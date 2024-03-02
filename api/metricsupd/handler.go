@@ -14,10 +14,11 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	urlParts := strings.Split(req.URL.Path, "/")
-	metricName := urlParts[3]
-	if len(metricName) == 0 {
-		http.Error(res, "metric name is missing", http.StatusNotFound)
+	if len(urlParts) < 4 {
+		http.Error(res, "Data is missing", http.StatusBadRequest)
+		return
 	}
+	metricName := urlParts[3]
 	metricValue := urlParts[4]
 	switch urlParts[2] {
 	case "gauge":
