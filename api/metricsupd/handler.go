@@ -14,8 +14,8 @@ func Handler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	urlParts := strings.Split(req.URL.Path, "/")
-	if len(urlParts) < 4 {
-		http.Error(res, "Data is missing", http.StatusBadRequest)
+	if len(urlParts) < 5 {
+		http.Error(res, "Data is missing", http.StatusNotFound)
 		return
 	}
 	metricName := urlParts[3]
