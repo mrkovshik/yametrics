@@ -29,11 +29,11 @@ func (m *MemStorage) UpdateGauge(name, value string) error {
 }
 
 func (m *MemStorage) UpdateCounter(name, value string) error {
-	intValue, err := strconv.Atoi(value)
+	floatValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return err
 	}
-	m.counters[name] += metrics.Counter(float64(intValue))
+	m.counters[name] += metrics.Counter(floatValue)
 	fmt.Printf("counter added\n name = %v,\n value = %v,\n MemStorage %v\n", name, value, m)
 	return nil
 }
