@@ -1,4 +1,4 @@
-package update_metrics
+package metricsupd
 
 import (
 	"github.com/mrkovshik/yametrics/internal/storage"

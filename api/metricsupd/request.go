@@ -1,4 +1,4 @@
-package update_metrics
+package metricsupd
 
 type UpdateMetricRequest struct {
 	metricType  string
