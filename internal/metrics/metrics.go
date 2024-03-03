@@ -1,6 +1,7 @@
 package metrics
 
-type (
-	Counter int64
-	Gauge   float64
-)
+import "github.com/mrkovshik/yametrics/internal/storage"
+
+type metric interface {
+	Update(storage.IStorage) error
+}

@@ -2,38 +2,34 @@ package storage
 
 import (
 	"fmt"
-	"github.com/mrkovshik/yametrics/internal/metrics"
-	"strconv"
 )
 
-type MemStorage struct {
-	gauges   map[string]metrics.Gauge
-	counters map[string]metrics.Counter
-}
+type (
+	MapStorage struct {
+		gauges   map[string]float64
+		counters map[string]int64
+	}
+	IStorage interface {
+		UpdateCounter(counter) error
+		UpdateGauge(gauge) error
+	}
+)
 
-func NewMemStorage() *MemStorage {
-	return &MemStorage{
-		gauges:   make(map[string]metrics.Gauge),
-		counters: make(map[string]metrics.Counter),
+func NewMapStorage() *MapStorage {
+	return &MapStorage{
+		gauges:   make(map[string]float64),
+		counters: make(map[string]int64),
 	}
 }
 
-func (m *MemStorage) UpdateGauge(name, value string) error {
-	intValue, err := strconv.Atoi(value)
-	if err != nil {
-		return err
-	}
-	m.gauges[name] = metrics.Gauge(intValue)
-	fmt.Printf("gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", name, value, m)
+func (m *MapStorage) UpdateGauge(g gauge) error {
+	m.gauges[g.name] = g.value
+	fmt.Printf("gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", g.name, g.value, m)
 	return nil
 }
 
-func (m *MemStorage) UpdateCounter(name, value string) error {
-	floatValue, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		return err
-	}
-	m.counters[name] += metrics.Counter(floatValue)
-	fmt.Printf("counter added\n name = %v,\n value = %v,\n MemStorage %v\n", name, value, m)
+func (m *MapStorage) UpdateCounter(c counter) error {
+	m.counters[c.name] += c.value
+	fmt.Printf("gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", c.name, c.value, m)
 	return nil
 }
