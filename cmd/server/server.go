@@ -25,7 +25,6 @@ func run(s *service.Service) {
 	mux.HandleFunc(`/update/gauge/`, gauge.Handler(s))
 	mux.HandleFunc(`/update/`, func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid metric type", http.StatusBadRequest)
-		return
 	})
 
 	err := http.ListenAndServe(`:8080`, mux)
