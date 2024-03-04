@@ -37,5 +37,5 @@ func Handler(s *service.Service) func(http.ResponseWriter, *http.Request) {
 
 func verifyGaugeName(name string) bool {
 	_, ok := metrics.MetricNamesMap[name]
-	return !ok
+	return ok
 }

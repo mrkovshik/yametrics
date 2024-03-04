@@ -6,7 +6,6 @@ import (
 
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
-
 )
 
 func Handler(s *service.Service) func(http.ResponseWriter, *http.Request) {
@@ -16,7 +15,7 @@ func Handler(s *service.Service) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		urlParts := strings.Split(req.URL.Path, "/")
-		if len(urlParts) < 5 {
+		if len(urlParts) < 5 || urlParts[3] != "PollCount" {
 			http.Error(res, "Data is missing", http.StatusNotFound)
 			return
 		}
