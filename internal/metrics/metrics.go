@@ -75,6 +75,16 @@ func (m RuntimeMetrics) GetMetrics(MetricsValues *sync.Map) {
 
 }
 
+func (m MockMetrics) GetMetrics(MetricsValues *sync.Map) {
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	MetricsValues.Store("Alloc", m.MemStats["Alloc"])
+	MetricsValues.Store("BuckHashSys", m.MemStats["BuckHashSys"])
+	MetricsValues.Store("Frees", m.MemStats["Frees"])
+	MetricsValues.Store("GCCPUFraction", m.MemStats["GCCPUFraction"])
+	MetricsValues.Store("RandomValue", random.Float64())
+
+}
+
 var MetricNamesMap = map[string]struct{}{
 	"Alloc":         {},
 	"BuckHashSys":   {},
