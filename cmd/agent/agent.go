@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/mrkovshik/yametrics/internal/metrics"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -16,7 +17,7 @@ const (
 	reportInterval    = 10 * time.Second
 )
 
-var metricsValues = make(map[string]float64)
+var metricsValues sync.Map
 
 func main() {
 	var (
@@ -26,23 +27,22 @@ func main() {
 
 	go func() {
 		for {
-			mu.Lock()
+			fmt.Println("Starting to update metrics")
 			getRuntimeMetrics()
+			mu.Lock()
 			updateCounter++
 			mu.Unlock()
 			time.Sleep(pollInterval)
 		}
 	}()
-
+	time.Sleep(1 * time.Second)
 	for {
-		for name, value := range metricsValues {
-			go sendMetric(name, fmt.Sprint(value), metricTypeGauge)
-			sendMetric("PollCount ", fmt.Sprint(updateCounter), metricTypeCounter)
-
+		fmt.Println("Starting to send metrics")
+		for name, _ := range metrics.MetricNamesMap {
+			value, _ := metricsValues.Load(name)
+			sendMetric(name, fmt.Sprint(value), metricTypeGauge)
 		}
-		getRuntimeMetrics()
-		updateCounter++
-
+		sendMetric("PollCount ", fmt.Sprint(updateCounter), metricTypeCounter)
 		time.Sleep(reportInterval)
 	}
 
@@ -52,38 +52,37 @@ func getRuntimeMetrics() {
 	var (
 		m runtime.MemStats
 	)
-	source := rand.NewSource(time.Now().UnixNano())
-	random := rand.New(source)
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	runtime.ReadMemStats(&m)
 
-	metricsValues["Alloc"] = float64(m.Alloc)
-	metricsValues["BuckHashSys"] = float64(m.BuckHashSys)
-	metricsValues["Frees"] = float64(m.Frees)
-	metricsValues["GCCPUFraction"] = float64(m.GCCPUFraction)
-	metricsValues["GCSys"] = float64(m.GCSys)
-	metricsValues["HeapAlloc"] = float64(m.HeapAlloc)
-	metricsValues["HeapIdle"] = float64(m.HeapIdle)
-	metricsValues["HeapInuse"] = float64(m.HeapInuse)
-	metricsValues["HeapObjects"] = float64(m.HeapObjects)
-	metricsValues["HeapReleased"] = float64(m.HeapReleased)
-	metricsValues["HeapSys"] = float64(m.HeapSys)
-	metricsValues["LastGC"] = float64(m.LastGC)
-	metricsValues["Lookups"] = float64(m.Lookups)
-	metricsValues["MCacheInuse"] = float64(m.MCacheInuse)
-	metricsValues["MCacheSys"] = float64(m.MCacheSys)
-	metricsValues["MSpanInuse"] = float64(m.MSpanInuse)
-	metricsValues["MSpanSys"] = float64(m.MSpanSys)
-	metricsValues["Mallocs"] = float64(m.Mallocs)
-	metricsValues["NextGC"] = float64(m.NextGC)
-	metricsValues["NumForcedGC"] = float64(m.NumForcedGC)
-	metricsValues["NumGC"] = float64(m.NumGC)
-	metricsValues["OtherSys"] = float64(m.OtherSys)
-	metricsValues["PauseTotalNs"] = float64(m.PauseTotalNs)
-	metricsValues["StackInuse"] = float64(m.StackInuse)
-	metricsValues["StackSys"] = float64(m.StackSys)
-	metricsValues["Sys"] = float64(m.Sys)
-	metricsValues["TotalAlloc"] = float64(m.TotalAlloc)
-	metricsValues["RandomValue"] = random.Float64()
+	metricsValues.Store("Alloc", float64(m.Alloc))
+	metricsValues.Store("BuckHashSys", float64(m.BuckHashSys))
+	metricsValues.Store("Frees", float64(m.Frees))
+	metricsValues.Store("GCCPUFraction", m.GCCPUFraction)
+	metricsValues.Store("GCSys", float64(m.GCSys))
+	metricsValues.Store("HeapAlloc", float64(m.HeapAlloc))
+	metricsValues.Store("HeapIdle", float64(m.HeapIdle))
+	metricsValues.Store("HeapInuse", float64(m.HeapInuse))
+	metricsValues.Store("HeapObjects", float64(m.HeapObjects))
+	metricsValues.Store("HeapReleased", float64(m.HeapReleased))
+	metricsValues.Store("HeapSys", float64(m.HeapSys))
+	metricsValues.Store("LastGC", float64(m.LastGC))
+	metricsValues.Store("Lookups", float64(m.Lookups))
+	metricsValues.Store("MCacheInuse", float64(m.MCacheInuse))
+	metricsValues.Store("MCacheSys", float64(m.MCacheSys))
+	metricsValues.Store("MSpanInuse", float64(m.MSpanInuse))
+	metricsValues.Store("MSpanSys", float64(m.MSpanSys))
+	metricsValues.Store("Mallocs", float64(m.Mallocs))
+	metricsValues.Store("NextGC", float64(m.NextGC))
+	metricsValues.Store("NumForcedGC", float64(m.NumForcedGC))
+	metricsValues.Store("NumGC", float64(m.NumGC))
+	metricsValues.Store("OtherSys", float64(m.OtherSys))
+	metricsValues.Store("PauseTotalNs", float64(m.PauseTotalNs))
+	metricsValues.Store("StackInuse", float64(m.StackInuse))
+	metricsValues.Store("StackSys", float64(m.StackSys))
+	metricsValues.Store("Sys", float64(m.Sys))
+	metricsValues.Store("TotalAlloc", float64(m.TotalAlloc))
+	metricsValues.Store("RandomValue", random.Float64())
 
 }
 
@@ -95,7 +94,7 @@ func sendMetric(name, value, metricType string) {
 		fmt.Println(err)
 	}
 	if response.StatusCode != http.StatusOK {
-		fmt.Printf("status code is %v", response.StatusCode)
+		fmt.Printf("status code is %v\n", response.StatusCode)
 	}
 
 }

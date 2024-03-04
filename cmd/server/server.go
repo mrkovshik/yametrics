@@ -8,14 +8,13 @@ import (
 	"github.com/mrkovshik/yametrics/api/gauge"
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
-
 )
 
 func main() {
 	mapStorage := storage.NewMapStorage()
 
-	service := service.NewServiceWithMapStorage(mapStorage, log.Default())
-	run(service)
+	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
+	run(getMetricsService)
 
 }
 
