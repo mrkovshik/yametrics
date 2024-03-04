@@ -1,6 +1,7 @@
 package gauge
 
 import (
+	"github.com/mrkovshik/yametrics/internal/metrics"
 	"net/http"
 	"strings"
 
@@ -15,7 +16,7 @@ func Handler(s *service.Service) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		urlParts := strings.Split(req.URL.Path, "/")
-		if len(urlParts) < 5 {
+		if len(urlParts) < 5 || !verifyGaugeName(urlParts[3]) {
 			http.Error(res, "Data is missing", http.StatusNotFound)
 			return
 		}
@@ -32,4 +33,9 @@ func Handler(s *service.Service) func(http.ResponseWriter, *http.Request) {
 		res.Write([]byte("gauge successfully updated"))
 
 	}
+}
+
+func verifyGaugeName(name string) bool {
+	_, ok := metrics.MetricNamesMap[name]
+	return !ok
 }
