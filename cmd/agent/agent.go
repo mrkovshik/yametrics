@@ -36,7 +36,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 	for {
 		fmt.Println("Starting to send metrics")
-		for name, _ := range metrics.MetricNamesMap {
+		for name := range metrics.MetricNamesMap {
 			value, _ := metricsValues.Load(name)
 			sendMetric(name, fmt.Sprint(value), metricTypeGauge)
 		}
@@ -58,6 +58,7 @@ func sendMetric(name, value, metricType string) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
 		fmt.Printf("status code is %v\n", response.StatusCode)
 	}
