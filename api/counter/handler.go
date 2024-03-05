@@ -15,6 +15,11 @@ func Handler(s *service.Service) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		urlParts := strings.Split(req.URL.Path, "/")
+		//if len(urlParts) < 5 || urlParts[3] != "PollCount" {
+		//	http.Error(res, "Data is missing", http.StatusNotFound)
+		//	return
+		//}
+
 		if len(urlParts) < 5 || urlParts[3] != "PollCount" {
 			http.Error(res, "Data is missing", http.StatusNotFound)
 			return
