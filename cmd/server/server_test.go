@@ -225,6 +225,7 @@ func Test_server(t *testing.T) {
 			req, err := http.NewRequest(tt.request.method, tt.request.url, nil)
 			require.NoError(t, err)
 			response, err1 := client.Do(req)
+			defer response.Body.Close()
 			require.NoError(t, err1)
 			require.Equal(t, tt.want.code, response.StatusCode)
 			require.Equal(t, tt.want.contentType, response.Header.Get("Content-Type"))
