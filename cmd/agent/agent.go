@@ -9,10 +9,8 @@ import (
 )
 
 const (
-	metricTypeGauge   = "gauge"
-	metricTypeCounter = "counter"
-	pollInterval      = 2 * time.Second
-	reportInterval    = 10 * time.Second
+	pollInterval   = 2 * time.Second
+	reportInterval = 10 * time.Second
 )
 
 func main() {
@@ -38,9 +36,9 @@ func main() {
 		fmt.Println("Starting to send metrics")
 		for name := range metrics.MetricNamesMap {
 			value, _ := metricsValues.Load(name)
-			sendMetric(name, fmt.Sprint(value), metricTypeGauge)
+			sendMetric(name, fmt.Sprint(value), metrics.MetricTypeGauge)
 		}
-		sendMetric("PollCount", fmt.Sprint(updateCounter), metricTypeCounter)
+		sendMetric("PollCount", fmt.Sprint(updateCounter), metrics.MetricTypeCounter)
 		time.Sleep(reportInterval)
 	}
 

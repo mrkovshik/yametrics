@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+const (
+	MetricTypeGauge   = "gauge"
+	MetricTypeCounter = "counter"
+)
+
 type (
 	Imetric interface {
 		Update(storage.IStorage) error

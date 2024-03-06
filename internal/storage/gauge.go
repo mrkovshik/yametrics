@@ -1,22 +1,16 @@
 package storage
 
-import "strconv"
-
 type (
-	gauge struct {
+	Gauge struct {
 		name  string
 		value float64
 	}
 )
 
-func (g gauge) Update(s IStorage) error {
+func (g Gauge) Update(s IStorage) error {
 	return s.UpdateGauge(g)
 }
 
-func NewGauge(name, value string) (gauge, error) {
-	floatValue, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		return gauge{}, err
-	}
-	return gauge{name: name, value: floatValue}, err
+func NewGauge(name string, value float64) Gauge {
+	return Gauge{name: name, value: value}
 }

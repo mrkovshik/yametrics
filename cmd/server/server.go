@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/mrkovshik/yametrics/api"
 	"log"
 	"net/http"
 
-	"github.com/mrkovshik/yametrics/api/counter"
-	"github.com/mrkovshik/yametrics/api/gauge"
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
 )
@@ -19,15 +20,10 @@ func main() {
 }
 
 func run(s *service.Service) {
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/update/counter/`, counter.Handler(s))
-	mux.HandleFunc(`/update/gauge/`, gauge.Handler(s))
-	mux.HandleFunc(`/update/`, func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Invalid metric type", http.StatusBadRequest)
-	})
-
-	err := http.ListenAndServe(`:8080`, mux)
-	if err != nil {
-		panic(err)
-	}
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
+	r.Get("/values/{type}/{name}", api.GetMetric(s))
+	r.Get("/", api.GetMetrics(s))
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

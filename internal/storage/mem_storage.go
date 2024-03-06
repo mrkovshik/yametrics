@@ -11,7 +11,7 @@ type (
 	}
 	IStorage interface {
 		UpdateCounter(counter) error
-		UpdateGauge(gauge) error
+		UpdateGauge(Gauge) error
 	}
 )
 
@@ -22,14 +22,14 @@ func NewMapStorage() *MapStorage {
 	}
 }
 
-func (m *MapStorage) UpdateGauge(g gauge) error {
+func (m *MapStorage) UpdateGauge(g Gauge) error {
 	m.Gauges[g.name] = g.value
-	fmt.Printf("gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", g.name, g.value, m)
+	fmt.Printf("Gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", g.name, g.value, m)
 	return nil
 }
 
 func (m *MapStorage) UpdateCounter(c counter) error {
 	m.Counters[c.name] += c.value
-	fmt.Printf("gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", c.name, c.value, m)
+	fmt.Printf("Gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", c.name, c.value, m)
 	return nil
 }
