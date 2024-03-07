@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	"github.com/mrkovshik/yametrics/internal/service"
@@ -83,9 +82,7 @@ func GetMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 			http.Error(res, "invalid metric type", http.StatusBadRequest)
 			return
 		}
-
-		body := fmt.Sprintf("Type: %v\nName: %v\nValue %v\n", metricType, metricName, metricValue)
-		res.Write([]byte(body))
+		res.Write([]byte(metricValue))
 	}
 }
 
