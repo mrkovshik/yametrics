@@ -1,35 +1,15 @@
 package storage
 
-import (
-	"fmt"
-)
-
 type (
 	MapStorage struct {
 		Gauges   map[string]float64
 		Counters map[string]int64
 	}
 	IStorage interface {
-		UpdateCounter(counter) error
+		UpdateCounter(Counter) error
 		UpdateGauge(Gauge) error
+		GetCounterValue(string) string
+		GetGaugeValue(string) string
+		GetAllMetrics() string
 	}
 )
-
-func NewMapStorage() *MapStorage {
-	return &MapStorage{
-		Gauges:   make(map[string]float64),
-		Counters: make(map[string]int64),
-	}
-}
-
-func (m *MapStorage) UpdateGauge(g Gauge) error {
-	m.Gauges[g.name] = g.value
-	fmt.Printf("Gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", g.name, g.value, m)
-	return nil
-}
-
-func (m *MapStorage) UpdateCounter(c counter) error {
-	m.Counters[c.name] += c.value
-	fmt.Printf("Gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", c.name, c.value, m)
-	return nil
-}

@@ -24,7 +24,7 @@ func main() {
 	go func() {
 		for {
 			fmt.Println("Starting to update metrics")
-			getMetrics(src, &metricsValues)
+			src.StoreMetrics(&metricsValues)
 			mu.Lock()
 			updateCounter++
 			mu.Unlock()
@@ -41,11 +41,6 @@ func main() {
 		sendMetric("PollCount", fmt.Sprint(updateCounter), metrics.MetricTypeCounter)
 		time.Sleep(reportInterval)
 	}
-
-}
-
-func getMetrics(source metrics.MetricSource, m *sync.Map) {
-	source.GetMetrics(m)
 
 }
 

@@ -18,7 +18,7 @@ type (
 		Update(storage.IStorage) error
 	}
 	MetricSource interface {
-		GetMetrics(MetricsValues *sync.Map)
+		StoreMetrics(MetricsValues *sync.Map)
 	}
 	RuntimeMetrics struct {
 		MemStats runtime.MemStats
@@ -47,7 +47,7 @@ func NewMockMetrics() MockMetrics {
 	}
 }
 
-func (m RuntimeMetrics) GetMetrics(MetricsValues *sync.Map) {
+func (m RuntimeMetrics) StoreMetrics(MetricsValues *sync.Map) {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	MetricsValues.Store("Alloc", float64(m.MemStats.Alloc))
 	MetricsValues.Store("BuckHashSys", float64(m.MemStats.BuckHashSys))
@@ -80,7 +80,7 @@ func (m RuntimeMetrics) GetMetrics(MetricsValues *sync.Map) {
 
 }
 
-func (m MockMetrics) GetMetrics(MetricsValues *sync.Map) {
+func (m MockMetrics) StoreMetrics(MetricsValues *sync.Map) {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	MetricsValues.Store("Alloc", m.MemStats["Alloc"])
 	MetricsValues.Store("BuckHashSys", m.MemStats["BuckHashSys"])
@@ -119,5 +119,4 @@ var MetricNamesMap = map[string]struct{}{
 	"Sys":           {},
 	"TotalAlloc":    {},
 	"RandomValue":   {},
-	"testGauge":     {},
 }

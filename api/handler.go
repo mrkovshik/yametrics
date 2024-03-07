@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	"github.com/mrkovshik/yametrics/internal/service"
@@ -48,8 +49,11 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 				http.Error(res, "Error updating counter", http.StatusBadRequest)
 				return
 			}
-
+		default:
+			http.Error(res, "invalid metric type", http.StatusBadRequest)
+			return
 		}
+
 		res.Write([]byte("Counter successfully updated"))
 	}
 
@@ -57,11 +61,39 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 
 func GetMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
+		var metricValue string
+		metricName := chi.URLParam(req, "name")
+		metricType := chi.URLParam(req, "type")
+		switch metricType {
+
+		case metrics.MetricTypeGauge:
+			if !verifyGaugeName(metricName) {
+				http.Error(res, "Data is missing", http.StatusNotFound)
+				return
+			}
+			metricValue = s.Storage.GetGaugeValue(metricName)
+
+		case metrics.MetricTypeCounter:
+			if metricName != "PollCount" && metricName != "testCounter" {
+				http.Error(res, "Data is missing", http.StatusNotFound)
+				return
+			}
+			metricValue = s.Storage.GetCounterValue(metricName)
+		default:
+			http.Error(res, "invalid metric type", http.StatusBadRequest)
+			return
+		}
+
+		body := fmt.Sprintf("Type: %v\nName: %v\nValue %v\n", metricType, metricName, metricValue)
+		res.Write([]byte(body))
 	}
 }
 
 func GetMetrics(s *service.Service) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
+		res.Header().Set("Content-Type", "text/html")
+		body := s.Storage.GetAllMetrics()
+		res.Write([]byte(body))
 	}
 }
 
