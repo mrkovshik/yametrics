@@ -207,7 +207,7 @@ func Test_server(t *testing.T) {
 			want: want{
 				code:              http.StatusMethodNotAllowed,
 				response:          "",
-				contentType:       "text/plain; charset=utf-8",
+				contentType:       "",
 				storageGaugeVal:   123.00,
 				storageCounterVal: 579,
 			},
