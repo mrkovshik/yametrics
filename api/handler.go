@@ -60,24 +60,25 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 
 func GetMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var metricValue string
+		var (
+			metricValue string
+			err         error
+		)
 		metricName := chi.URLParam(req, "name")
 		metricType := chi.URLParam(req, "type")
 		switch metricType {
 
 		case metrics.MetricTypeGauge:
-			//if !verifyGaugeName(metricName) {
-			//	http.Error(res, "Data is missing", http.StatusNotFound)
-			//	return
-			//}
-			metricValue = s.Storage.GetGaugeValue(metricName)
+			metricValue, err = s.Storage.GetGaugeValue(metricName)
+			if err != nil {
+				http.Error(res, "Data is missing", http.StatusNotFound)
+			}
 
 		case metrics.MetricTypeCounter:
-			//if metricName != "PollCount" && metricName != "testCounter" {
-			//	http.Error(res, "Data is missing", http.StatusNotFound)
-			//	return
-			//}
-			metricValue = s.Storage.GetCounterValue(metricName)
+			metricValue, err = s.Storage.GetCounterValue(metricName)
+			if err != nil {
+				http.Error(res, "Data is missing", http.StatusNotFound)
+			}
 		default:
 			http.Error(res, "invalid metric type", http.StatusBadRequest)
 			return
@@ -92,9 +93,4 @@ func GetMetrics(s *service.Service) func(http.ResponseWriter, *http.Request) {
 		body := s.Storage.GetAllMetrics()
 		res.Write([]byte(body))
 	}
-}
-
-func verifyGaugeName(name string) bool {
-	_, ok := metrics.MetricNamesMap[name]
-	return ok
 }
