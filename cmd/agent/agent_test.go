@@ -19,7 +19,7 @@ func Test_getMetrics(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storeMetrics(src, &m)
+			src.StoreMetrics(&m)
 			valAlloc, ok := m.Load("Alloc")
 			assert.True(t, ok)
 			assert.Equal(t, valAlloc, 1.00)
