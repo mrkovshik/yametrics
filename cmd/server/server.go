@@ -23,7 +23,7 @@ func run(s *service.Service) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
-	r.Get("/values/{type}/{name}", api.GetMetric(s))
+	r.Get("/value/{type}/{name}", api.GetMetric(s))
 	r.Get("/", api.GetMetrics(s))
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
