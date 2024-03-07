@@ -120,4 +120,5 @@ var MetricNamesMap = map[string]struct{}{
 	"TotalAlloc":    {},
 	"RandomValue":   {},
 	"testGauge":     {},
+	"testSetGet197": {},
 }
