@@ -35,7 +35,7 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 			}
 
 		case metrics.MetricTypeCounter:
-			if metricName != "PollCount" && metricName != "testCounter" {
+			if metricName != "PollCount" && metricName != "testCounter" && metricName != "testSetGet197" {
 				http.Error(res, "Data is missing", http.StatusNotFound)
 				return
 			}
