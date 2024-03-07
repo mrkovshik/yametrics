@@ -18,10 +18,10 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 		switch metricType {
 
 		case metrics.MetricTypeGauge:
-			if !verifyGaugeName(metricName) {
-				http.Error(res, "Data is missing", http.StatusNotFound)
-				return
-			}
+			//if !verifyGaugeName(metricName) {
+			//	http.Error(res, "Data is missing", http.StatusNotFound)
+			//	return
+			//}
 			floatValue, err := strconv.ParseFloat(metricValue, 64)
 			if err != nil {
 				http.Error(res, "wrong value format", http.StatusBadRequest)
@@ -35,10 +35,10 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 			}
 
 		case metrics.MetricTypeCounter:
-			if metricName != "PollCount" && metricName != "testCounter" && metricName != "testSetGet197" {
-				http.Error(res, "Data is missing", http.StatusNotFound)
-				return
-			}
+			//if metricName != "PollCount" && metricName != "testCounter" && metricName != "testSetGet197" {
+			//	http.Error(res, "Data is missing", http.StatusNotFound)
+			//	return
+			//}
 			intValue, err := strconv.ParseInt(chi.URLParam(req, "value"), 0, 64)
 			if err != nil {
 				http.Error(res, "wrong value format", http.StatusBadRequest)
@@ -67,17 +67,17 @@ func GetMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 		switch metricType {
 
 		case metrics.MetricTypeGauge:
-			if !verifyGaugeName(metricName) {
-				http.Error(res, "Data is missing", http.StatusNotFound)
-				return
-			}
+			//if !verifyGaugeName(metricName) {
+			//	http.Error(res, "Data is missing", http.StatusNotFound)
+			//	return
+			//}
 			metricValue = s.Storage.GetGaugeValue(metricName)
 
 		case metrics.MetricTypeCounter:
-			if metricName != "PollCount" && metricName != "testCounter" {
-				http.Error(res, "Data is missing", http.StatusNotFound)
-				return
-			}
+			//if metricName != "PollCount" && metricName != "testCounter" {
+			//	http.Error(res, "Data is missing", http.StatusNotFound)
+			//	return
+			//}
 			metricValue = s.Storage.GetCounterValue(metricName)
 		default:
 			http.Error(res, "invalid metric type", http.StatusBadRequest)
