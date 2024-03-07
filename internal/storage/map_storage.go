@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -23,12 +24,20 @@ func (m *MapStorage) UpdateCounter(c Counter) error {
 	return nil
 }
 
-func (m *MapStorage) GetCounterValue(name string) string {
-	return fmt.Sprint(m.Counters[name])
+func (m *MapStorage) GetCounterValue(name string) (string, error) {
+	value, ok := m.Counters[name]
+	if !ok {
+		return "", errors.New("not found")
+	}
+	return fmt.Sprint(value), nil
 }
 
-func (m *MapStorage) GetGaugeValue(name string) string {
-	return fmt.Sprint(m.Gauges[name])
+func (m *MapStorage) GetGaugeValue(name string) (string, error) {
+	value, ok := m.Gauges[name]
+	if !ok {
+		return "", errors.New("not found")
+	}
+	return fmt.Sprint(value), nil
 }
 
 func (m *MapStorage) GetAllMetrics() string {
