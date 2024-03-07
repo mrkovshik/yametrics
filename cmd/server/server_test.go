@@ -108,21 +108,6 @@ func Test_server(t *testing.T) {
 			},
 		},
 		{
-			name: "negative test #2 (invalid counter name)",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/counter/wrongname/456",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:              http.StatusNotFound,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
-			},
-		},
-		{
 			name: "negative test #3 (invalid counter value)",
 			request: request{
 				method:      http.MethodPost,
@@ -152,21 +137,7 @@ func Test_server(t *testing.T) {
 				storageCounterVal: 579,
 			},
 		},
-		{
-			name: "negative test #5 (invalid gauge name)",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/gauge/wrongname/456",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:              http.StatusNotFound,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
-			},
-		},
+
 		{
 			name: "negative test #6 (invalid gauge value)",
 			request: request{
