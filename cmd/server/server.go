@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	parseFlags()
 	mapStorage := storage.NewMapStorage()
 
 	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
@@ -25,5 +27,6 @@ func run(s *service.Service) {
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
 	r.Get("/value/{type}/{name}", api.GetMetric(s))
 	r.Get("/", api.GetMetrics(s))
-	log.Fatal(http.ListenAndServe(":8080", r))
+	fmt.Println("Running server on", addr.String())
+	log.Fatal(http.ListenAndServe(addr.String(), r))
 }

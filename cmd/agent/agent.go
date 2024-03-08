@@ -8,19 +8,15 @@ import (
 	"time"
 )
 
-const (
-	pollInterval   = 2 * time.Second
-	reportInterval = 10 * time.Second
-)
-
 func main() {
+	parseFlags()
 	var (
 		mu            sync.Mutex
 		updateCounter int
 		metricsValues = sync.Map{}
 		src           = metrics.NewRuntimeMetrics()
 	)
-
+	fmt.Println("Running agent on", addr.String())
 	go func() {
 		for {
 			fmt.Println("Starting to update metrics")
@@ -45,15 +41,17 @@ func main() {
 }
 
 func sendMetric(name, value, metricType string) {
-	url := "http://localhost:8080/update/"
+	url := fmt.Sprintf("http://%v/update/", addr.String())
 	metricUpdateURL := fmt.Sprintf("%v%v/%v/%v", url, metricType, name, value)
 	response, err := http.Post(metricUpdateURL, "text/plain", nil)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
 		fmt.Printf("status code is %v\n", response.StatusCode)
+		return
 	}
 
 }
