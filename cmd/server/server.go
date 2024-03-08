@@ -7,9 +7,16 @@ import (
 	"github.com/mrkovshik/yametrics/api"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
+)
+
+const (
+	readTimeout  = 5 * time.Second  // Adjust as needed
+	writeTimeout = 10 * time.Second // Adjust as needed
+	idleTimeout  = 15 * time.Second // Adjust as needed
 )
 
 func main() {
@@ -20,6 +27,7 @@ func main() {
 }
 
 func run(s *service.Service) {
+
 	parseFlags()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -27,5 +35,12 @@ func run(s *service.Service) {
 	r.Get("/value/{type}/{name}", api.GetMetric(s))
 	r.Get("/", api.GetMetrics(s))
 	fmt.Println("Running server on", addr.String())
-	log.Fatal(http.ListenAndServe(addr.String(), r))
+	server := &http.Server{
+		Addr:         addr.String(),
+		Handler:      r,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
+	}
+	log.Fatal(server.ListenAndServe())
 }
