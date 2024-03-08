@@ -192,8 +192,8 @@ func Test_server(t *testing.T) {
 	mapStorage := storage.NewMapStorage()
 	wg := sync.WaitGroup{}
 	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		defer wg.Done()
 		run(getMetricsService)
 	}()
