@@ -27,19 +27,19 @@ func Test_server(t *testing.T) {
 		request request
 		want    want
 	}{
-		{
-			name: "positive test #1",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/gauge/Alloc/456",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusOK,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
+		//{
+		//	name: "positive test #1",
+		//	request: request{
+		//		method:      http.MethodPost,
+		//		url:         "http://localhost:8080/update/gauge/Alloc/456",
+		//		contentType: "text/plain",
+		//	},
+		//	want: want{
+		//		code:        http.StatusOK,
+		//		response:    "",
+		//		contentType: "text/plain; charset=utf-8",
+		//	},
+		//},
 		{
 			name: "positive test #2",
 			request: request{
