@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
-	"sync"
 	"testing"
+	"time"
 )
 
 func Test_server(t *testing.T) {
@@ -190,14 +190,9 @@ func Test_server(t *testing.T) {
 	}
 
 	mapStorage := storage.NewMapStorage()
-	wg := sync.WaitGroup{}
 	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		run(getMetricsService)
-	}()
-	wg.Wait()
+	run(getMetricsService)
+	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{}
