@@ -44,7 +44,7 @@ func Test_server(t *testing.T) {
 			name: "positive test #2",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/counter/PollCount/456",
+				url:         "http://localhost:8080/update/gauge/Alloc/123",
 				contentType: "text/plain",
 			},
 			want: want{
@@ -53,12 +53,11 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-
 		{
 			name: "positive test #3",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/counter/PollCount/123",
+				url:         "http://localhost:8080/update/counter/PollCount/456",
 				contentType: "text/plain",
 			},
 			want: want{
@@ -71,12 +70,39 @@ func Test_server(t *testing.T) {
 			name: "positive test #4",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/gauge/Alloc/123",
+				url:         "http://localhost:8080/update/counter/PollCount/1",
 				contentType: "text/plain",
 			},
 			want: want{
 				code:        http.StatusOK,
 				response:    "",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name: "positive test #5",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/value/counter/PollCount",
+				contentType: "text/plain",
+			},
+			want: want{
+				code:        http.StatusOK,
+				response:    "457",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+
+		{
+			name: "positive test #6",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/value/gauge/Alloc",
+				contentType: "text/plain",
+			},
+			want: want{
+				code:        http.StatusOK,
+				response:    "123",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -108,7 +134,7 @@ func Test_server(t *testing.T) {
 			},
 		},
 		{
-			name: "negative test #4 (no gauge name)",
+			name: "negative test #4 (invalid gauge name)",
 			request: request{
 				method:      http.MethodPost,
 				url:         "http://localhost:8080/update/gauge/456",
@@ -139,6 +165,19 @@ func Test_server(t *testing.T) {
 			request: request{
 				method:      http.MethodPost,
 				url:         "http://localhost:8080/update/wrongtype/PollCount/456",
+				contentType: "text/plain",
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name: "negative test #8 (invalid metric type)",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/value/wrongtype/PollCount",
 				contentType: "text/plain",
 			},
 			want: want{
