@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func Test_server(t *testing.T) {
@@ -192,6 +193,8 @@ func Test_server(t *testing.T) {
 
 	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
 	go run(getMetricsService)
+
+	time.Sleep(1 * time.Second)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
