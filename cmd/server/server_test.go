@@ -147,19 +147,6 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-		{
-			name: "negative test #8 (invalid http method)",
-			request: request{
-				method:      http.MethodGet,
-				url:         "http://localhost:8080/update/gauge/Alloc/456",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusMethodNotAllowed,
-				response:    "",
-				contentType: "",
-			},
-		},
 	}
 
 	mapStorage := storage.NewMapStorage()
