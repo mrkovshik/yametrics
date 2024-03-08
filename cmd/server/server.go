@@ -13,15 +13,14 @@ import (
 )
 
 func main() {
-	parseFlags()
 	mapStorage := storage.NewMapStorage()
-
 	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
 	run(getMetricsService)
 
 }
 
 func run(s *service.Service) {
+	parseFlags()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
