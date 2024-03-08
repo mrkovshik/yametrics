@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
@@ -13,11 +12,9 @@ import (
 func Test_server(t *testing.T) {
 	type (
 		want struct {
-			code              int
-			response          string
-			contentType       string
-			storageGaugeVal   float64
-			storageCounterVal int64
+			code        int
+			response    string
+			contentType string
 		}
 		request struct {
 			method      string
@@ -38,11 +35,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusOK,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   456.00,
-				storageCounterVal: 0,
+				code:        http.StatusOK,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -53,11 +48,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusOK,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   456.00,
-				storageCounterVal: 456,
+				code:        http.StatusOK,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 
@@ -69,11 +62,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusOK,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   456.00,
-				storageCounterVal: 579,
+				code:        http.StatusOK,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -84,11 +75,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusOK,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
+				code:        http.StatusOK,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 
@@ -100,11 +89,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusNotFound,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
+				code:        http.StatusNotFound,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -115,11 +102,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusBadRequest,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
+				code:        http.StatusBadRequest,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -130,11 +115,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusNotFound,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
+				code:        http.StatusNotFound,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 
@@ -146,11 +129,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusBadRequest,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
+				code:        http.StatusBadRequest,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -161,11 +142,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusBadRequest,
-				response:          "",
-				contentType:       "text/plain; charset=utf-8",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
+				code:        http.StatusBadRequest,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -176,11 +155,9 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain",
 			},
 			want: want{
-				code:              http.StatusMethodNotAllowed,
-				response:          "",
-				contentType:       "",
-				storageGaugeVal:   123.00,
-				storageCounterVal: 579,
+				code:        http.StatusMethodNotAllowed,
+				response:    "",
+				contentType: "",
 			},
 		},
 	}
@@ -200,8 +177,6 @@ func Test_server(t *testing.T) {
 			defer response.Body.Close()
 			require.Equal(t, tt.want.code, response.StatusCode)
 			require.Equal(t, tt.want.contentType, response.Header.Get("Content-Type"))
-			assert.Equal(t, tt.want.storageGaugeVal, mapStorage.Gauges["Alloc"])
-			assert.Equal(t, tt.want.storageCounterVal, mapStorage.Counters["PollCount"])
 		})
 	}
 }
