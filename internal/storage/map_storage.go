@@ -14,13 +14,11 @@ func NewMapStorage() *MapStorage {
 
 func (m *MapStorage) UpdateGauge(g Gauge) error {
 	m.Gauges[g.name] = g.value
-	fmt.Printf("Gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", g.name, g.value, m)
 	return nil
 }
 
 func (m *MapStorage) UpdateCounter(c Counter) error {
 	m.Counters[c.name] += c.value
-	fmt.Printf("Gauge added\n name = %v\n, value = %v,\n MemStorage %v\n", c.name, c.value, m)
 	return nil
 }
 
