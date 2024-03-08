@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
@@ -16,7 +15,7 @@ import (
 const (
 	readTimeout  = 5 * time.Second  // Adjust as needed
 	writeTimeout = 10 * time.Second // Adjust as needed
-	idleTimeout  = 15 * time.Second // Adjust as needed
+	idleTimeout  = 30 * time.Second // Adjust as needed
 )
 
 func main() {
@@ -34,7 +33,7 @@ func run(s *service.Service) {
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
 	r.Get("/value/{type}/{name}", api.GetMetric(s))
 	r.Get("/", api.GetMetrics(s))
-	fmt.Println("Running server on", addr.String())
+	log.Println("Running server on", addr.String())
 	server := &http.Server{
 		Addr:         addr.String(),
 		Handler:      r,
