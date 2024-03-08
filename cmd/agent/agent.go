@@ -50,7 +50,7 @@ func sendMetric(name, value, metricType string) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		fmt.Printf("status code is %v\n", response.StatusCode)
+		fmt.Printf("status code is %v, while sending %v:%v:%v\n", response.StatusCode, metricType, name, value)
 		return
 	}
 

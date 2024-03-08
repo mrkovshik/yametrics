@@ -17,6 +17,6 @@ func parseFlags() {
 
 	flag.Var(&addr, "a", "address and port to run server")
 	flag.DurationVar(&pollInterval, "r", 2*time.Second, "metrics polling interval")
-	flag.DurationVar(&reportInterval, "p", 2*time.Second, "metrics sending to server interval")
+	flag.DurationVar(&reportInterval, "p", 10*time.Second, "metrics sending to server interval")
 	flag.Parse()
 }
