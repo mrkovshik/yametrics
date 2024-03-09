@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
+	"github.com/mrkovshik/yametrics/internal/flags"
 	"log"
 	"net/http"
 	"time"
@@ -42,4 +44,14 @@ func run(s *service.Service) {
 		IdleTimeout:  idleTimeout,
 	}
 	log.Fatal(server.ListenAndServe())
+}
+
+var addr = flags.NetAddress{
+	Host: "localhost",
+	Port: 8080,
+}
+
+func parseFlags() {
+	flag.Var(&addr, "a", "address and port to run server")
+	flag.Parse()
 }

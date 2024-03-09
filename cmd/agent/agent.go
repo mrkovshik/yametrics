@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/mrkovshik/yametrics/internal/flags"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	"net/http"
 	"sync"
@@ -54,4 +56,19 @@ func sendMetric(name, value, metricType string) {
 		return
 	}
 
+}
+
+var addr = flags.NetAddress{
+	Host: "localhost",
+	Port: 8080,
+}
+var pollInterval time.Duration
+var reportInterval time.Duration
+
+func parseFlags() {
+
+	flag.Var(&addr, "a", "address and port to run server")
+	flag.DurationVar(&pollInterval, "r", 2*time.Second, "metrics polling interval")
+	flag.DurationVar(&reportInterval, "p", 10*time.Second, "metrics sending to server interval")
+	flag.Parse()
 }
