@@ -2,6 +2,7 @@ package flags
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -22,6 +23,7 @@ func (a *NetAddress) Set(s string) error {
 	}
 	port, err := strconv.Atoi(hp[1])
 	if err != nil {
+		log.Print(err)
 		return err
 	}
 	a.Host = hp[0]
