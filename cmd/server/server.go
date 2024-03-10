@@ -1,29 +1,26 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
-	"github.com/mrkovshik/yametrics/internal/flags"
-	"log"
-	"net/http"
-	"time"
-
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/utl"
+	"log"
+	"net/http"
 )
 
-const (
-	readTimeout  = 5 * time.Second  // Adjust as needed
-	writeTimeout = 10 * time.Second // Adjust as needed
-	idleTimeout  = 30 * time.Second // Adjust as needed
-)
+var hostPort *string
 
 func main() {
 	mapStorage := storage.NewMapStorage()
 	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
-	parseFlags()
+	if err := parseFlags(); err != nil {
+		log.Fatal(err)
+	}
 	run(getMetricsService)
 
 }
@@ -34,23 +31,17 @@ func run(s *service.Service) {
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
 	r.Get("/value/{type}/{name}", api.GetMetric(s))
 	r.Get("/", api.GetMetrics(s))
-	log.Println("Starting server on", addr.String())
-	server := &http.Server{
-		Addr:         addr.String(),
-		Handler:      r,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
-		IdleTimeout:  idleTimeout,
-	}
-	log.Fatal(server.ListenAndServe())
+	log.Println("Starting server on", *hostPort)
+	log.Fatal(http.ListenAndServe(*hostPort, r))
 }
 
-var addr = flags.NetAddress{
-	Host: "localhost",
-	Port: 8080,
-}
+func parseFlags() error {
 
-func parseFlags() {
-	flag.Var(&addr, "a", "address and port to run server")
+	hostPort = flag.String("a", "localhost:8080", "server host and port")
 	flag.Parse()
+	if !utl.ValidateAddress(*hostPort) {
+		return errors.New("need address in a form host:port")
+	}
+
+	return nil
 }

@@ -28,19 +28,19 @@ func Test_server(t *testing.T) {
 		request request
 		want    want
 	}{
-		//{
-		//	name: "positive test #1",
-		//	request: request{
-		//		method:      http.MethodPost,
-		//		url:         "http://localhost:8080/update/gauge/Alloc/456",
-		//		contentType: "text/plain",
-		//	},
-		//	want: want{
-		//		code:        http.StatusOK,
-		//		response:    "",
-		//		contentType: "text/plain; charset=utf-8",
-		//	},
-		//},
+		{
+			name: "positive test #1",
+			request: request{
+				method:      http.MethodPost,
+				url:         "http://localhost:8080/update/gauge/Alloc/456",
+				contentType: "text/plain",
+			},
+			want: want{
+				code:        http.StatusOK,
+				response:    "",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
 		{
 			name: "positive test #2",
 			request: request{
@@ -191,6 +191,8 @@ func Test_server(t *testing.T) {
 
 	mapStorage := storage.NewMapStorage()
 	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
+	err := parseFlags()
+	require.NoError(t, err)
 	go run(getMetricsService)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
