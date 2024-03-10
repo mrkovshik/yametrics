@@ -1,28 +1,23 @@
 package main
 
 import (
-	"errors"
-	"flag"
-	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
-	config "github.com/mrkovshik/yametrics/internal/config/agent"
+	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
-	"github.com/mrkovshik/yametrics/internal/utl"
 	"log"
 	"net/http"
 )
 
-var hostPort *string
-
 func main() {
+	cfg := config.ServerConfig{}
 	mapStorage := storage.NewMapStorage()
-	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default())
-	if err := parseFlags(); err != nil {
+	if err := cfg.GetConfigs(); err != nil {
 		log.Fatal(err)
 	}
+	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default(), cfg)
 	run(getMetricsService)
 
 }
@@ -33,27 +28,6 @@ func run(s *service.Service) {
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
 	r.Get("/value/{type}/{name}", api.GetMetric(s))
 	r.Get("/", api.GetMetrics(s))
-	log.Println("Starting server on", *hostPort)
-	log.Fatal(http.ListenAndServe(*hostPort, r))
-}
-
-func parseFlags() error {
-	var cfg config.AgentConfig
-	hostPort = flag.String("a", "localhost:8080", "server host and port")
-	flag.Parse()
-	if !utl.ValidateAddress(*hostPort) {
-		return errors.New("need address in a form host:port")
-	}
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if cfg.Address != "" {
-		if !utl.ValidateAddress(cfg.Address) {
-			log.Fatal(errors.New("invalid address env"))
-		}
-		hostPort = &cfg.Address
-	}
-
-	return nil
+	log.Printf("Starting server on %v\n", s.Config.Address)
+	log.Fatal(http.ListenAndServe(s.Config.Address, r))
 }
