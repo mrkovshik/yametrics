@@ -4,6 +4,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/caarlos0/env/v6"
+	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	"github.com/mrkovshik/yametrics/internal/utl"
 	"log"
@@ -17,16 +19,34 @@ var reportInterval time.Duration
 var hostPort *string
 
 func main() {
-	if err := parseFlags(); err != nil {
-		log.Fatal(err)
-	}
 	var (
+		cfg           config.AgentConfig
 		mu            sync.Mutex
 		updateCounter int
 		metricsValues = sync.Map{}
 		src           = metrics.NewRuntimeMetrics()
 	)
-	fmt.Println("Running agent on", *hostPort)
+	if err := parseFlags(); err != nil {
+		log.Fatal(err)
+	}
+	err := env.Parse(&cfg)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	if cfg.Address != "" {
+		if !utl.ValidateAddress(cfg.Address) {
+			log.Fatal(errors.New("invalid address env"))
+		}
+		hostPort = &cfg.Address
+	}
+	if cfg.PollInterval != 0 {
+		pollInterval = time.Duration(cfg.PollInterval) * time.Second
+	}
+	if cfg.ReportInterval != 0 {
+		reportInterval = time.Duration(cfg.ReportInterval) * time.Second
+	}
+	fmt.Printf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", *hostPort, pollInterval, reportInterval)
 	go func() {
 		for {
 			fmt.Println("Starting to update metrics")
@@ -69,8 +89,8 @@ func sendMetric(name, value, metricType string) {
 func parseFlags() error {
 
 	hostPort = flag.String("a", "localhost:8080", "server host and port")
-	flag.DurationVar(&pollInterval, "r", 2*time.Second, "metrics polling interval")
-	flag.DurationVar(&reportInterval, "p", 10*time.Second, "metrics sending to server interval")
+	flag.DurationVar(&pollInterval, "p", 2*time.Second, "metrics polling interval")
+	flag.DurationVar(&reportInterval, "r", 10*time.Second, "metrics sending to server interval")
 	flag.Parse()
 	if !utl.ValidateAddress(*hostPort) {
 		return errors.New("need address in a form host:port")

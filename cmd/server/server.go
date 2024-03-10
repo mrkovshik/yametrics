@@ -3,9 +3,11 @@ package main
 import (
 	"errors"
 	"flag"
+	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
+	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/mrkovshik/yametrics/internal/utl"
@@ -36,11 +38,21 @@ func run(s *service.Service) {
 }
 
 func parseFlags() error {
-
+	var cfg config.AgentConfig
 	hostPort = flag.String("a", "localhost:8080", "server host and port")
 	flag.Parse()
 	if !utl.ValidateAddress(*hostPort) {
 		return errors.New("need address in a form host:port")
+	}
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if cfg.Address != "" {
+		if !utl.ValidateAddress(cfg.Address) {
+			log.Fatal(errors.New("invalid address env"))
+		}
+		hostPort = &cfg.Address
 	}
 
 	return nil
