@@ -2,8 +2,8 @@ package main
 
 import (
 	config "github.com/mrkovshik/yametrics/internal/config/server"
-	"github.com/mrkovshik/yametrics/internal/service"
-	"github.com/mrkovshik/yametrics/internal/storage"
+	service "github.com/mrkovshik/yametrics/internal/service/server"
+	"github.com/mrkovshik/yametrics/internal/storage/server"
 	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
@@ -190,8 +190,8 @@ func Test_server(t *testing.T) {
 		},
 	}
 
-	mapStorage := storage.NewMapStorage()
-	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default(), config.ServerConfig{})
+	mapStorage := server.NewMapStorage()
+	getMetricsService := service.NewServer(mapStorage, log.Default(), config.ServerConfig{})
 	err := getMetricsService.Config.GetConfigs()
 	require.NoError(t, err)
 	go run(getMetricsService)

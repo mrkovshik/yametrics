@@ -1,10 +1,6 @@
-package storage
+package server
 
 type (
-	MapStorage struct {
-		Gauges   map[string]float64
-		Counters map[string]int64
-	}
 	IStorage interface {
 		UpdateCounter(Counter) error
 		UpdateGauge(Gauge) error

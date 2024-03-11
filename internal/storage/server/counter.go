@@ -1,4 +1,4 @@
-package storage
+package server
 
 type (
 	Counter struct {

@@ -1,9 +1,14 @@
-package storage
+package server
 
 import (
 	"errors"
 	"fmt"
 )
+
+type MapStorage struct {
+	Gauges   map[string]float64
+	Counters map[string]int64
+}
 
 func NewMapStorage() *MapStorage {
 	return &MapStorage{

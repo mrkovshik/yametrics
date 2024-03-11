@@ -1,4 +1,4 @@
-package storage
+package server
 
 type (
 	Gauge struct {

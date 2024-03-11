@@ -5,24 +5,24 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
-	"github.com/mrkovshik/yametrics/internal/service"
-	"github.com/mrkovshik/yametrics/internal/storage"
+	service "github.com/mrkovshik/yametrics/internal/service/server"
+	"github.com/mrkovshik/yametrics/internal/storage/server"
 	"log"
 	"net/http"
 )
 
 func main() {
 	cfg := config.ServerConfig{}
-	mapStorage := storage.NewMapStorage()
+	mapStorage := server.NewMapStorage()
 	if err := cfg.GetConfigs(); err != nil {
 		log.Fatal(err)
 	}
-	getMetricsService := service.NewServiceWithMapStorage(mapStorage, log.Default(), cfg)
+	getMetricsService := service.NewServer(mapStorage, log.Default(), cfg)
 	run(getMetricsService)
 
 }
 
-func run(s *service.Service) {
+func run(s *service.Server) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))

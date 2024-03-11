@@ -4,59 +4,28 @@ import (
 	"fmt"
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
+	service "github.com/mrkovshik/yametrics/internal/service/agent"
+	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 	"log"
-	"net/http"
-	"sync"
 	"time"
 )
 
 func main() {
 	var (
-		cfg           config.AgentConfig
-		mu            sync.Mutex
-		updateCounter int
-		metricsValues = sync.Map{}
-		src           = metrics.NewRuntimeMetrics()
+		strg  = storage.NewAgentMapStorage()
+		src   = metrics.NewRuntimeMetrics()
+		agent = service.NewAgent(src, log.Default(), config.AgentConfig{}, strg) //TODO: implement zap logger
 	)
-	if err := cfg.GetConfigs(); err != nil {
+	if err := agent.Config.GetConfigs(); err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", cfg.Address, cfg.PollInterval, cfg.ReportInterval)
-	go func() {
-		for {
-			log.Println("Starting to update metrics")
-			src.StoreMetrics(&metricsValues)
-			mu.Lock()
-			updateCounter++
-			mu.Unlock()
-			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
-		}
-	}()
+	fmt.Printf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval)
+	go agent.PollMetrics()
 	time.Sleep(1 * time.Second)
 	for {
-		log.Println("Starting to send metrics")
-		for name := range metrics.MetricNamesMap {
-			value, _ := metricsValues.Load(name)
-			sendMetric(cfg.Address, name, fmt.Sprint(value), metrics.MetricTypeGauge)
+		if err := agent.SendMetric(); err != nil {
+			log.Println(err)
 		}
-		sendMetric(cfg.Address, "PollCount", fmt.Sprint(updateCounter), metrics.MetricTypeCounter)
-		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
-	}
-
-}
-
-func sendMetric(addr, name, value, metricType string) {
-	url := fmt.Sprintf("http://%v/update/", addr)
-	metricUpdateURL := fmt.Sprintf("%v%v/%v/%v", url, metricType, name, value)
-	response, err := http.Post(metricUpdateURL, "text/plain", nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		fmt.Printf("status code is %v, while sending %v:%v:%v\n", response.StatusCode, metricType, name, value)
-		return
+		time.Sleep(time.Duration(agent.Config.ReportInterval) * time.Second)
 	}
 }

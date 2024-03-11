@@ -3,13 +3,13 @@ package api
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/mrkovshik/yametrics/internal/metrics"
-	"github.com/mrkovshik/yametrics/internal/service"
-	"github.com/mrkovshik/yametrics/internal/storage"
+	service "github.com/mrkovshik/yametrics/internal/service/server"
+	"github.com/mrkovshik/yametrics/internal/storage/server"
 	"net/http"
 	"strconv"
 )
 
-func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
+func UpdateMetric(s *service.Server) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		metricName := chi.URLParam(req, "name")
 		metricValue := chi.URLParam(req, "value")
@@ -22,7 +22,7 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 				http.Error(res, "wrong value format", http.StatusBadRequest)
 				return
 			}
-			gauge := storage.NewGauge(metricName, floatValue)
+			gauge := server.NewGauge(metricName, floatValue)
 
 			if err := gauge.Update(s.Storage); err != nil {
 				http.Error(res, "Error updating counter", http.StatusBadRequest)
@@ -35,7 +35,7 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 				http.Error(res, "wrong value format", http.StatusBadRequest)
 				return
 			}
-			counter := storage.NewCounter(metricName, intValue)
+			counter := server.NewCounter(metricName, intValue)
 			if err := counter.Update(s.Storage); err != nil {
 				http.Error(res, "Error updating counter", http.StatusBadRequest)
 				return
@@ -50,7 +50,7 @@ func UpdateMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 
 }
 
-func GetMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
+func GetMetric(s *service.Server) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var (
 			metricValue string
@@ -79,7 +79,7 @@ func GetMetric(s *service.Service) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func GetMetrics(s *service.Service) func(http.ResponseWriter, *http.Request) {
+func GetMetrics(s *service.Server) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		res.Header().Set("Content-Type", "text/html")
 		body := s.Storage.GetAllMetrics()
