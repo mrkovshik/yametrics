@@ -2,7 +2,7 @@ package metrics
 
 import "github.com/mrkovshik/yametrics/internal/storage/server"
 
-type Imetric interface {
+type Imetric interface { //TODO: Подумать, нужен ли тут интерфейс вообще
 	Update(server.IStorage) error
 }
 
