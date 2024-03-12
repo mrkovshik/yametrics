@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"github.com/mrkovshik/yametrics/internal/metrics"
 )
 
 type MapStorage struct {
@@ -27,20 +28,23 @@ func (m *MapStorage) UpdateCounter(c Counter) error {
 	return nil
 }
 
-func (m *MapStorage) GetCounterValue(name string) (string, error) {
-	value, ok := m.Counters[name]
-	if !ok {
-		return "", errors.New("not found")
+func (m *MapStorage) GetMetricValue(metricType, metricName string) (string, error) {
+	var stringValue string
+	switch metricType {
+	case metrics.MetricTypeGauge:
+		value, ok := m.Gauges[metricName]
+		if !ok {
+			return "", errors.New("not found")
+		}
+		stringValue = fmt.Sprint(value)
+	case metrics.MetricTypeCounter:
+		value, ok := m.Counters[metricName]
+		if !ok {
+			return "", errors.New("not found")
+		}
+		stringValue = fmt.Sprint(value)
 	}
-	return fmt.Sprint(value), nil
-}
-
-func (m *MapStorage) GetGaugeValue(name string) (string, error) {
-	value, ok := m.Gauges[name]
-	if !ok {
-		return "", errors.New("not found")
-	}
-	return fmt.Sprint(value), nil
+	return stringValue, nil
 }
 
 func (m *MapStorage) GetAllMetrics() string {

@@ -58,22 +58,12 @@ func GetMetric(s *service.Server) func(http.ResponseWriter, *http.Request) {
 		)
 		metricName := chi.URLParam(req, "name")
 		metricType := chi.URLParam(req, "type")
-		switch metricType {
-
-		case metrics.MetricTypeGauge:
-			metricValue, err = s.Storage.GetGaugeValue(metricName)
-			if err != nil {
-				http.Error(res, "Data is missing", http.StatusNotFound)
-			}
-
-		case metrics.MetricTypeCounter:
-			metricValue, err = s.Storage.GetCounterValue(metricName)
-			if err != nil {
-				http.Error(res, "Data is missing", http.StatusNotFound)
-			}
-		default:
+		if metricType != metrics.MetricTypeCounter && metricType != metrics.MetricTypeGauge {
 			http.Error(res, "invalid metric type", http.StatusBadRequest)
-			return
+		}
+		metricValue, err = s.Storage.GetMetricValue(metricType, metricName)
+		if err != nil {
+			http.Error(res, "error getting value from storage", http.StatusNotFound)
 		}
 		res.Write([]byte(metricValue))
 	}
