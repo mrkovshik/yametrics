@@ -28,9 +28,39 @@ func NewAgent(source metrics.MetricSource, logger *log.Logger, cfg config.AgentC
 }
 
 func (a *Agent) SendMetric() error {
-
+	var metricNamesMap = map[string]struct{}{
+		"Alloc":         {},
+		"BuckHashSys":   {},
+		"Frees":         {},
+		"GCCPUFraction": {},
+		"GCSys":         {},
+		"HeapAlloc":     {},
+		"HeapIdle":      {},
+		"HeapInuse":     {},
+		"HeapObjects":   {},
+		"HeapReleased":  {},
+		"HeapSys":       {},
+		"LastGC":        {},
+		"Lookups":       {},
+		"MCacheInuse":   {},
+		"MCacheSys":     {},
+		"MSpanInuse":    {},
+		"MSpanSys":      {},
+		"Mallocs":       {},
+		"NextGC":        {},
+		"NumForcedGC":   {},
+		"NumGC":         {},
+		"OtherSys":      {},
+		"PauseTotalNs":  {},
+		"StackInuse":    {},
+		"StackSys":      {},
+		"Sys":           {},
+		"TotalAlloc":    {},
+		"RandomValue":   {},
+		"PollCount":     {},
+	}
 	log.Println("Starting to send metrics")
-	for name := range metrics.MetricNamesMap {
+	for name := range metricNamesMap {
 		metricType := metrics.MetricTypeGauge
 		if name == "PollCount" {
 			metricType = metrics.MetricTypeCounter
@@ -57,7 +87,6 @@ func (a *Agent) PollMetrics() {
 	for {
 		log.Println("Starting to update metrics")
 		a.Source.PollMetrics(a.Storage)
-
 		time.Sleep(time.Duration(a.Config.PollInterval) * time.Second)
 	}
 }
