@@ -1,14 +1,15 @@
 package main
 
 import (
-	config "github.com/mrkovshik/yametrics/internal/config/server"
-	service "github.com/mrkovshik/yametrics/internal/service/server"
-	"github.com/mrkovshik/yametrics/internal/storage/server"
-	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
 	"testing"
 	"time"
+
+	config "github.com/mrkovshik/yametrics/internal/config/server"
+	service "github.com/mrkovshik/yametrics/internal/service/server"
+	"github.com/mrkovshik/yametrics/internal/storage/server"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_server(t *testing.T) {
@@ -190,7 +191,7 @@ func Test_server(t *testing.T) {
 		},
 	}
 
-	mapStorage := server.NewMapStorage()
+	mapStorage := storage.NewMapStorage()
 	getMetricsService := service.NewServer(mapStorage, log.Default(), config.ServerConfig{})
 	err := getMetricsService.Config.GetConfigs()
 	require.NoError(t, err)

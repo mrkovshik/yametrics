@@ -14,7 +14,7 @@ import (
 
 func main() {
 	cfg := config.ServerConfig{}
-	mapStorage := server.NewMapStorage()
+	mapStorage := storage.NewMapStorage()
 	if err := cfg.GetConfigs(); err != nil {
 		log.Fatal(err)
 	}

@@ -2,12 +2,10 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
-	"github.com/mrkovshik/yametrics/internal/storage/server"
 )
 
 func UpdateMetric(s *service.Server) func(http.ResponseWriter, *http.Request) {
@@ -15,38 +13,11 @@ func UpdateMetric(s *service.Server) func(http.ResponseWriter, *http.Request) {
 		metricName := chi.URLParam(req, "name")
 		metricValue := chi.URLParam(req, "value")
 		metricType := chi.URLParam(req, "type")
-		switch metricType {
-
-		case metrics.MetricTypeGauge:
-			floatValue, err := strconv.ParseFloat(metricValue, 64)
-			if err != nil {
-				http.Error(res, "wrong value format", http.StatusBadRequest)
-				return
-			}
-			gauge := server.NewGauge(metricName, floatValue)
-
-			if err := gauge.Update(s.Storage); err != nil {
-				http.Error(res, "Error updating counter", http.StatusBadRequest)
-				return
-			}
-
-		case metrics.MetricTypeCounter:
-			intValue, err := strconv.ParseInt(chi.URLParam(req, "value"), 0, 64)
-			if err != nil {
-				http.Error(res, "wrong value format", http.StatusBadRequest)
-				return
-			}
-			counter := server.NewCounter(metricName, intValue)
-			if err := counter.Update(s.Storage); err != nil {
-				http.Error(res, "Error updating counter", http.StatusBadRequest)
-				return
-			}
-		default:
-			http.Error(res, "invalid metric type", http.StatusBadRequest)
+		if err := s.Storage.UpdateMetricValue(metricType, metricName, metricValue); err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		res.Write([]byte("Counter successfully updated"))
+		res.Write([]byte("Gauge successfully updated"))
 	}
 
 }
@@ -61,10 +32,11 @@ func GetMetric(s *service.Server) func(http.ResponseWriter, *http.Request) {
 		metricType := chi.URLParam(req, "type")
 		if metricType != metrics.MetricTypeCounter && metricType != metrics.MetricTypeGauge {
 			http.Error(res, "invalid metric type", http.StatusBadRequest)
+			return
 		}
 		metricValue, err = s.Storage.GetMetricValue(metricType, metricName)
 		if err != nil {
-			http.Error(res, "error getting value from storage", http.StatusNotFound)
+			http.Error(res, "error getting value from server", http.StatusNotFound)
 		}
 		res.Write([]byte(metricValue))
 	}

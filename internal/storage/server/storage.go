@@ -1,10 +1,13 @@
-package server
+package storage
 
 type (
-	IStorage interface {
-		UpdateCounter(Counter) error
-		UpdateGauge(Gauge) error
-		GetMetricValue(string, string) (string, error)
+	IServerStorage interface {
+		UpdateMetricValue(metricType, metricName, metricValue string) error
+		GetMetricValue(metricType, metricName string) (string, error)
 		GetAllMetrics() string
+	}
+
+	IMetric interface {
+		Update(s IServerStorage) error
 	}
 )

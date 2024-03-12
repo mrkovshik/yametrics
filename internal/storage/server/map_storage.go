@@ -1,8 +1,9 @@
-package server
+package storage
 
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/mrkovshik/yametrics/internal/metrics"
@@ -20,27 +21,38 @@ func NewMapStorage() *MapStorage {
 	}
 }
 
-func (m *MapStorage) UpdateGauge(g Gauge) error {
-	m.Gauges[g.name] = g.value
+func (s *MapStorage) UpdateMetricValue(metricType, metricName, metricValue string) error {
+	switch metricType {
+
+	case metrics.MetricTypeGauge:
+		floatValue, err := strconv.ParseFloat(metricValue, 64)
+		if err != nil {
+			return errors.New("wrong value format")
+		}
+		s.Gauges[metricName] = floatValue
+	case metrics.MetricTypeCounter:
+		intValue, err := strconv.ParseInt(metricValue, 0, 64)
+		if err != nil {
+			return errors.New("wrong value format")
+		}
+		s.Counters[metricName] += intValue
+	default:
+		return errors.New("invalid metric type")
+	}
 	return nil
 }
 
-func (m *MapStorage) UpdateCounter(c Counter) error {
-	m.Counters[c.name] += c.value
-	return nil
-}
-
-func (m *MapStorage) GetMetricValue(metricType, metricName string) (string, error) {
+func (s *MapStorage) GetMetricValue(metricType, metricName string) (string, error) {
 	var stringValue string
 	switch metricType {
 	case metrics.MetricTypeGauge:
-		value, ok := m.Gauges[metricName]
+		value, ok := s.Gauges[metricName]
 		if !ok {
 			return "", errors.New("not found")
 		}
 		stringValue = fmt.Sprint(value)
 	case metrics.MetricTypeCounter:
-		value, ok := m.Counters[metricName]
+		value, ok := s.Counters[metricName]
 		if !ok {
 			return "", errors.New("not found")
 		}
@@ -49,15 +61,15 @@ func (m *MapStorage) GetMetricValue(metricType, metricName string) (string, erro
 	return stringValue, nil
 }
 
-func (m *MapStorage) GetAllMetrics() string {
+func (s *MapStorage) GetAllMetrics() string {
 	var sb strings.Builder
 	sb.WriteString("<html><body><h1>Metric List</h1><h2>Gauges:</h2><ul>")
 
-	for name, value := range m.Gauges {
+	for name, value := range s.Gauges {
 		sb.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %f</li>", name, value))
 	}
 	sb.WriteString("</ul><h2>Counters:</h2><ul>")
-	for name, value := range m.Counters {
+	for name, value := range s.Counters {
 		sb.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %v</li>", name, value))
 	}
 	sb.WriteString("</ul></body></html>")

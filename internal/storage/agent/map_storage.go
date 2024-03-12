@@ -42,7 +42,7 @@ func (m *AgentMapStorage) UpdateCounter() error {
 	} else {
 		stringValue, ok := value.(string)
 		if !ok {
-			return errors.New("invalid storage data")
+			return errors.New("invalid server data")
 		}
 		intValue, err = strconv.Atoi(stringValue)
 		if err != nil {
