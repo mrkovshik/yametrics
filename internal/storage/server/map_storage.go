@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mrkovshik/yametrics/internal/metrics"
+	"strings"
 )
 
 type MapStorage struct {
@@ -48,17 +49,16 @@ func (m *MapStorage) GetMetricValue(metricType, metricName string) (string, erro
 }
 
 func (m *MapStorage) GetAllMetrics() string {
-
-	resp := "<html><body><h1>Metric List</h1>" +
-		"<h2>Gauges:</h2><ul>"
+	var sb strings.Builder
+	sb.WriteString("<html><body><h1>Metric List</h1><h2>Gauges:</h2><ul>")
 
 	for name, value := range m.Gauges {
-		resp += fmt.Sprintf("<li><strong>%s:</strong> %f</li>", name, value)
+		sb.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %f</li>", name, value))
 	}
-	resp += "</ul><h2>Counters:</h2><ul>"
+	sb.WriteString("</ul><h2>Counters:</h2><ul>")
 	for name, value := range m.Counters {
-		resp += fmt.Sprintf("<li><strong>%s:</strong> %v</li>", name, value)
+		sb.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %v</li>", name, value))
 	}
-	resp += "</ul></body></html>"
-	return resp
+	sb.WriteString("</ul></body></html>")
+	return sb.String()
 }
