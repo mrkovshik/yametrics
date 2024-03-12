@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	service "github.com/mrkovshik/yametrics/internal/service/agent"
 	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
-	"log"
-	"time"
 )
 
 func main() {

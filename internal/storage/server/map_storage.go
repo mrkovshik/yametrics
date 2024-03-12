@@ -3,8 +3,9 @@ package server
 import (
 	"errors"
 	"fmt"
-	"github.com/mrkovshik/yametrics/internal/metrics"
 	"strings"
+
+	"github.com/mrkovshik/yametrics/internal/metrics"
 )
 
 type MapStorage struct {

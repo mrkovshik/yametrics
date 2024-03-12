@@ -1,12 +1,13 @@
 package api
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
 	"github.com/mrkovshik/yametrics/internal/storage/server"
-	"net/http"
-	"strconv"
 )
 
 func UpdateMetric(s *service.Server) func(http.ResponseWriter, *http.Request) {

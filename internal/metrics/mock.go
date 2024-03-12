@@ -2,10 +2,11 @@ package metrics
 
 import (
 	"fmt"
-	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 	"log"
 	"math/rand"
 	"time"
+
+	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 )
 
 type MockMetrics struct {

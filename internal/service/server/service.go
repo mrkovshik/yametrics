@@ -1,9 +1,10 @@
 package service
 
 import (
+	"log"
+
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/storage/server"
-	"log"
 )
 
 type Server struct {

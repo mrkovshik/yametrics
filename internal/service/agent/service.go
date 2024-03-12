@@ -3,12 +3,13 @@ package service
 import (
 	"errors"
 	"fmt"
-	config "github.com/mrkovshik/yametrics/internal/config/agent"
-	"github.com/mrkovshik/yametrics/internal/metrics"
-	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 	"log"
 	"net/http"
 	"time"
+
+	config "github.com/mrkovshik/yametrics/internal/config/agent"
+	"github.com/mrkovshik/yametrics/internal/metrics"
+	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 )
 
 type Agent struct {

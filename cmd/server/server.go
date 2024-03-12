@@ -1,14 +1,15 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
 	"github.com/mrkovshik/yametrics/internal/storage/server"
-	"log"
-	"net/http"
 )
 
 func main() {

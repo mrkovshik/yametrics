@@ -2,11 +2,12 @@ package metrics
 
 import (
 	"fmt"
-	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 	"log"
 	"math/rand"
 	"runtime"
 	"time"
+
+	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 )
 
 type RuntimeMetrics struct {

@@ -3,9 +3,10 @@ package agent
 import (
 	"errors"
 	"flag"
+	"log"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/mrkovshik/yametrics/internal/utl"
-	"log"
 )
 
 type ServerConfig struct {

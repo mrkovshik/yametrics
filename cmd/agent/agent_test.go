@@ -1,10 +1,11 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_getMetrics(t *testing.T) {
