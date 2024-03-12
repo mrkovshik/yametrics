@@ -26,9 +26,9 @@ func main() {
 func run(s *service.Server) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Post("/update/{type}/{name}/{value}", api.UpdateMetric(s))
-	r.Get("/value/{type}/{name}", api.GetMetric(s))
-	r.Get("/", api.GetMetrics(s))
+	r.Post("/update/{type}/{name}/{value}", api.UpdateMetricHandler(s))
+	r.Get("/value/{type}/{name}", api.GetMetricHandler(s))
+	r.Get("/", api.GetMetricsHandler(s))
 	log.Printf("Starting server on %v\n", s.Config.Address)
 	log.Fatal(http.ListenAndServe(s.Config.Address, r))
 }
