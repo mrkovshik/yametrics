@@ -40,7 +40,7 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *Server) GetMetrics(res http.ResponseWriter, req *http.Request) {
+func (s *Server) GetMetrics(res http.ResponseWriter, _ *http.Request) {
 	res.Header().Set("Content-Type", "text/html")
 	body := s.Storage.GetAllMetrics()
 	if _, err := res.Write([]byte(body)); err != nil {
