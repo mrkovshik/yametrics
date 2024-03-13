@@ -77,7 +77,9 @@ func (a *Agent) SendMetric() error {
 			log.Printf("status code is %v, while sending %v:%v:%v\n", response.StatusCode, metricType, name, value)
 			return errors.New("status code is not OK")
 		}
-		response.Body.Close()
+		if err := response.Body.Close(); err != nil {
+			return err
+		}
 	}
 
 	return nil

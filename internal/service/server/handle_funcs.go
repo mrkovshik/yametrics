@@ -15,7 +15,9 @@ func (s *Server) UpdateMetric(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
-	res.Write([]byte("Gauge successfully updated"))
+	if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
+		http.Error(res, "error res.Write", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
@@ -33,11 +35,15 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(res, "error getting value from server", http.StatusNotFound)
 	}
-	res.Write([]byte(metricValue))
+	if _, err := res.Write([]byte(metricValue)); err != nil {
+		http.Error(res, "error res.Write", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) GetMetrics(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "text/html")
 	body := s.Storage.GetAllMetrics()
-	res.Write([]byte(body))
+	if _, err := res.Write([]byte(body)); err != nil {
+		http.Error(res, "error res.Write", http.StatusInternalServerError)
+	}
 }
