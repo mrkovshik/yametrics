@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"testing"
@@ -219,12 +218,10 @@ func Test_server(t *testing.T) {
 			require.NoError(t, err3)
 			response, err4 := client.Do(req)
 			require.NoError(t, err4)
-			defer func(Body io.ReadCloser) {
-				err5 := Body.Close()
-				require.NoError(t, err5)
-			}(response.Body)
 			require.Equal(t, tt.want.code, response.StatusCode)
 			require.Equal(t, tt.want.contentType, response.Header.Get("Content-Type"))
+			err5 := response.Body.Close()
+			require.NoError(t, err5)
 		})
 	}
 }
