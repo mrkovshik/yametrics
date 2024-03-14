@@ -37,9 +37,7 @@ func (m *AgentMapStorage) UpdateCounter() error {
 	)
 
 	value, ok := m.Map.Load("PollCount")
-	if !ok {
-		intValue = 0
-	} else {
+	if ok {
 		stringValue, ok := value.(string)
 		if !ok {
 			return errors.New("invalid server data")
@@ -48,7 +46,6 @@ func (m *AgentMapStorage) UpdateCounter() error {
 		if err != nil {
 			log.Fatal(err)
 		}
-
 	}
 	intValue++
 	m.Map.Store("PollCount", fmt.Sprint(intValue))
