@@ -1,10 +1,11 @@
 package storage
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"strconv"
-	"strings"
 
 	"github.com/mrkovshik/yametrics/internal/metrics"
 )
@@ -61,17 +62,15 @@ func (s *MapStorage) GetMetricValue(metricType, metricName string) (string, erro
 	return stringValue, nil
 }
 
-func (s *MapStorage) GetAllMetrics() string {
-	var sb strings.Builder
-	sb.WriteString("<html><body><h1>Metric List</h1><h2>Gauges:</h2><ul>")
+func (s *MapStorage) GetAllMetrics() (string, error) {
+	t, err := template.New("metrics").ParseFiles("./internal/templates/htmlTemplates.tpl")
+	if err != nil {
+		return "", err
+	}
+	var tpl bytes.Buffer
+	if err := t.ExecuteTemplate(&tpl, "list_metrics", s); err != nil {
+		return "", err
+	}
 
-	for name, value := range s.Gauges {
-		sb.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %f</li>", name, value))
-	}
-	sb.WriteString("</ul><h2>Counters:</h2><ul>")
-	for name, value := range s.Counters {
-		sb.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %v</li>", name, value))
-	}
-	sb.WriteString("</ul></body></html>")
-	return sb.String()
+	return tpl.String(), nil
 }

@@ -42,7 +42,10 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 
 func (s *Server) GetMetrics(res http.ResponseWriter, _ *http.Request) {
 	res.Header().Set("Content-Type", "text/html")
-	body := s.Storage.GetAllMetrics()
+	body, err := s.Storage.GetAllMetrics()
+	if err != nil {
+		http.Error(res, "s.Storage.GetAllMetrics", http.StatusInternalServerError)
+	}
 	if _, err := res.Write([]byte(body)); err != nil {
 		http.Error(res, "error res.Write", http.StatusInternalServerError)
 	}

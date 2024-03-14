@@ -16,7 +16,7 @@ type Server struct {
 func NewServer(storage storage.IServerStorage, logger *log.Logger, cfg config.ServerConfig) *Server {
 	return &Server{
 		Storage: storage,
-		Logger:  logger,
 		Config:  cfg,
+		Logger:  logger,
 	}
 }
