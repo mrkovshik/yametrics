@@ -111,6 +111,20 @@ func Test_server(t *testing.T) {
 		},
 
 		{
+			name: "positive test #7",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080",
+				contentType: "text/plain",
+			},
+			want: want{
+				code:        http.StatusOK,
+				response:    "",
+				contentType: "text/html",
+			},
+		},
+
+		{
 			name: "negative test #1 (no counter name)",
 			request: request{
 				method:      http.MethodPost,
