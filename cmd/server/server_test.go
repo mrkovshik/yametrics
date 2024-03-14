@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"net/http"
 	"testing"
@@ -206,19 +207,22 @@ func Test_server(t *testing.T) {
 	}
 
 	mapStorage := storage.NewMapStorage()
-	getMetricsService := service.NewServer(mapStorage, log.Default(), config.ServerConfig{})
-	err := getMetricsService.Config.GetConfigs()
-	require.NoError(t, err)
+	getMetricsService := service.NewServer(mapStorage, config.ServerConfig{}, log.Default())
+	err2 := getMetricsService.Config.GetConfigs()
+	require.NoError(t, err2)
 	go run(getMetricsService)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{}
-			req, err := http.NewRequest(tt.request.method, tt.request.url, nil)
-			require.NoError(t, err)
-			response, err1 := client.Do(req)
-			require.NoError(t, err1)
-			defer response.Body.Close()
+			req, err3 := http.NewRequest(tt.request.method, tt.request.url, nil)
+			require.NoError(t, err3)
+			response, err4 := client.Do(req)
+			require.NoError(t, err4)
+			defer func(Body io.ReadCloser) {
+				err5 := Body.Close()
+				require.NoError(t, err5)
+			}(response.Body)
 			require.Equal(t, tt.want.code, response.StatusCode)
 			require.Equal(t, tt.want.contentType, response.Header.Get("Content-Type"))
 		})

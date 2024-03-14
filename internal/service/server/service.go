@@ -9,11 +9,11 @@ import (
 
 type Server struct {
 	Storage storage.IServerStorage
-	Logger  *log.Logger
 	Config  config.ServerConfig
+	Logger  *log.Logger
 }
 
-func NewServer(storage storage.IServerStorage, logger *log.Logger, cfg config.ServerConfig) *Server {
+func NewServer(storage storage.IServerStorage, cfg config.ServerConfig, logger *log.Logger) *Server {
 	return &Server{
 		Storage: storage,
 		Config:  cfg,

@@ -13,12 +13,13 @@ import (
 )
 
 func main() {
+
 	cfg := config.ServerConfig{}
 	mapStorage := storage.NewMapStorage()
 	if err := cfg.GetConfigs(); err != nil {
 		log.Fatal(err)
 	}
-	getMetricsService := service.NewServer(mapStorage, log.Default(), cfg)
+	getMetricsService := service.NewServer(mapStorage, cfg, log.Default())
 	run(getMetricsService)
 
 }

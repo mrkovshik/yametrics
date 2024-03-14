@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"html/template"
 	"strconv"
 
 	"github.com/mrkovshik/yametrics/internal/metrics"
+	"github.com/mrkovshik/yametrics/internal/templates"
 )
 
 type MapStorage struct {
@@ -63,14 +63,13 @@ func (s *MapStorage) GetMetricValue(metricType, metricName string) (string, erro
 }
 
 func (s *MapStorage) GetAllMetrics() (string, error) {
-	t, err := template.New("metrics").ParseFiles("./internal/templates/htmlTemplates.tpl")
+	var tpl bytes.Buffer
+	t, err := templates.ParseTemplates()
 	if err != nil {
 		return "", err
 	}
-	var tpl bytes.Buffer
 	if err := t.ExecuteTemplate(&tpl, "list_metrics", s); err != nil {
 		return "", err
 	}
-
 	return tpl.String(), nil
 }
