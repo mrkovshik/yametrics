@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"go.uber.org/zap"
-	"log"
 	"time"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
@@ -17,22 +15,23 @@ func main() {
 		strg = storage.NewAgentMapStorage()
 		src  = metrics.NewRuntimeMetrics()
 	)
-
+	logger, _ := zap.NewProduction()
 	cfg, err := config.GetConfigs()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal("config.GetConfigs",
+			zap.Error(err))
 	}
-	logger, _ := zap.NewProduction()
-
 	defer logger.Sync() //nolint:all
-
 	agent := service.NewAgent(src, cfg, strg, logger)
-	logger.Info(fmt.Sprintf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval))
+	logger.Info("Running agent on",
+		zap.String("Host", agent.Config.Address),
+		zap.Int("Poll interval", agent.Config.PollInterval),
+		zap.Int("Report interval", agent.Config.ReportInterval))
 	go agent.PollMetrics()
 	time.Sleep(1 * time.Second)
 	for {
 		if err := agent.SendMetric(); err != nil {
-			logger.Fatal("agent.SendMetric",
+			logger.Error("agent.SendMetric",
 				zap.Error(err))
 		}
 		time.Sleep(time.Duration(agent.Config.ReportInterval) * time.Second)

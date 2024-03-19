@@ -10,7 +10,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
 func main() {
@@ -19,21 +18,11 @@ func main() {
 		Concise:          true,
 		RequestHeaders:   true,
 		MessageFieldName: "message",
-		Tags: map[string]string{
-			"version": "v1.0-81aa4244d9fc8076a",
-			"env":     "dev",
-		},
-		QuietDownRoutes: []string{
-			"/",
-			"/ping",
-		},
-		QuietDownPeriod: 10 * time.Second,
-		// SourceFieldName: "source",
 	})
-	cfg := config.ServerConfig{}
 
 	mapStorage := storage.NewMapStorage()
-	if err := cfg.GetConfigs(); err != nil {
+	cfg, err := config.GetConfigs()
+	if err != nil {
 		logger.Error("cfg.GetConfigs", err)
 	}
 	getMetricsService := service.NewServer(mapStorage, cfg, logger)

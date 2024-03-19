@@ -1,4 +1,4 @@
-package agent
+package config
 
 import (
 	"errors"
@@ -13,17 +13,37 @@ type ServerConfig struct {
 	Address string `env:"ADDRESS"`
 }
 
-func (c *ServerConfig) GetConfigs() error {
+type ServerConfigBuilder struct {
+	Config ServerConfig
+}
+
+func (c *ServerConfigBuilder) WithAddress(host string) *ServerConfigBuilder {
+	c.Config.Address = host
+	return c
+}
+
+func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
 	flag.Parse()
+
+	if c.Config.Address == "" {
+		c.WithAddress(*addr)
+	}
+	return c
+}
+
+func (c *ServerConfigBuilder) FromEnv() *ServerConfigBuilder {
 	if err := env.Parse(c); err != nil {
 		log.Fatal(err)
 	}
-	if c.Address == "" {
-		c.Address = *addr
+	return c
+}
+
+func GetConfigs() (ServerConfig, error) {
+	var c ServerConfigBuilder
+	c.FromEnv().FromFlags()
+	if !utl.ValidateAddress(c.Config.Address) {
+		return ServerConfig{}, errors.New("need address in a form host:port")
 	}
-	if !utl.ValidateAddress(c.Address) {
-		return errors.New("need address in a form host:port")
-	}
-	return nil
+	return c.Config, nil
 }

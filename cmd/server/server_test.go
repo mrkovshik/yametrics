@@ -214,9 +214,9 @@ func Test_server(t *testing.T) {
 		MessageFieldName: "message",
 	})
 
-	getMetricsService := service.NewServer(mapStorage, config.ServerConfig{}, logger)
-	err2 := getMetricsService.Config.GetConfigs()
+	cfg, err2 := config.GetConfigs()
 	require.NoError(t, err2)
+	getMetricsService := service.NewServer(mapStorage, cfg, logger)
 	go run(getMetricsService)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
