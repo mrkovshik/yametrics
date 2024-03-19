@@ -15,25 +15,55 @@ type AgentConfig struct {
 	PollInterval   int    `env:"POLL_INTERVAL"`
 }
 
-func (c *AgentConfig) GetConfigs() error {
+type AgentConfigBuilder struct {
+	Config AgentConfig
+}
+
+func (c *AgentConfigBuilder) WithAddress(host string) *AgentConfigBuilder {
+	c.Config.Address = host
+	return c
+}
+
+func (c *AgentConfigBuilder) WithReportInterval(reportInterval int) *AgentConfigBuilder {
+	c.Config.ReportInterval = reportInterval
+	return c
+}
+
+func (c *AgentConfigBuilder) WithPollInterval(pollInterval int) *AgentConfigBuilder {
+	c.Config.PollInterval = pollInterval
+	return c
+}
+
+func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
 	pollInterval := flag.Int("p", 2, "metrics polling interval")
 	reportInterval := flag.Int("r", 10, "metrics sending to server interval")
 	flag.Parse()
+
+	if c.Config.Address == "" {
+		c.WithAddress(*addr)
+	}
+	if c.Config.PollInterval == 0 {
+		c.WithPollInterval(*pollInterval)
+	}
+	if c.Config.ReportInterval == 0 {
+		c.WithReportInterval(*reportInterval)
+	}
+	return c
+}
+
+func (c *AgentConfigBuilder) FromEnv() *AgentConfigBuilder {
 	if err := env.Parse(c); err != nil {
 		log.Fatal(err)
 	}
-	if c.Address == "" {
-		c.Address = *addr
+	return c
+}
+
+func GetConfigs() (AgentConfig, error) {
+	var c AgentConfigBuilder
+	c.FromEnv().FromFlags()
+	if !utl.ValidateAddress(c.Config.Address) {
+		return AgentConfig{}, errors.New("need address in a form host:port")
 	}
-	if !utl.ValidateAddress(c.Address) {
-		return errors.New("need address in a form host:port")
-	}
-	if c.ReportInterval == 0 {
-		c.ReportInterval = *reportInterval
-	}
-	if c.PollInterval == 0 {
-		c.PollInterval = *pollInterval
-	}
-	return nil
+	return c.Config, nil
 }

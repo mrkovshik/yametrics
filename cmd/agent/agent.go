@@ -13,13 +13,16 @@ import (
 
 func main() {
 	var (
-		strg  = storage.NewAgentMapStorage()
-		src   = metrics.NewRuntimeMetrics()
-		agent = service.NewAgent(src, log.Default(), config.AgentConfig{}, strg) //TODO: implement zap logger
+		strg = storage.NewAgentMapStorage()
+		src  = metrics.NewRuntimeMetrics()
 	)
-	if err := agent.Config.GetConfigs(); err != nil {
+
+	cfg, err := config.GetConfigs()
+	if err != nil {
 		log.Fatal(err)
 	}
+
+	agent := service.NewAgent(src, log.Default(), cfg, strg) //TODO: implement zap logger
 	fmt.Printf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval)
 	go agent.PollMetrics()
 	time.Sleep(1 * time.Second)
