@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"github.com/go-chi/httplog/v2"
+	"log/slog"
 	"net/http"
 	"testing"
 	"time"
@@ -206,7 +207,14 @@ func Test_server(t *testing.T) {
 	}
 
 	mapStorage := storage.NewMapStorage()
-	getMetricsService := service.NewServer(mapStorage, config.ServerConfig{}, log.Default())
+	logger := httplog.NewLogger("httplog-example", httplog.Options{
+		LogLevel:         slog.LevelDebug,
+		Concise:          true,
+		RequestHeaders:   true,
+		MessageFieldName: "message",
+	})
+
+	getMetricsService := service.NewServer(mapStorage, config.ServerConfig{}, logger)
 	err2 := getMetricsService.Config.GetConfigs()
 	require.NoError(t, err2)
 	go run(getMetricsService)
