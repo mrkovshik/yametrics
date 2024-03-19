@@ -12,6 +12,7 @@ func (s *Server) UpdateMetric(res http.ResponseWriter, req *http.Request) {
 	metricValue := chi.URLParam(req, "value")
 	metricType := chi.URLParam(req, "type")
 	if err := s.Storage.UpdateMetricValue(metricType, metricName, metricValue); err != nil {
+		s.Logger.Error("Storage.UpdateMetricValue", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}

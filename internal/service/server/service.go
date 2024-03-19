@@ -1,8 +1,7 @@
 package service
 
 import (
-	"log"
-
+	"github.com/go-chi/httplog/v2"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/storage/server"
 )
@@ -10,10 +9,10 @@ import (
 type Server struct {
 	Storage storage.IServerStorage
 	Config  config.ServerConfig
-	Logger  *log.Logger
+	Logger  *httplog.Logger
 }
 
-func NewServer(storage storage.IServerStorage, cfg config.ServerConfig, logger *log.Logger) *Server {
+func NewServer(storage storage.IServerStorage, cfg config.ServerConfig, logger *httplog.Logger) *Server {
 	return &Server{
 		Storage: storage,
 		Config:  cfg,
