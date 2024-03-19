@@ -23,8 +23,8 @@ func main() {
 		log.Fatal(err)
 	}
 	logger, _ := zap.NewProduction()
-	//lint:ignore
-	defer logger.Sync()
+
+	defer logger.Sync() //nolint:all
 
 	agent := service.NewAgent(src, cfg, strg, logger)
 	logger.Info(fmt.Sprintf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval))
