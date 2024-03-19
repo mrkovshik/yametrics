@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"time"
@@ -14,12 +15,12 @@ import (
 
 type Agent struct {
 	Source  metrics.MetricSource
-	Logger  *log.Logger
+	Logger  *zap.Logger
 	Config  config.AgentConfig
 	Storage storage.IAgentStorage
 }
 
-func NewAgent(source metrics.MetricSource, logger *log.Logger, cfg config.AgentConfig, strg storage.IAgentStorage) *Agent {
+func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.IAgentStorage, logger *zap.Logger) *Agent {
 	return &Agent{
 		Source:  source,
 		Logger:  logger,

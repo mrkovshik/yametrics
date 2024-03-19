@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"log"
 	"time"
 
@@ -21,14 +22,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger, _ := zap.NewProduction()
+	//lint:ignore
+	defer logger.Sync()
 
-	agent := service.NewAgent(src, log.Default(), cfg, strg) //TODO: implement zap logger
-	fmt.Printf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval)
+	agent := service.NewAgent(src, cfg, strg, logger)
+	logger.Info(fmt.Sprintf("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval))
 	go agent.PollMetrics()
 	time.Sleep(1 * time.Second)
 	for {
 		if err := agent.SendMetric(); err != nil {
-			log.Println(err)
+			logger.Fatal("agent.SendMetric",
+				zap.Error(err))
 		}
 		time.Sleep(time.Duration(agent.Config.ReportInterval) * time.Second)
 	}
