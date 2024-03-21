@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/go-chi/httplog/v2"
-	"log/slog"
+	"go.uber.org/zap"
+
 	"net/http"
 	"testing"
 	"time"
@@ -207,16 +207,17 @@ func Test_server(t *testing.T) {
 	}
 
 	mapStorage := storage.NewMapStorage()
-	logger := httplog.NewLogger("httplog-example", httplog.Options{
-		LogLevel:         slog.LevelDebug,
-		Concise:          true,
-		RequestHeaders:   true,
-		MessageFieldName: "message",
-	})
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		logger.Fatal("zap.NewDevelopment",
+			zap.Error(err))
+	}
+	defer logger.Sync() //nolint:all
+	sugar := logger.Sugar()
 
 	cfg, err2 := config.GetConfigs()
 	require.NoError(t, err2)
-	getMetricsService := service.NewServer(mapStorage, cfg, logger)
+	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
 	go run(getMetricsService)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {

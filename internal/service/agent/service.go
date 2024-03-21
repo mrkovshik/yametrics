@@ -3,10 +3,10 @@ package service
 import (
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
-	"log"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
@@ -15,12 +15,12 @@ import (
 
 type Agent struct {
 	Source  metrics.MetricSource
-	Logger  *zap.Logger
+	Logger  *zap.SugaredLogger
 	Config  config.AgentConfig
 	Storage storage.IAgentStorage
 }
 
-func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.IAgentStorage, logger *zap.Logger) *Agent {
+func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.IAgentStorage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
 		Source:  source,
 		Logger:  logger,
@@ -61,7 +61,7 @@ func (a *Agent) SendMetric() error {
 		"RandomValue":   {},
 		"PollCount":     {},
 	}
-	log.Println("Starting to send metrics")
+	a.Logger.Debug("Starting to send metrics")
 	for name := range metricNamesMap {
 		metricType := metrics.MetricTypeGauge
 		if name == "PollCount" {
@@ -75,7 +75,7 @@ func (a *Agent) SendMetric() error {
 		}
 
 		if response.StatusCode != http.StatusOK {
-			log.Printf("status code is %v, while sending %v:%v:%v\n", response.StatusCode, metricType, name, value)
+			a.Logger.Errorf("status code is %v, while sending %v:%v:%v\n", response.StatusCode, metricType, name, value)
 			return errors.New("status code is not OK")
 		}
 		if err := response.Body.Close(); err != nil {
@@ -89,7 +89,7 @@ func (a *Agent) SendMetric() error {
 func (a *Agent) PollMetrics() {
 
 	for {
-		log.Println("Starting to update metrics")
+		a.Logger.Debug("Starting to update metrics")
 		a.Source.PollMetrics(a.Storage)
 		time.Sleep(time.Duration(a.Config.PollInterval) * time.Second)
 	}

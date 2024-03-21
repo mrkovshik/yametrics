@@ -1,18 +1,18 @@
 package service
 
 import (
-	"github.com/go-chi/httplog/v2"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/storage/server"
+	"go.uber.org/zap"
 )
 
 type Server struct {
 	Storage storage.IServerStorage
 	Config  config.ServerConfig
-	Logger  *httplog.Logger
+	Logger  *zap.SugaredLogger
 }
 
-func NewServer(storage storage.IServerStorage, cfg config.ServerConfig, logger *httplog.Logger) *Server {
+func NewServer(storage storage.IServerStorage, cfg config.ServerConfig, logger *zap.SugaredLogger) *Server {
 	return &Server{
 		Storage: storage,
 		Config:  cfg,

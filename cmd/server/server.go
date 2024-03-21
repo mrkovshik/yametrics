@@ -1,41 +1,41 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/httplog/v2"
 	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
 	"github.com/mrkovshik/yametrics/internal/storage/server"
-	"log"
-	"log/slog"
-	"net/http"
+	"go.uber.org/zap"
 )
 
 func main() {
-	logger := httplog.NewLogger("httplog-example", httplog.Options{
-		LogLevel:         slog.LevelDebug,
-		Concise:          true,
-		RequestHeaders:   true,
-		MessageFieldName: "message",
-	})
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		logger.Fatal("zap.NewDevelopment",
+			zap.Error(err))
+	}
+	defer logger.Sync() //nolint:all
+	sugar := logger.Sugar()
 
 	mapStorage := storage.NewMapStorage()
 	cfg, err := config.GetConfigs()
 	if err != nil {
-		logger.Error("cfg.GetConfigs", err)
+		sugar.Fatal("cfg.GetConfigs", err)
 	}
-	getMetricsService := service.NewServer(mapStorage, cfg, logger)
+	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
 	run(getMetricsService)
 
 }
 
 func run(s *service.Server) {
 	r := chi.NewRouter()
-	r.Use(httplog.RequestLogger(s.Logger))
+	r.Use(s.WithLogging)
 	r.Post("/update/{type}/{name}/{value}", api.UpdateMetricHandler(s))
 	r.Get("/value/{type}/{name}", api.GetMetricHandler(s))
 	r.Get("/", api.GetMetricsHandler(s))
-	log.Printf("Starting server on %v\n", s.Config.Address)
-	log.Fatal(http.ListenAndServe(s.Config.Address, r))
+	s.Logger.Infof("Starting server on %v\n", s.Config.Address)
+	s.Logger.Fatal(http.ListenAndServe(s.Config.Address, r))
 }
