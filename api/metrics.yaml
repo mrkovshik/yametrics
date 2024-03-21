@@ -1,0 +1,56 @@
+openapi: 3.0.0
+
+info:
+  title: (WIP) API Сервиса сбора метрик
+  description: Серверная часть для сервиса сбора метрик
+
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8080
+paths:
+
+  /update/{metric_type}/{metric_name}/{metric_value}:
+    post:
+      tags:
+        - Передача метрик на сервер
+      summary: Обновляет значение указанной метрики в хранилище сервера
+      responses:
+        '200':
+          description: Ok
+        '400':
+          description: Bad request
+
+  /:
+    get:
+      tags:
+        - Получение метрик от сервера
+      summary: Возвращает HTML с перечислением значений всех собранных метрик
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<html> <body> <h1>Metric List</h1> <h2>Gauges:</h2> <ul></ul> <h2>Counters:</h2> <ul> <li><strong>Alloc:</strong> 45</li> </ul> </body> </html>"
+        '400':
+          description: Bad request
+
+  /value/{metric_type}/{metric_name}:
+    get:
+      tags:
+        - Получение значения конкретной метрики от сервера
+      summary: Возвращает в текстовом виде значение метрики, указанной в URL
+      responses:
+        '200':
+          description: Ok
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+                example: "45"
+        '404':
+          description: Not Found
+
+        '400':
+          description: Bad request
