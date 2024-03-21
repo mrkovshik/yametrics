@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"time"
 
 	"go.uber.org/zap"
@@ -17,6 +18,10 @@ func main() {
 		src  = metrics.NewRuntimeMetrics()
 	)
 	logger, err := zap.NewDevelopment()
+	if err != nil {
+		log.Fatal("zap.NewDevelopment",
+			zap.Error(err))
+	}
 	cfg, err := config.GetConfigs()
 	if err != nil {
 		logger.Fatal("config.GetConfigs",
