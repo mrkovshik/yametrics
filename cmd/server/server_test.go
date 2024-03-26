@@ -24,6 +24,7 @@ func Test_server(t *testing.T) {
 			method      string
 			url         string
 			contentType string
+			body        []byte
 		}
 	)
 	tests := []struct {

@@ -1,8 +1,11 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/mrkovshik/yametrics/internal/model"
 	"net/http"
 	"time"
 
@@ -63,19 +66,44 @@ func (a *Agent) SendMetric() error {
 	}
 	a.Logger.Debug("Starting to send metrics")
 	for name := range metricNamesMap {
-		metricType := metrics.MetricTypeGauge
-		if name == "PollCount" {
-			metricType = metrics.MetricTypeCounter
+		currentMetric := model.Metrics{
+			ID: name,
 		}
-		value := a.Storage.LoadMetric(name)
-		metricUpdateURL := fmt.Sprintf("http://%v/update/%v/%v/%v", a.Config.Address, metricType, name, value)
-		response, err := http.Post(metricUpdateURL, "text/plain", nil)
+		if name == "PollCount" {
+
+			delta, err := a.Storage.LoadCounter()
+			if err != nil {
+				a.Logger.Error("a.Storage.LoadCounter", err)
+				return err
+			}
+
+			currentMetric.MType = model.MetricTypeCounter
+			currentMetric.Delta = &delta
+		} else {
+
+			delta, err := a.Storage.LoadMetric(name)
+			if err != nil {
+				a.Logger.Error("a.Storage.LoadMetric", err)
+				return err
+			}
+			currentMetric.MType = model.MetricTypeGauge
+			currentMetric.Value = &delta
+		}
+
+		metricUpdateURL := fmt.Sprintf("http://%v/update/", a.Config.Address)
+		buf := bytes.Buffer{}
+		if err3 := json.NewEncoder(&buf).Encode(currentMetric); err3 != nil {
+			a.Logger.Error("Encode", zap.Error(err3))
+			return err3
+		}
+
+		response, err := http.Post(metricUpdateURL, "application/json", &buf)
 		if err != nil {
 			return err
 		}
 
 		if response.StatusCode != http.StatusOK {
-			a.Logger.Errorf("status code is %v, while sending %v:%v:%v\n", response.StatusCode, metricType, name, value)
+			a.Logger.Errorf("status code is %v, while sending %v\n", response.StatusCode, currentMetric)
 			return errors.New("status code is not OK")
 		}
 		if err := response.Body.Close(); err != nil {

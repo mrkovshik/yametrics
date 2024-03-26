@@ -4,14 +4,18 @@
 				<h1>Metric List</h1>
 				<h2>Gauges:</h2>
 				<ul>
-					{{range $name, $value := .Gauges}}
-						<li><strong>{{ $name }}:</strong> {{ $value }}</li>
+					{{range $name, $value := .}}
+					{{if eq $value.MType "gauge"}}
+						<li><strong>{{ $name }}:</strong> {{ $value.Value }}</li>
+							{{end}}
 					{{end}}
 				</ul>
 				<h2>Counters:</h2>
 				<ul>
-					{{range $name, $value := .Counters}}
-						<li><strong>{{ $name }}:</strong> {{ $value }}</li>
+					{{range $name, $value := .}}
+					{{if eq $value.MType "counter"}}
+						<li><strong>{{ $name }}:</strong> {{ $value.Delta }}</li>
+						{{end}}
 					{{end}}
 				</ul>
 			</body>

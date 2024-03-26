@@ -2,9 +2,6 @@ package storage
 
 import (
 	"errors"
-	"fmt"
-	"log"
-	"strconv"
 	"sync"
 )
 
@@ -18,36 +15,40 @@ func NewAgentMapStorage() *AgentMapStorage {
 	}
 }
 
-func (m *AgentMapStorage) SaveMetric(name string, value string) {
+func (m *AgentMapStorage) SaveMetric(name string, value float64) {
 	m.Map.Store(name, value)
 }
 
-func (m *AgentMapStorage) LoadMetric(name string) string {
+func (m *AgentMapStorage) LoadMetric(name string) (float64, error) {
 	value, ok := m.Map.Load(name)
 	if !ok {
-		return "0"
+		return 0, nil
 	}
-	return value.(string)
+	floatVal, ok := value.(float64)
+	if !ok {
+		return 0, errors.New("invalid server data")
+	}
+	return floatVal, nil
+}
+
+func (m *AgentMapStorage) LoadCounter() (int64, error) {
+	value, ok := m.Map.Load("PollCount")
+	if !ok {
+		return 0, nil
+	}
+	intValue, ok := value.(int64)
+	if !ok {
+		return 0, errors.New("invalid server data")
+	}
+	return intValue, nil
 }
 
 func (m *AgentMapStorage) UpdateCounter() error {
-	var (
-		intValue int
-		err      error
-	)
-
-	value, ok := m.Map.Load("PollCount")
-	if ok {
-		stringValue, ok := value.(string)
-		if !ok {
-			return errors.New("invalid server data")
-		}
-		intValue, err = strconv.Atoi(stringValue)
-		if err != nil {
-			log.Fatal(err)
-		}
+	intValue, err := m.LoadCounter()
+	if err != nil {
+		return err
 	}
 	intValue++
-	m.Map.Store("PollCount", fmt.Sprint(intValue))
+	m.Map.Store("PollCount", intValue)
 	return nil
 }

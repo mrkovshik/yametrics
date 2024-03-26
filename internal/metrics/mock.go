@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -10,27 +9,27 @@ import (
 )
 
 type MockMetrics struct {
-	MemStats map[string]string
+	MemStats map[string]float64
 }
 
 func NewMockMetrics() MockMetrics {
 	return MockMetrics{
-		map[string]string{
-			"Alloc":         "1.00",
-			"BuckHashSys":   "2.00",
-			"Frees":         "3.00",
-			"GCCPUFraction": "4.00",
+		map[string]float64{
+			"Alloc":         1.00,
+			"BuckHashSys":   2.00,
+			"Frees":         3.00,
+			"GCCPUFraction": 4.00,
 		},
 	}
 }
 
 func (m MockMetrics) PollMetrics(s storage.IAgentStorage) {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	s.SaveMetric("Alloc", fmt.Sprint(m.MemStats["Alloc"]))
+	s.SaveMetric("Alloc", m.MemStats["Alloc"])
 	s.SaveMetric("BuckHashSys", m.MemStats["BuckHashSys"])
 	s.SaveMetric("Frees", m.MemStats["Frees"])
 	s.SaveMetric("GCCPUFraction", m.MemStats["GCCPUFraction"])
-	s.SaveMetric("RandomValue", fmt.Sprint(random.Float64()))
+	s.SaveMetric("RandomValue", random.Float64())
 	if err := s.UpdateCounter(); err != nil {
 		log.Fatal(err)
 	}
