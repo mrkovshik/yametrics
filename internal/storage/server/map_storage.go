@@ -15,6 +15,13 @@ func NewMapStorage() MapStorage {
 }
 
 func (s MapStorage) UpdateMetricValue(newMetrics model.Metrics) {
+	found, ok := s[newMetrics.ID]
+	if ok && (found.MType == model.MetricTypeCounter) && (newMetrics.MType == model.MetricTypeCounter) {
+		newDelta := *s[newMetrics.ID].Delta + *newMetrics.Delta
+		found.Delta = &newDelta
+		s[newMetrics.ID] = found
+		return
+	}
 	s[newMetrics.ID] = newMetrics
 }
 

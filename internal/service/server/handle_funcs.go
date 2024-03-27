@@ -35,7 +35,7 @@ func (s *Server) UpdateMetric(res http.ResponseWriter, req *http.Request) {
 func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 
 	var newMetrics model.Metrics
-
+	res.Header().Set("Content-Type", "application/json")
 	if err1 := json.NewDecoder(req.Body).Decode(&newMetrics); err1 != nil {
 		s.Logger.Error("Decode", zap.Error(err1))
 		http.Error(res, err1.Error(), http.StatusBadRequest)
@@ -56,6 +56,7 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 		s.Logger.Error("Encode", zap.Error(err3))
 		http.Error(res, err3.Error(), http.StatusInternalServerError)
 	}
+
 }
 
 func (s *Server) GetMetrics(res http.ResponseWriter, _ *http.Request) {

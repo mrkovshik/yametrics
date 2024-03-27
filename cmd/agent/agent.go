@@ -32,7 +32,6 @@ func main() {
 	agent := service.NewAgent(src, cfg, strg, sugar)
 	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval)
 	go agent.PollMetrics()
-	//time.Sleep(1 * time.Second) //TODO: Костыль. Потом написать сюда WG?
 	for {
 		if err := agent.SendMetric(); err != nil {
 			logger.Error("agent.SendMetric",

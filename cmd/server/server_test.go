@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"github.com/mrkovshik/yametrics/internal/model"
 	"go.uber.org/zap"
 
 	"net/http"
@@ -14,17 +17,23 @@ import (
 )
 
 func Test_server(t *testing.T) {
+	var (
+		testCounter1      = int64(3)
+		testCounterResult = int64(3) * 2
+		testGauge1        = 2.5
+		testGauge2        = 3.5
+	)
 	type (
 		want struct {
 			code        int
-			response    string
+			response    model.Metrics
 			contentType string
 		}
 		request struct {
 			method      string
 			url         string
 			contentType string
-			body        []byte
+			req         model.Metrics
 		}
 	)
 	tests := []struct {
@@ -33,175 +42,217 @@ func Test_server(t *testing.T) {
 		want    want
 	}{
 		{
-			name: "positive test #1",
+			name: "positive update #1",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/gauge/Alloc/456",
-				contentType: "text/plain",
+				url:         "http://localhost:8080/update/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test1",
+					MType: model.MetricTypeGauge,
+					Value: &testGauge1,
+				},
 			},
 			want: want{
 				code:        http.StatusOK,
-				response:    "",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
-			name: "positive test #2",
+			name: "positive update #2",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/gauge/Alloc/123",
-				contentType: "text/plain",
+				url:         "http://localhost:8080/update/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test2",
+					MType: model.MetricTypeCounter,
+					Delta: &testCounter1,
+				},
 			},
+
 			want: want{
 				code:        http.StatusOK,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name: "positive test #3",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/counter/PollCount/456",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusOK,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name: "positive test #4",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/counter/PollCount/1",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusOK,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name: "positive test #5",
-			request: request{
-				method:      http.MethodGet,
-				url:         "http://localhost:8080/value/counter/PollCount",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusOK,
-				response:    "457",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
 
 		{
-			name: "positive test #6",
+			name: "positive get #1",
 			request: request{
 				method:      http.MethodGet,
-				url:         "http://localhost:8080/value/gauge/Alloc",
-				contentType: "text/plain",
+				url:         "http://localhost:8080/value/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test2",
+					MType: model.MetricTypeCounter,
+				},
 			},
+
+			want: want{
+				code: http.StatusOK,
+				response: model.Metrics{
+					ID:    "test2",
+					MType: model.MetricTypeCounter,
+					Delta: &testCounter1,
+				},
+				contentType: "application/json",
+			},
+		},
+
+		{
+			name: "positive get #2",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/value/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test1",
+					MType: model.MetricTypeGauge,
+				},
+			},
+
+			want: want{
+				code: http.StatusOK,
+				response: model.Metrics{
+					ID:    "test1",
+					MType: model.MetricTypeGauge,
+					Value: &testGauge1,
+				},
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "positive update #3",
+			request: request{
+				method:      http.MethodPost,
+				url:         "http://localhost:8080/update/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test2",
+					MType: model.MetricTypeCounter,
+					Delta: &testCounter1,
+				},
+			},
+
 			want: want{
 				code:        http.StatusOK,
-				response:    "123",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-
 		{
-			name: "positive test #7",
+			name: "positive update #4",
 			request: request{
-				method:      http.MethodGet,
-				url:         "http://localhost:8080",
-				contentType: "text/plain",
+				method:      http.MethodPost,
+				url:         "http://localhost:8080/update/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test1",
+					MType: model.MetricTypeGauge,
+					Value: &testGauge2,
+				},
 			},
 			want: want{
 				code:        http.StatusOK,
-				response:    "",
-				contentType: "text/html",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name: "positive get #3",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/value/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test2",
+					MType: model.MetricTypeCounter,
+				},
+			},
+
+			want: want{
+				code: http.StatusOK,
+				response: model.Metrics{
+					ID:    "test2",
+					MType: model.MetricTypeCounter,
+					Delta: &testCounterResult,
+				},
+				contentType: "application/json",
 			},
 		},
 
 		{
-			name: "negative test #1 (no counter name)",
+			name: "positive get #4",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/value/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test1",
+					MType: model.MetricTypeGauge,
+				},
+			},
+
+			want: want{
+				code: http.StatusOK,
+				response: model.Metrics{
+					ID:    "test1",
+					MType: model.MetricTypeGauge,
+					Value: &testGauge2,
+				},
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "negative update #1",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/counter/456",
-				contentType: "text/plain",
+				url:         "http://localhost:8080/update/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test1",
+					MType: model.MetricTypeCounter,
+					Value: &testGauge1,
+				},
 			},
+
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name: "negative update #2",
+			request: request{
+				method:      http.MethodPost,
+				url:         "http://localhost:8080/update/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "test1",
+					MType: "non_existing_type",
+					Value: &testGauge1,
+				},
+			},
+
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name: "negative get #1",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/value/",
+				contentType: "application/json",
+				req: model.Metrics{
+					ID:    "non_existing_name",
+					MType: model.MetricTypeGauge,
+					Value: &testGauge1,
+				},
+			},
+
 			want: want{
 				code:        http.StatusNotFound,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name: "negative test #3 (invalid counter value)",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/counter/PollCount/45q6",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusBadRequest,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name: "negative test #4 (invalid gauge name)",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/gauge/456",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusNotFound,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-
-		{
-			name: "negative test #6 (invalid gauge value)",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/gauge/Alloc/45q6",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusBadRequest,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name: "negative test #7 (invalid metric type)",
-			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/wrongtype/PollCount/456",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusBadRequest,
-				response:    "",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name: "negative test #8 (invalid metric type)",
-			request: request{
-				method:      http.MethodGet,
-				url:         "http://localhost:8080/value/wrongtype/PollCount",
-				contentType: "text/plain",
-			},
-			want: want{
-				code:        http.StatusBadRequest,
-				response:    "",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -215,6 +266,7 @@ func Test_server(t *testing.T) {
 	}
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
+	buf := bytes.Buffer{}
 
 	cfg, err2 := config.GetConfigs()
 	require.NoError(t, err2)
@@ -223,13 +275,29 @@ func Test_server(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			err22 := json.NewEncoder(&buf).Encode(tt.request.req)
+			require.NoError(t, err22)
 			client := &http.Client{}
-			req, err3 := http.NewRequest(tt.request.method, tt.request.url, nil)
+			req, err3 := http.NewRequest(tt.request.method, tt.request.url, &buf)
 			require.NoError(t, err3)
 			response, err4 := client.Do(req)
 			require.NoError(t, err4)
 			require.Equal(t, tt.want.code, response.StatusCode)
-			require.Equal(t, tt.want.contentType, response.Header.Get("Content-Type"))
+			contentType := response.Header.Get("Content-Type")
+			require.Equal(t, tt.want.contentType, contentType)
+			if contentType == "application/json" {
+				respBody := model.Metrics{}
+				err44 := json.NewDecoder(response.Body).Decode(&respBody)
+				require.NoError(t, err44)
+				require.Equal(t, tt.want.response.MType, respBody.MType)
+				require.Equal(t, tt.want.response.ID, respBody.ID)
+				if tt.want.response.MType == model.MetricTypeCounter {
+					require.Equal(t, *tt.want.response.Delta, *respBody.Delta)
+				}
+				if tt.want.response.MType == model.MetricTypeGauge {
+					require.Equal(t, *tt.want.response.Value, *respBody.Value)
+				}
+			}
 			err5 := response.Body.Close()
 			require.NoError(t, err5)
 		})
