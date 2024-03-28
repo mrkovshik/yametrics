@@ -33,9 +33,14 @@ func main() {
 func run(s *service.Server) {
 	r := chi.NewRouter()
 	r.Use(s.WithLogging)
-	r.Post("/update/", api.UpdateMetricHandler(s))
-	r.Get("/value/", api.GetMetricHandler(s))
-	r.Get("/", api.GetMetricsHandler(s))
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/", api.UpdateMetricFromJSONHandler(s))
+		r.Post("/{type}/{name}/{value}", api.UpdateMetricFromURLHandler(s))
+	})
+	r.Route("/value", func(r chi.Router) {
+		r.Get("/", api.GetMetricFromJSONHandler(s))
+		r.Get("/{type}/{name}", api.GetMetricFromURLHandler(s))
+	})
 	s.Logger.Infof("Starting server on %v\n", s.Config.Address)
 	s.Logger.Fatal(http.ListenAndServe(s.Config.Address, r))
 }

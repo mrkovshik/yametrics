@@ -1,13 +1,20 @@
 package model
 
-import "testing"
+import (
+	"bytes"
+	"encoding/json"
+	"github.com/stretchr/testify/assert"
+	"net/http"
+	"testing"
+)
 
 func TestMetrics_ValidateMetrics(t *testing.T) {
 	type fields struct {
-		ID    string
-		MType string
-		Delta *int64
-		Value *float64
+		ID     string
+		MType  string
+		Delta  *int64
+		Value  *float64
+		Method string
 	}
 	var (
 		testGauge         = 3.6
@@ -20,64 +27,71 @@ func TestMetrics_ValidateMetrics(t *testing.T) {
 	}{
 		{"pos 1",
 			fields{
-				ID:    "test",
-				MType: MetricTypeGauge,
-				Delta: nil,
-				Value: &testGauge,
+				ID:     "test",
+				MType:  MetricTypeGauge,
+				Delta:  nil,
+				Value:  &testGauge,
+				Method: http.MethodPost,
 			},
 			true,
 		},
 		{"noName",
 			fields{
-				ID:    "",
-				MType: MetricTypeGauge,
-				Delta: nil,
-				Value: &testGauge,
+				ID:     "",
+				MType:  MetricTypeGauge,
+				Delta:  nil,
+				Value:  &testGauge,
+				Method: http.MethodPost,
 			},
 			false,
 		},
 		{"noType",
 			fields{
-				ID:    "test",
-				MType: "",
-				Delta: nil,
-				Value: &testGauge,
+				ID:     "test",
+				MType:  "",
+				Delta:  nil,
+				Value:  &testGauge,
+				Method: http.MethodPost,
 			},
 			false,
 		},
 		{"wrongType",
 			fields{
-				ID:    "test",
-				MType: "someWrongType",
-				Delta: nil,
-				Value: &testGauge,
+				ID:     "test",
+				MType:  "someWrongType",
+				Delta:  nil,
+				Value:  &testGauge,
+				Method: http.MethodPost,
 			},
 			false,
 		},
 		{"wrongValueType",
 			fields{
-				ID:    "test",
-				MType: MetricTypeCounter,
-				Delta: nil,
-				Value: &testGauge,
+				ID:     "test",
+				MType:  MetricTypeCounter,
+				Delta:  nil,
+				Value:  &testGauge,
+				Method: http.MethodPost,
 			},
 			false,
 		},
 		{"wrongValueType2",
 			fields{
-				ID:    "test",
-				MType: MetricTypeGauge,
-				Delta: &testCounter,
-				Value: nil,
+				ID:     "test",
+				MType:  MetricTypeGauge,
+				Delta:  &testCounter,
+				Value:  nil,
+				Method: http.MethodPost,
 			},
 			false,
 		},
 		{"nilValues",
 			fields{
-				ID:    "test",
-				MType: MetricTypeCounter,
-				Delta: nil,
-				Value: nil,
+				ID:     "test",
+				MType:  MetricTypeCounter,
+				Delta:  nil,
+				Value:  nil,
+				Method: http.MethodPost,
 			},
 			false,
 		},
@@ -90,8 +104,15 @@ func TestMetrics_ValidateMetrics(t *testing.T) {
 				Delta: tt.fields.Delta,
 				Value: tt.fields.Value,
 			}
-			if got := m.ValidateMetrics(); got != tt.want {
-				t.Errorf("ValidateMetrics() = %v, want %v", got, tt.want)
+			buf := bytes.Buffer{}
+			err1 := json.NewEncoder(&buf).Encode(m)
+			assert.NoError(t, err1)
+			req, err2 := http.NewRequest(tt.fields.Method, "test", &buf)
+			assert.NoError(t, err2)
+
+			err3 := m.MapMetricsFromReqJSON(req)
+			if (err3 == nil) != tt.want {
+				t.Errorf("MapMetricsFromReqJSON() = %v, want %v", err3 == nil, tt.want)
 			}
 		})
 	}

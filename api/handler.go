@@ -6,12 +6,20 @@ import (
 	service "github.com/mrkovshik/yametrics/internal/service/server"
 )
 
-func UpdateMetricHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
-	return s.UpdateMetric
+func UpdateMetricFromJSONHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
+	return s.UpdateMetricFromJSON
 }
 
-func GetMetricHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
-	return s.GetMetric
+func UpdateMetricFromURLHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
+	return s.UpdateMetricFromURL
+}
+
+func GetMetricFromJSONHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
+	return s.GetMetricFromJSON
+}
+
+func GetMetricFromURLHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
+	return s.GetMetricFromURL
 }
 
 func GetMetricsHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {

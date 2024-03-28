@@ -3,23 +3,20 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/mrkovshik/yametrics/internal/model"
 	"net/http"
 
 	"go.uber.org/zap"
 )
 
-var invalidRequestData = errors.New("invalid request data")
+var invalidRequestData = errors.New("errInvalidRequestData")
 
-func (s *Server) UpdateMetric(res http.ResponseWriter, req *http.Request) {
+func (s *Server) UpdateMetricFromJSON(res http.ResponseWriter, req *http.Request) {
 	var newMetrics model.Metrics
-	if err := json.NewDecoder(req.Body).Decode(&newMetrics); err != nil {
-		s.Logger.Error("Decode", zap.Error(err))
-		http.Error(res, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if !newMetrics.ValidateMetrics() {
-		s.Logger.Error("ValidateMetrics", zap.Error(invalidRequestData))
+
+	if err := newMetrics.MapMetricsFromReqJSON(req); err != nil {
+		s.Logger.Error("MapMetricsFromReqJSON", zap.Error(err))
 		http.Error(res, invalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
@@ -32,8 +29,23 @@ func (s *Server) UpdateMetric(res http.ResponseWriter, req *http.Request) {
 
 }
 
-func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
+func (s *Server) UpdateMetricFromURL(res http.ResponseWriter, req *http.Request) {
+	var newMetrics model.Metrics
+	if err := newMetrics.MapMetricsFromReqURL(req); err != nil {
+		s.Logger.Error("MapMetricsFromReq", zap.Error(err))
+		http.Error(res, invalidRequestData.Error(), http.StatusBadRequest)
+		return
+	}
+	s.Storage.UpdateMetricValue(newMetrics)
+	res.WriteHeader(http.StatusOK)
+	if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
+		s.Logger.Error("res.Write", zap.Error(err))
+		http.Error(res, "error res.Write", http.StatusInternalServerError)
+	}
 
+}
+
+func (s *Server) GetMetricFromJSON(res http.ResponseWriter, req *http.Request) {
 	var newMetrics model.Metrics
 	res.Header().Set("Content-Type", "application/json")
 	if err1 := json.NewDecoder(req.Body).Decode(&newMetrics); err1 != nil {
@@ -41,11 +53,6 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err1.Error(), http.StatusBadRequest)
 		return
 	}
-	//TODO: перенести проверки в validator
-	//if metricType != metrics.MetricTypeCounter && metricType != metrics.MetricTypeGauge {
-	//	http.Error(res, "invalid metric type", http.StatusBadRequest)
-	//	return
-	//}
 	metric, err2 := s.Storage.GetMetricValue(newMetrics)
 	if err2 != nil {
 		s.Logger.Error("s.Storage.GetMetricValue", zap.Error(err2))
@@ -57,6 +64,29 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err3.Error(), http.StatusInternalServerError)
 	}
 
+}
+
+func (s *Server) GetMetricFromURL(res http.ResponseWriter, req *http.Request) {
+	var newMetrics model.Metrics
+	if err := newMetrics.MapMetricsFromReqURL(req); err != nil {
+		s.Logger.Error("MapMetricsFromReq", zap.Error(err))
+		http.Error(res, invalidRequestData.Error(), http.StatusBadRequest)
+		return
+	}
+	metric, err2 := s.Storage.GetMetricValue(newMetrics)
+	if err2 != nil {
+		s.Logger.Error("s.Storage.GetMetricValue", zap.Error(err2))
+		http.Error(res, "error getting value from server", http.StatusNotFound)
+	}
+	res.WriteHeader(http.StatusOK)
+	stringValue := fmt.Sprint(metric.Value)
+	if metric.MType == model.MetricTypeCounter {
+		stringValue = fmt.Sprint(metric.Delta)
+	}
+	if _, err := res.Write([]byte(stringValue)); err != nil {
+		s.Logger.Error("res.Write", zap.Error(err))
+		http.Error(res, "error res.Write", http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) GetMetrics(res http.ResponseWriter, _ *http.Request) {
