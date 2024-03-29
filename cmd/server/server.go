@@ -41,6 +41,7 @@ func run(s *service.Server) {
 		r.Get("/", api.GetMetricFromJSONHandler(s))
 		r.Get("/{type}/{name}", api.GetMetricFromURLHandler(s))
 	})
+	r.Get("/", api.GetMetricsHandler(s))
 	s.Logger.Infof("Starting server on %v\n", s.Config.Address)
 	s.Logger.Fatal(http.ListenAndServe(s.Config.Address, r))
 }
