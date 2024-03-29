@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/mrkovshik/yametrics/internal/model"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"io"
+	"strconv"
 
 	"net/http"
 	"testing"
@@ -126,13 +129,8 @@ func Test_server(t *testing.T) {
 			name: "positive update #3",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/",
-				contentType: "application/json",
-				req: model.Metrics{
-					ID:    "test2",
-					MType: model.MetricTypeCounter,
-					Delta: &testCounter1,
-				},
+				url:         "http://localhost:8080/update/counter/test2/3",
+				contentType: "text/plain; charset=utf-8",
 			},
 
 			want: want{
@@ -144,13 +142,8 @@ func Test_server(t *testing.T) {
 			name: "positive update #4",
 			request: request{
 				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/",
-				contentType: "application/json",
-				req: model.Metrics{
-					ID:    "test1",
-					MType: model.MetricTypeGauge,
-					Value: &testGauge2,
-				},
+				url:         "http://localhost:8080/update/gauge/test1/3.5",
+				contentType: "text/plain; charset=utf-8",
 			},
 			want: want{
 				code:        http.StatusOK,
@@ -161,12 +154,8 @@ func Test_server(t *testing.T) {
 			name: "positive get #3",
 			request: request{
 				method:      http.MethodGet,
-				url:         "http://localhost:8080/value/",
-				contentType: "application/json",
-				req: model.Metrics{
-					ID:    "test2",
-					MType: model.MetricTypeCounter,
-				},
+				url:         "http://localhost:8080/value/counter/test2",
+				contentType: "text/plain; charset=utf-8",
 			},
 
 			want: want{
@@ -176,7 +165,7 @@ func Test_server(t *testing.T) {
 					MType: model.MetricTypeCounter,
 					Delta: &testCounterResult,
 				},
-				contentType: "application/json",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 
@@ -184,8 +173,8 @@ func Test_server(t *testing.T) {
 			name: "positive get #4",
 			request: request{
 				method:      http.MethodGet,
-				url:         "http://localhost:8080/value/",
-				contentType: "application/json",
+				url:         "http://localhost:8080/value/gauge/test1",
+				contentType: "text/plain; charset=utf-8",
 				req: model.Metrics{
 					ID:    "test1",
 					MType: model.MetricTypeGauge,
@@ -199,7 +188,7 @@ func Test_server(t *testing.T) {
 					MType: model.MetricTypeGauge,
 					Value: &testGauge2,
 				},
-				contentType: "application/json",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -297,7 +286,23 @@ func Test_server(t *testing.T) {
 				if tt.want.response.MType == model.MetricTypeGauge {
 					require.Equal(t, *tt.want.response.Value, *respBody.Value)
 				}
+			} else {
+				if tt.want.response.MType == model.MetricTypeCounter {
+					body, err55 := io.ReadAll(response.Body)
+					assert.NoError(t, err55)
+					val, err66 := strconv.ParseInt(string(body), 10, 64)
+					assert.NoError(t, err66)
+					require.Equal(t, *tt.want.response.Delta, val)
+				}
+				if tt.want.response.MType == model.MetricTypeGauge {
+					body, err55 := io.ReadAll(response.Body)
+					assert.NoError(t, err55)
+					val, err66 := strconv.ParseFloat(string(body), 64)
+					assert.NoError(t, err66)
+					require.Equal(t, *tt.want.response.Value, val)
+				}
 			}
+
 			err5 := response.Body.Close()
 			require.NoError(t, err5)
 		})
