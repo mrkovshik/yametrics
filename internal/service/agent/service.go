@@ -3,7 +3,6 @@ package service
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/mrkovshik/yametrics/internal/model"
 	"net/http"
@@ -32,7 +31,7 @@ func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.
 	}
 }
 
-func (a *Agent) SendMetric() error {
+func (a *Agent) SendMetrics() {
 	var metricNamesMap = map[string]struct{}{
 		"Alloc":         {},
 		"BuckHashSys":   {},
@@ -65,53 +64,13 @@ func (a *Agent) SendMetric() error {
 		"PollCount":     {},
 	}
 	//a.Logger.Debug("Starting to send metrics")
-	for name := range metricNamesMap {
-		currentMetric := model.Metrics{
-			ID: name,
-		}
-		if name == "PollCount" {
-
-			delta, err := a.Storage.LoadCounter()
-			if err != nil {
-				a.Logger.Error("a.Storage.LoadCounter", err)
-				return err
-			}
-
-			currentMetric.MType = model.MetricTypeCounter
-			currentMetric.Delta = &delta
-		} else {
-
-			delta, err := a.Storage.LoadMetric(name)
-			if err != nil {
-				a.Logger.Error("a.Storage.LoadMetric", err)
-				return err
-			}
-			currentMetric.MType = model.MetricTypeGauge
-			currentMetric.Value = &delta
-		}
-
-		metricUpdateURL := fmt.Sprintf("http://%v/update/", a.Config.Address)
-		buf := bytes.Buffer{}
-		if err3 := json.NewEncoder(&buf).Encode(currentMetric); err3 != nil {
-			a.Logger.Error("Encode", zap.Error(err3))
-			return err3
-		}
-
-		response, err := http.Post(metricUpdateURL, "application/json", &buf)
-		if err != nil {
-			return err
-		}
-
-		if response.StatusCode != http.StatusOK {
-			a.Logger.Errorf("status code is %v, while sending %v\n", response.StatusCode, currentMetric)
-			return errors.New("status code is not OK")
-		}
-		if err := response.Body.Close(); err != nil {
-			return err
+	for {
+		time.Sleep(time.Duration(a.Config.ReportInterval) * time.Second)
+		for name := range metricNamesMap {
+			go a.sendMetric(name)
 		}
 	}
 
-	return nil
 }
 
 func (a *Agent) PollMetrics() {
@@ -120,5 +79,51 @@ func (a *Agent) PollMetrics() {
 		//a.Logger.Debug("Starting to update metrics")
 		a.Source.PollMetrics(a.Storage)
 		time.Sleep(time.Duration(a.Config.PollInterval) * time.Second)
+	}
+}
+
+func (a *Agent) sendMetric(name string) {
+	currentMetric := model.Metrics{
+		ID: name,
+	}
+	if name == "PollCount" {
+		delta, err := a.Storage.LoadCounter()
+		if err != nil {
+			a.Logger.Error("a.Storage.LoadCounter", err)
+			return
+		}
+
+		currentMetric.MType = model.MetricTypeCounter
+		currentMetric.Delta = &delta
+	} else {
+		value, err := a.Storage.LoadMetric(name)
+		if err != nil {
+			a.Logger.Error("a.Storage.LoadMetric", err)
+			return
+		}
+		currentMetric.MType = model.MetricTypeGauge
+		currentMetric.Value = &value
+	}
+
+	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.Config.Address)
+	buf := bytes.Buffer{}
+	if err3 := json.NewEncoder(&buf).Encode(currentMetric); err3 != nil {
+		a.Logger.Error("Encode", zap.Error(err3))
+		return
+	}
+
+	response, err := http.Post(metricUpdateURL, "application/json", &buf)
+	if err != nil {
+		a.Logger.Errorf("error sending request: %v\nmetric name: %v", err, currentMetric.ID)
+		return
+	}
+	if response.StatusCode != http.StatusOK {
+		a.Logger.Errorf("status code is %v, while sending %v\n", response.StatusCode, currentMetric)
+		return
+	}
+
+	if err := response.Body.Close(); err != nil {
+		a.Logger.Error("response.Body.Close()", err)
+		return
 	}
 }

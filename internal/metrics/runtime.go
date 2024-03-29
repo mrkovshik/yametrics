@@ -17,12 +17,12 @@ func NewRuntimeMetrics() RuntimeMetrics {
 	m := RuntimeMetrics{
 		MemStats: runtime.MemStats{},
 	}
-	runtime.ReadMemStats(&m.MemStats)
 	return m
 }
 
 func (m RuntimeMetrics) PollMetrics(s storage.IAgentStorage) {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	runtime.ReadMemStats(&m.MemStats)
 	s.SaveMetric("Alloc", float64(m.MemStats.Alloc))
 	s.SaveMetric("BuckHashSys", float64(m.MemStats.BuckHashSys))
 	s.SaveMetric("Frees", float64(m.MemStats.Frees))

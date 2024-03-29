@@ -6,7 +6,7 @@
 				<ul>
 					{{range $name, $value := .}}
 					{{if eq $value.MType "gauge"}}
-						<li><strong>{{ $name }}:</strong> {{ $value.Value }}</li>
+						<li><strong>{{ $value.ID }}:</strong> {{ $value.Value }}</li>
 							{{end}}
 					{{end}}
 				</ul>
@@ -14,7 +14,7 @@
 				<ul>
 					{{range $name, $value := .}}
 					{{if eq $value.MType "counter"}}
-						<li><strong>{{ $name }}:</strong> {{ $value.Delta }}</li>
+						<li><strong>{{ $value.ID }}:</strong> {{ $value.Delta }}</li>
 						{{end}}
 					{{end}}
 				</ul>

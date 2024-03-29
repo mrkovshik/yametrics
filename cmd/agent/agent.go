@@ -1,10 +1,8 @@
 package main
 
 import (
-	"log"
-	"time"
-
 	"go.uber.org/zap"
+	"log"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
@@ -32,11 +30,6 @@ func main() {
 	agent := service.NewAgent(src, cfg, strg, sugar)
 	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval)
 	go agent.PollMetrics()
-	for {
-		time.Sleep(time.Duration(agent.Config.ReportInterval) * time.Second)
-		if err := agent.SendMetric(); err != nil {
-			logger.Error("agent.SendMetric",
-				zap.Error(err))
-		}
-	}
+	go agent.SendMetrics()
+	select {}
 }

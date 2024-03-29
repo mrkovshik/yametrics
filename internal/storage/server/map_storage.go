@@ -3,46 +3,61 @@ package storage
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/templates"
+	"sync"
 )
 
-type MapStorage map[string]model.Metrics
-
-func NewMapStorage() MapStorage {
-	s := make(map[string]model.Metrics)
-	return s
+type MapStorage struct {
+	mu      sync.Mutex
+	metrics map[string]model.Metrics
 }
 
-func (s MapStorage) UpdateMetricValue(newMetrics model.Metrics) {
-	found, ok := s[newMetrics.ID]
-	if ok && (found.MType == model.MetricTypeCounter) && (newMetrics.MType == model.MetricTypeCounter) {
-		newDelta := *s[newMetrics.ID].Delta + *newMetrics.Delta
+func NewMapStorage() *MapStorage {
+	s := make(map[string]model.Metrics)
+	return &MapStorage{
+		sync.Mutex{},
+		s,
+	}
+}
+
+func (s *MapStorage) UpdateMetricValue(newMetrics model.Metrics) {
+	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
+	s.mu.Lock()
+	found, ok := s.metrics[key]
+	if ok && (newMetrics.MType == model.MetricTypeCounter) {
+		newDelta := *s.metrics[key].Delta + *newMetrics.Delta
 		found.Delta = &newDelta
-		s[newMetrics.ID] = found
+		s.metrics[key] = found
+		s.mu.Unlock()
 		return
 	}
-	s[newMetrics.ID] = newMetrics
+	s.metrics[key] = newMetrics
+	s.mu.Unlock()
 }
 
-func (s MapStorage) GetMetricValue(newMetrics model.Metrics) (model.Metrics, error) {
-
-	res, ok := s[newMetrics.ID]
+func (s *MapStorage) GetMetricValue(newMetrics model.Metrics) (model.Metrics, error) {
+	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
+	s.mu.Lock()
+	res, ok := s.metrics[key]
 	if !ok {
 		return model.Metrics{}, errors.New("not found")
 	}
+	s.mu.Unlock()
 	return res, nil
-
 }
 
-func (s MapStorage) GetAllMetrics() (string, error) {
+func (s *MapStorage) GetAllMetrics() (string, error) {
 	var tpl bytes.Buffer
 	t, err := templates.ParseTemplates()
 	if err != nil {
 		return "", err
 	}
-	if err := t.ExecuteTemplate(&tpl, "list_metrics", s); err != nil {
+	s.mu.Lock()
+	if err := t.ExecuteTemplate(&tpl, "list_metrics", s.metrics); err != nil {
 		return "", err
 	}
+	s.mu.Unlock()
 	return tpl.String(), nil
 }
