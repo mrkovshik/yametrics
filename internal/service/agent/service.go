@@ -64,7 +64,7 @@ func (a *Agent) SendMetric() error {
 		"RandomValue":   {},
 		"PollCount":     {},
 	}
-	a.Logger.Debug("Starting to send metrics")
+	//a.Logger.Debug("Starting to send metrics")
 	for name := range metricNamesMap {
 		currentMetric := model.Metrics{
 			ID: name,
@@ -117,7 +117,7 @@ func (a *Agent) SendMetric() error {
 func (a *Agent) PollMetrics() {
 
 	for {
-		a.Logger.Debug("Starting to update metrics")
+		//a.Logger.Debug("Starting to update metrics")
 		a.Source.PollMetrics(a.Storage)
 		time.Sleep(time.Duration(a.Config.PollInterval) * time.Second)
 	}
