@@ -78,7 +78,7 @@ func (s *Server) GetMetricFromURL(res http.ResponseWriter, req *http.Request) {
 		s.Logger.Error("s.Storage.GetMetricValue", zap.Error(err2))
 		http.Error(res, "error getting value from server", http.StatusNotFound)
 	}
-	res.WriteHeader(http.StatusOK)
+
 	var stringValue string
 	switch metric.MType {
 	case model.MetricTypeCounter:
@@ -89,7 +89,7 @@ func (s *Server) GetMetricFromURL(res http.ResponseWriter, req *http.Request) {
 		s.Logger.Error("invalid metric type", zap.Error(errors.New("ErrInvalidMetricType")))
 		http.Error(res, "error res.Write", http.StatusInternalServerError)
 	}
-
+	res.WriteHeader(http.StatusOK)
 	if _, err := res.Write([]byte(stringValue)); err != nil {
 		s.Logger.Error("res.Write", zap.Error(err))
 		http.Error(res, "error res.Write", http.StatusInternalServerError)

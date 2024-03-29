@@ -25,26 +25,27 @@ func NewMapStorage() *MapStorage {
 func (s *MapStorage) UpdateMetricValue(newMetrics model.Metrics) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	found, ok := s.metrics[key]
 	if ok && (newMetrics.MType == model.MetricTypeCounter) {
 		newDelta := *s.metrics[key].Delta + *newMetrics.Delta
 		found.Delta = &newDelta
 		s.metrics[key] = found
-		s.mu.Unlock()
 		return
 	}
 	s.metrics[key] = newMetrics
-	s.mu.Unlock()
+
 }
 
 func (s *MapStorage) GetMetricValue(newMetrics model.Metrics) (model.Metrics, error) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	res, ok := s.metrics[key]
 	if !ok {
 		return model.Metrics{}, errors.New("not found")
 	}
-	s.mu.Unlock()
+
 	return res, nil
 }
 
@@ -55,9 +56,9 @@ func (s *MapStorage) GetAllMetrics() (string, error) {
 		return "", err
 	}
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	if err := t.ExecuteTemplate(&tpl, "list_metrics", s.metrics); err != nil {
 		return "", err
 	}
-	s.mu.Unlock()
 	return tpl.String(), nil
 }
