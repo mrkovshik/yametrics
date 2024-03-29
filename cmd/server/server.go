@@ -38,7 +38,7 @@ func run(s *service.Server) {
 		r.Post("/{type}/{name}/{value}", api.UpdateMetricFromURLHandler(s))
 	})
 	r.Route("/value", func(r chi.Router) {
-		r.Get("/", api.GetMetricFromJSONHandler(s))
+		r.Post("/", api.GetMetricFromJSONHandler(s))
 		r.Get("/{type}/{name}", api.GetMetricFromURLHandler(s))
 	})
 	r.Get("/", api.GetMetricsHandler(s))

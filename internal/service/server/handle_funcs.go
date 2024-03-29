@@ -10,14 +10,14 @@ import (
 	"go.uber.org/zap"
 )
 
-var invalidRequestData = errors.New("errInvalidRequestData")
+var errInvalidRequestData = errors.New("invalid request data")
 
 func (s *Server) UpdateMetricFromJSON(res http.ResponseWriter, req *http.Request) {
 	var newMetrics model.Metrics
 
 	if err := newMetrics.MapMetricsFromReqJSON(req); err != nil {
 		s.Logger.Error("MapMetricsFromReqJSON", zap.Error(err))
-		http.Error(res, invalidRequestData.Error(), http.StatusBadRequest)
+		http.Error(res, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
 	s.Storage.UpdateMetricValue(newMetrics)
@@ -33,7 +33,7 @@ func (s *Server) UpdateMetricFromURL(res http.ResponseWriter, req *http.Request)
 	var newMetrics model.Metrics
 	if err := newMetrics.MapMetricsFromReqURL(req); err != nil {
 		s.Logger.Error("MapMetricsFromReq", zap.Error(err))
-		http.Error(res, invalidRequestData.Error(), http.StatusBadRequest)
+		http.Error(res, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
 	s.Storage.UpdateMetricValue(newMetrics)
@@ -70,7 +70,7 @@ func (s *Server) GetMetricFromURL(res http.ResponseWriter, req *http.Request) {
 	var newMetrics model.Metrics
 	if err := newMetrics.MapMetricsFromReqURL(req); err != nil {
 		s.Logger.Error("MapMetricsFromReq", zap.Error(err))
-		http.Error(res, invalidRequestData.Error(), http.StatusBadRequest)
+		http.Error(res, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
 	metric, err2 := s.Storage.GetMetricValue(newMetrics)

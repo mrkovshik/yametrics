@@ -83,7 +83,7 @@ func Test_server(t *testing.T) {
 		{
 			name: "positive get #1",
 			request: request{
-				method:      http.MethodGet,
+				method:      http.MethodPost,
 				url:         "http://localhost:8080/value/",
 				contentType: "application/json",
 				req: model.Metrics{
@@ -106,7 +106,7 @@ func Test_server(t *testing.T) {
 		{
 			name: "positive get #2",
 			request: request{
-				method:      http.MethodGet,
+				method:      http.MethodPost,
 				url:         "http://localhost:8080/value/",
 				contentType: "application/json",
 				req: model.Metrics{
@@ -230,7 +230,7 @@ func Test_server(t *testing.T) {
 		{
 			name: "negative get #1",
 			request: request{
-				method:      http.MethodGet,
+				method:      http.MethodPost,
 				url:         "http://localhost:8080/value/",
 				contentType: "application/json",
 				req: model.Metrics{
