@@ -2,11 +2,14 @@ package storage
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"sync"
+
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/templates"
-	"sync"
 )
 
 type MapStorage struct {
@@ -61,4 +64,12 @@ func (s *MapStorage) GetAllMetrics() (string, error) {
 		return "", err
 	}
 	return tpl.String(), nil
+}
+
+func (s *MapStorage) DumpMetrics(path string) error {
+	jsonData, err := json.Marshal(s.metrics)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, jsonData, 0666)
 }
