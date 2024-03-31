@@ -1,17 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"github.com/mrkovshik/yametrics/internal/model"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 	"io"
-	"strconv"
-
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
+
+	"github.com/mrkovshik/yametrics/internal/model"
+	service2 "github.com/mrkovshik/yametrics/internal/service/agent"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
@@ -33,10 +33,12 @@ func Test_server(t *testing.T) {
 			contentType string
 		}
 		request struct {
-			method      string
-			url         string
-			contentType string
-			req         model.Metrics
+			method         string
+			url            string
+			contentType    string
+			contentEncode  string
+			acceptEncoding string
+			req            model.Metrics
 		}
 	)
 	tests := []struct {
@@ -47,9 +49,10 @@ func Test_server(t *testing.T) {
 		{
 			name: "positive update #1",
 			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/",
-				contentType: "application/json",
+				method:        http.MethodPost,
+				url:           "http://localhost:8080/update/",
+				contentType:   "application/json",
+				contentEncode: "gzip",
 				req: model.Metrics{
 					ID:    "test1",
 					MType: model.MetricTypeGauge,
@@ -64,9 +67,10 @@ func Test_server(t *testing.T) {
 		{
 			name: "positive update #2",
 			request: request{
-				method:      http.MethodPost,
-				url:         "http://localhost:8080/update/",
-				contentType: "application/json",
+				method:        http.MethodPost,
+				url:           "http://localhost:8080/update/",
+				contentType:   "application/json",
+				contentEncode: "gzip",
 				req: model.Metrics{
 					ID:    "test2",
 					MType: model.MetricTypeCounter,
@@ -255,8 +259,6 @@ func Test_server(t *testing.T) {
 	}
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
-	buf := bytes.Buffer{}
-
 	cfg, err2 := config.GetConfigs()
 	require.NoError(t, err2)
 	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
@@ -264,12 +266,19 @@ func Test_server(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err22 := json.NewEncoder(&buf).Encode(tt.request.req)
-			require.NoError(t, err22)
+			//err22 := json.NewEncoder(&buf).Encode(tt.request.req)
+			//require.NoError(t, err22)
 			client := &http.Client{}
-			req, err3 := http.NewRequest(tt.request.method, tt.request.url, &buf)
-			require.NoError(t, err3)
-			response, err4 := client.Do(req)
+			//req, err3 := http.NewRequest(tt.request.method, tt.request.url, &buf)
+			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method)
+			if tt.request.contentType == "application/json" {
+				req.AddJSONBody(tt.request.req)
+			}
+			if tt.request.contentEncode == "gzip" {
+				req.Compress()
+			}
+			require.NoError(t, req.Err)
+			response, err4 := client.Do(&req.R)
 			require.NoError(t, err4)
 			require.Equal(t, tt.want.code, response.StatusCode)
 			contentType := response.Header.Get("Content-Type")

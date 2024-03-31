@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mrkovshik/yametrics/internal/model"
 	"net/http"
+
+	"github.com/mrkovshik/yametrics/internal/model"
 
 	"go.uber.org/zap"
 )
@@ -20,7 +21,9 @@ func (s *Server) UpdateMetricFromJSON(res http.ResponseWriter, req *http.Request
 		http.Error(res, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
+
 	s.Storage.UpdateMetricValue(newMetrics)
+	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(http.StatusOK)
 	if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
 		s.Logger.Error("res.Write", zap.Error(err))
@@ -37,6 +40,7 @@ func (s *Server) UpdateMetricFromURL(res http.ResponseWriter, req *http.Request)
 		return
 	}
 	s.Storage.UpdateMetricValue(newMetrics)
+	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(http.StatusOK)
 	if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
 		s.Logger.Error("res.Write", zap.Error(err))
@@ -47,7 +51,7 @@ func (s *Server) UpdateMetricFromURL(res http.ResponseWriter, req *http.Request)
 
 func (s *Server) GetMetricFromJSON(res http.ResponseWriter, req *http.Request) {
 	var newMetrics model.Metrics
-	res.Header().Set("Content-Type", "application/json")
+
 	if err1 := json.NewDecoder(req.Body).Decode(&newMetrics); err1 != nil {
 		s.Logger.Error("Decode", zap.Error(err1))
 		http.Error(res, err1.Error(), http.StatusBadRequest)
@@ -58,6 +62,7 @@ func (s *Server) GetMetricFromJSON(res http.ResponseWriter, req *http.Request) {
 		s.Logger.Error("s.Storage.GetMetricValue", zap.Error(err2))
 		http.Error(res, "error getting value from server", http.StatusNotFound)
 	}
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	if err3 := json.NewEncoder(res).Encode(metric); err3 != nil {
 		s.Logger.Error("Encode", zap.Error(err3))
@@ -89,6 +94,7 @@ func (s *Server) GetMetricFromURL(res http.ResponseWriter, req *http.Request) {
 		s.Logger.Error("invalid metric type", zap.Error(errors.New("ErrInvalidMetricType")))
 		http.Error(res, "error res.Write", http.StatusInternalServerError)
 	}
+	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(http.StatusOK)
 	if _, err := res.Write([]byte(stringValue)); err != nil {
 		s.Logger.Error("res.Write", zap.Error(err))

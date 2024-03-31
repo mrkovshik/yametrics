@@ -108,11 +108,11 @@ func (a *Agent) sendMetric(name string) {
 	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.Config.Address)
 
 	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(currentMetric).Compress().SetMethod(http.MethodPost)
-	if reqBuilder.err != nil {
-		a.Logger.Errorf("error building request: %v\nmetric name: %v", reqBuilder.err, currentMetric.ID)
+	if reqBuilder.Err != nil {
+		a.Logger.Errorf("error building request: %v\nmetric name: %v", reqBuilder.Err, currentMetric.ID)
 		return
 	}
-	response, err := client.Do(&reqBuilder.r)
+	response, err := client.Do(&reqBuilder.R)
 	if err != nil {
 		a.Logger.Errorf("error sending request: %v\nmetric name: %v", err, currentMetric.ID)
 		return

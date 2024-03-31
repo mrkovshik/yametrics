@@ -10,8 +10,8 @@ import (
 )
 
 type RequestBuilder struct {
-	r   http.Request
-	err error
+	R   http.Request
+	Err error
 }
 
 func NewRequestBuilder() *RequestBuilder {
@@ -20,30 +20,30 @@ func NewRequestBuilder() *RequestBuilder {
 }
 
 func (rb *RequestBuilder) WithHeader(key, value string) *RequestBuilder {
-	rb.r.Header.Add(key, value)
+	rb.R.Header.Add(key, value)
 	return rb
 }
 
 func (rb *RequestBuilder) SetMethod(method string) *RequestBuilder {
-	if rb.err == nil {
-		rb.r.Method = method
+	if rb.Err == nil {
+		rb.R.Method = method
 	}
 	return rb
 }
 
 func (rb *RequestBuilder) SetURL(rawURL string) *RequestBuilder {
-	if rb.err == nil {
-		rb.r.URL, rb.err = url.Parse(rawURL)
+	if rb.Err == nil {
+		rb.R.URL, rb.Err = url.Parse(rawURL)
 	}
 	return rb
 }
 
 func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
-	if rb.err == nil {
+	if rb.Err == nil && data != nil {
 		buf := bytes.Buffer{}
-		rb.err = json.NewEncoder(&buf).Encode(data)
-		if rb.err == nil {
-			rb.r.Body = io.NopCloser(&buf)
+		rb.Err = json.NewEncoder(&buf).Encode(data)
+		if rb.Err == nil {
+			rb.R.Body = io.NopCloser(&buf)
 			rb.WithHeader("Content-Type", "application/json")
 		}
 	}
@@ -51,19 +51,19 @@ func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
 }
 
 func (rb *RequestBuilder) Compress() *RequestBuilder {
-	if rb.err == nil {
+	if rb.Err == nil {
 		var compressedBody bytes.Buffer
 		gzipWriter := gzip.NewWriter(&compressedBody)
-		_, err := io.Copy(gzipWriter, rb.r.Body)
+		_, err := io.Copy(gzipWriter, rb.R.Body)
 		if err != nil {
-			return &RequestBuilder{err: err}
+			return &RequestBuilder{Err: err}
 		}
 		err = gzipWriter.Close()
 		if err != nil {
-			return &RequestBuilder{err: err}
+			return &RequestBuilder{Err: err}
 		}
-		rb.r.Body = io.NopCloser(&compressedBody)
-		rb.r.ContentLength = int64(compressedBody.Len())
+		rb.R.Body = io.NopCloser(&compressedBody)
+		rb.R.ContentLength = int64(compressedBody.Len())
 		rb.WithHeader("Content-Encoding", "gzip")
 	}
 	return rb
