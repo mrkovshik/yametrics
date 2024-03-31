@@ -32,7 +32,7 @@ func main() {
 
 func run(s *service.Server) {
 	r := chi.NewRouter()
-	r.Use(s.WithLogging)
+	r.Use(s.WithLogging, s.GzipHandle)
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", api.UpdateMetricFromJSONHandler(s))
 		r.Post("/{type}/{name}/{value}", api.UpdateMetricFromURLHandler(s))
