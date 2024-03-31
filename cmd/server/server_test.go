@@ -33,12 +33,12 @@ func Test_server(t *testing.T) {
 			contentType string
 		}
 		request struct {
-			method         string
-			url            string
-			contentType    string
-			contentEncode  string
-			acceptEncoding string
-			req            model.Metrics
+			method        string
+			url           string
+			contentType   string
+			contentEncode string
+			//acceptEncoding string
+			req model.Metrics
 		}
 	)
 	tests := []struct {
