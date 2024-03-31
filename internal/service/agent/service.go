@@ -1,12 +1,11 @@
 package service
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"github.com/mrkovshik/yametrics/internal/model"
 	"net/http"
 	"time"
+
+	"github.com/mrkovshik/yametrics/internal/model"
 
 	"go.uber.org/zap"
 
@@ -83,6 +82,7 @@ func (a *Agent) PollMetrics() {
 }
 
 func (a *Agent) sendMetric(name string) {
+	var client = http.Client{Timeout: 30 * time.Second}
 	currentMetric := model.Metrics{
 		ID: name,
 	}
@@ -106,13 +106,13 @@ func (a *Agent) sendMetric(name string) {
 	}
 
 	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.Config.Address)
-	buf := bytes.Buffer{}
-	if err3 := json.NewEncoder(&buf).Encode(currentMetric); err3 != nil {
-		a.Logger.Error("Encode", zap.Error(err3))
+
+	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(currentMetric).Compress().SetMethod(http.MethodPost)
+	if reqBuilder.err != nil {
+		a.Logger.Errorf("error building request: %v\nmetric name: %v", reqBuilder.err, currentMetric.ID)
 		return
 	}
-
-	response, err := http.Post(metricUpdateURL, "application/json", &buf)
+	response, err := client.Do(&reqBuilder.r)
 	if err != nil {
 		a.Logger.Errorf("error sending request: %v\nmetric name: %v", err, currentMetric.ID)
 		return
@@ -121,7 +121,6 @@ func (a *Agent) sendMetric(name string) {
 		a.Logger.Errorf("status code is %v, while sending %v\n", response.StatusCode, currentMetric)
 		return
 	}
-
 	if err := response.Body.Close(); err != nil {
 		a.Logger.Error("response.Body.Close()", err)
 		return
