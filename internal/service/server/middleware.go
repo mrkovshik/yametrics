@@ -35,10 +35,10 @@ func (s *Server) WithLogging(h http.Handler) http.Handler {
 
 func (s *Server) GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if cType := r.Header.Get("Content-Type"); cType != "application/json" && cType != "text/html" {
-			next.ServeHTTP(w, r)
-			return
-		}
+		//if cType := r.Header.Get("Content-Type"); cType != "application/json" && cType != "text/html" {
+		//	next.ServeHTTP(w, r)
+		//	return
+		//}
 		var (
 			isEncodingSupported = false
 		)
@@ -65,6 +65,7 @@ func (s *Server) GzipHandle(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+
 		cw := compress.NewGzipWriter(w)
 
 		defer cw.Close() //nolint:all

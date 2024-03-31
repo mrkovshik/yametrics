@@ -31,9 +31,9 @@ func (rb *RequestBuilder) SetMethod(method string) *RequestBuilder {
 	return rb
 }
 
-func (rb *RequestBuilder) SetURL(rawUrl string) *RequestBuilder {
+func (rb *RequestBuilder) SetURL(rawURL string) *RequestBuilder {
 	if rb.err == nil {
-		rb.r.URL, rb.err = url.Parse(rawUrl)
+		rb.r.URL, rb.err = url.Parse(rawURL)
 	}
 	return rb
 }
