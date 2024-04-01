@@ -26,10 +26,18 @@ func main() {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
 	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
+	if getMetricsService.Config.RestoreEnable {
+		if err := getMetricsService.Storage.RestoreMetrics(getMetricsService.Config.StoreFilePath); err != nil {
+			sugar.Fatal("RestoreMetrics", err)
+		}
+	}
 	if getMetricsService.Config.StoreEnable && !getMetricsService.Config.SyncStoreEnable {
 		go getMetricsService.DumpMetrics()
 	}
 	run(getMetricsService)
+	if err := getMetricsService.Storage.StoreMetrics(getMetricsService.Config.StoreFilePath); err != nil {
+		sugar.Fatal("StoreMetrics", err)
+	}
 
 }
 

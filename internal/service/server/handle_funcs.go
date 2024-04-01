@@ -21,8 +21,13 @@ func (s *Server) UpdateMetricFromJSON(res http.ResponseWriter, req *http.Request
 		http.Error(res, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
-
 	s.Storage.UpdateMetricValue(newMetrics)
+	if s.Config.SyncStoreEnable {
+		if err := s.Storage.StoreMetrics(s.Config.StoreFilePath); err != nil {
+			s.Logger.Error("StoreMetrics", zap.Error(err))
+			http.Error(res, "error StoreMetrics", http.StatusInternalServerError)
+		}
+	}
 	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(http.StatusOK)
 	if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
@@ -40,6 +45,12 @@ func (s *Server) UpdateMetricFromURL(res http.ResponseWriter, req *http.Request)
 		return
 	}
 	s.Storage.UpdateMetricValue(newMetrics)
+	if s.Config.SyncStoreEnable {
+		if err := s.Storage.StoreMetrics(s.Config.StoreFilePath); err != nil {
+			s.Logger.Error("StoreMetrics", zap.Error(err))
+			http.Error(res, "error StoreMetrics", http.StatusInternalServerError)
+		}
+	}
 	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	res.WriteHeader(http.StatusOK)
 	if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {

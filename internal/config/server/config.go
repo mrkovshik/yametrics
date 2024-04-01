@@ -55,7 +55,7 @@ func (c *ServerConfigBuilder) WithSyncStoreEnable(sync bool) *ServerConfigBuilde
 func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
 	storeInterval := flag.Int("i", 300, "time interval between storing data to file")
-	storeFilePath := flag.String("f", "/tmp/metrics-db.json", "path to storing data file")
+	storeFilePath := flag.String("f", "./tmp/metrics-db.json", "path to storing data file")
 	restoreEnable := flag.Bool("r", true, "is data restore from file enabled")
 
 	flag.Parse()
@@ -63,18 +63,20 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	if c.Config.Address == "" {
 		c.WithAddress(*addr)
 	}
-	if !c.Config.StoreIntervalSet {
-		c.WithStoreInterval(*storeInterval)
-	}
-	if c.Config.StoreInterval == 0 {
-		c.WithSyncStoreEnable(true)
-	}
 	if !c.Config.StoreFilePathSet {
 		c.WithStoreFilePath(*storeFilePath)
 	}
 	if c.Config.StoreFilePath == "" {
 		c.WithStoreEnable(false)
 	}
+
+	if !c.Config.StoreIntervalSet {
+		c.WithStoreInterval(*storeInterval)
+	}
+	if c.Config.StoreInterval == 0 && c.Config.StoreEnable { //Если функция записи в файл отключена, то и эта опция будет отключена
+		c.WithSyncStoreEnable(true)
+	}
+
 	if !c.Config.RestoreEnvSet {
 		c.WithRestoreEnable(*restoreEnable)
 	}

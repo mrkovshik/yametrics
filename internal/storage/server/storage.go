@@ -7,6 +7,7 @@ type (
 		UpdateMetricValue(newMetrics model.Metrics)
 		GetMetricValue(newMetrics model.Metrics) (model.Metrics, error)
 		GetAllMetrics() (string, error)
-		DumpMetrics(path string) error
+		StoreMetrics(path string) error
+		RestoreMetrics(path string) error
 	}
 )
