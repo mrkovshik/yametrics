@@ -35,13 +35,7 @@ func (s *Server) WithLogging(h http.Handler) http.Handler {
 
 func (s *Server) GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//if cType := r.Header.Get("Content-Type"); cType != "application/json" && cType != "text/html" {
-		//	next.ServeHTTP(w, r)
-		//	return
-		//}
-		var (
-			isEncodingSupported = false
-		)
+		var isEncodingSupported = false
 
 		if r.Header.Get(`Content-Encoding`) == `gzip` {
 			gz, err := compress.NewGzipReader(r.Body)
