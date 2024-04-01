@@ -26,7 +26,7 @@ func main() {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
 	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
-	if getMetricsService.Config.StoreEnable && !getMetricsService.Config.SyncStore {
+	if getMetricsService.Config.StoreEnable && !getMetricsService.Config.SyncStoreEnable {
 		go getMetricsService.DumpMetrics()
 	}
 	run(getMetricsService)

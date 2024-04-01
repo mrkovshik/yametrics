@@ -3,21 +3,23 @@ package config
 import (
 	"errors"
 	"flag"
+	"github.com/caarlos0/env/v6"
 	"log"
 	"os"
 
-	"github.com/caarlos0/env/v6"
 	"github.com/mrkovshik/yametrics/internal/utl"
 )
 
 type ServerConfig struct {
-	Address       string `env:"ADDRESS"`
-	StoreInterval int    `env:"STORE_INTERVAL"`
-	SyncStore     bool
-	StoreFilePath string `env:"FILE_STORAGE_PATH"`
-	StoreEnable   bool
-	RestoreEnable bool `env:"RESTORE"`
-	RestoreEnvSet bool
+	Address          string `env:"ADDRESS"`
+	StoreInterval    int    `env:"STORE_INTERVAL" envDefault:"300"`
+	StoreIntervalSet bool
+	SyncStoreEnable  bool   `envDefault:"false"`
+	StoreFilePath    string `env:"FILE_STORAGE_PATH" envDefault:"/tmp/metrics-db.json"`
+	StoreFilePathSet bool
+	StoreEnable      bool `envDefault:"true"`
+	RestoreEnable    bool `env:"RESTORE" envDefault:"true"`
+	RestoreEnvSet    bool
 }
 
 type ServerConfigBuilder struct {
@@ -41,6 +43,14 @@ func (c *ServerConfigBuilder) WithRestoreEnable(restore bool) *ServerConfigBuild
 	c.Config.RestoreEnable = restore
 	return c
 }
+func (c *ServerConfigBuilder) WithStoreEnable(store bool) *ServerConfigBuilder {
+	c.Config.StoreEnable = store
+	return c
+}
+func (c *ServerConfigBuilder) WithSyncStoreEnable(sync bool) *ServerConfigBuilder {
+	c.Config.SyncStoreEnable = sync
+	return c
+}
 
 func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
@@ -53,11 +63,17 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	if c.Config.Address == "" {
 		c.WithAddress(*addr)
 	}
-	if c.Config.StoreInterval == 0 && !c.Config.SyncStore {
+	if !c.Config.StoreIntervalSet {
 		c.WithStoreInterval(*storeInterval)
 	}
-	if c.Config.StoreFilePath == "" && !c.Config.StoreEnable {
+	if c.Config.StoreInterval == 0 {
+		c.WithSyncStoreEnable(true)
+	}
+	if !c.Config.StoreFilePathSet {
 		c.WithStoreFilePath(*storeFilePath)
+	}
+	if c.Config.StoreFilePath == "" {
+		c.WithStoreEnable(false)
 	}
 	if !c.Config.RestoreEnvSet {
 		c.WithRestoreEnable(*restoreEnable)
@@ -66,19 +82,20 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 }
 
 func (c *ServerConfigBuilder) FromEnv() *ServerConfigBuilder {
+
 	if err := env.Parse(c); err != nil {
 		log.Fatal(err)
 	}
 	_, storeIntSet := os.LookupEnv("STORE_INTERVAL")
 	if storeIntSet {
-		c.Config.SyncStore = true
+		c.Config.StoreIntervalSet = true
 	}
 	_, pathSet := os.LookupEnv("FILE_STORAGE_PATH")
 	if pathSet {
-		c.Config.StoreEnable = true
+		c.Config.StoreFilePathSet = true
 	}
-	_, restore := os.LookupEnv("RESTORE")
-	if restore {
+	_, restoreSet := os.LookupEnv("RESTORE")
+	if restoreSet {
 		c.Config.RestoreEnvSet = true
 	}
 	return c
