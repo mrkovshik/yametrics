@@ -68,9 +68,9 @@ func (s *Server) GetMetricFromJSON(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err1.Error(), http.StatusBadRequest)
 		return
 	}
-	metric, err2 := s.Storage.GetMetricValue(newMetrics)
+	metric, err2 := s.Storage.GetMetricByModel(newMetrics)
 	if err2 != nil {
-		s.Logger.Error("s.Storage.GetMetricValue", zap.Error(err2))
+		s.Logger.Error("s.Storage.GetMetricByModel", zap.Error(err2))
 		http.Error(res, "error getting value from server", http.StatusNotFound)
 	}
 	res.Header().Set("Content-Type", "application/json")
@@ -89,9 +89,9 @@ func (s *Server) GetMetricFromURL(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
-	metric, err2 := s.Storage.GetMetricValue(newMetrics)
+	metric, err2 := s.Storage.GetMetricByModel(newMetrics)
 	if err2 != nil {
-		s.Logger.Error("s.Storage.GetMetricValue", zap.Error(err2))
+		s.Logger.Error("s.Storage.GetMetricByModel", zap.Error(err2))
 		http.Error(res, "error getting value from server", http.StatusNotFound)
 	}
 

@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/mrkovshik/yametrics/internal/storage"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
-	"github.com/mrkovshik/yametrics/internal/storage/server"
 	"go.uber.org/zap"
 )
 

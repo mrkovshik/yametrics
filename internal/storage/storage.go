@@ -3,9 +3,9 @@ package storage
 import "github.com/mrkovshik/yametrics/internal/model"
 
 type (
-	IServerStorage interface {
+	IStorage interface {
 		UpdateMetricValue(newMetrics model.Metrics)
-		GetMetricValue(newMetrics model.Metrics) (model.Metrics, error)
+		GetMetricByModel(newMetrics model.Metrics) (model.Metrics, error)
 		GetAllMetrics() (string, error)
 		StoreMetrics(path string) error
 		RestoreMetrics(path string) error

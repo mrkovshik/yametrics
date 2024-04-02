@@ -11,17 +11,17 @@ import (
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
-	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
+	storage "github.com/mrkovshik/yametrics/internal/storage"
 )
 
 type Agent struct {
 	Source  metrics.MetricSource
 	Logger  *zap.SugaredLogger
 	Config  config.AgentConfig
-	Storage storage.IAgentStorage
+	Storage storage.IStorage
 }
 
-func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.IAgentStorage, logger *zap.SugaredLogger) *Agent {
+func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.IStorage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
 		Source:  source,
 		Logger:  logger,
@@ -86,28 +86,19 @@ func (a *Agent) sendMetric(name string) {
 	currentMetric := model.Metrics{
 		ID: name,
 	}
-	if name == "PollCount" {
-		delta, err := a.Storage.LoadCounter()
-		if err != nil {
-			a.Logger.Error("a.Storage.LoadCounter", err)
-			return
-		}
-
+	if name == "PollCounter" {
 		currentMetric.MType = model.MetricTypeCounter
-		currentMetric.Delta = &delta
 	} else {
-		value, err := a.Storage.LoadMetric(name)
-		if err != nil {
-			a.Logger.Error("a.Storage.LoadMetric", err)
-			return
-		}
 		currentMetric.MType = model.MetricTypeGauge
-		currentMetric.Value = &value
 	}
-
+	foundMetric, err := a.Storage.GetMetricByModel(currentMetric)
+	if err != nil {
+		a.Logger.Error("GetMetricByModel", err)
+		return
+	}
 	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.Config.Address)
 
-	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(currentMetric).Compress().SetMethod(http.MethodPost)
+	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(foundMetric).Compress().SetMethod(http.MethodPost)
 	if reqBuilder.Err != nil {
 		a.Logger.Errorf("error building request: %v\nmetric name: %v", reqBuilder.Err, currentMetric.ID)
 		return

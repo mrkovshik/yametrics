@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/mrkovshik/yametrics/internal/storage"
 	"io"
 	"net/http"
 	"strconv"
@@ -15,7 +16,6 @@ import (
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
-	"github.com/mrkovshik/yametrics/internal/storage/server"
 	"github.com/stretchr/testify/require"
 )
 

@@ -1,11 +1,11 @@
 package metrics
 
 import (
-	"log"
+	"github.com/mrkovshik/yametrics/internal/model"
 	"math/rand"
 	"time"
 
-	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
+	storage "github.com/mrkovshik/yametrics/internal/storage"
 )
 
 type MockMetrics struct {
@@ -23,14 +23,42 @@ func NewMockMetrics() MockMetrics {
 	}
 }
 
-func (m MockMetrics) PollMetrics(s storage.IAgentStorage) {
+func (m MockMetrics) PollMetrics(s storage.IStorage) {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	s.SaveMetric("Alloc", m.MemStats["Alloc"])
-	s.SaveMetric("BuckHashSys", m.MemStats["BuckHashSys"])
-	s.SaveMetric("Frees", m.MemStats["Frees"])
-	s.SaveMetric("GCCPUFraction", m.MemStats["GCCPUFraction"])
-	s.SaveMetric("RandomValue", random.Float64())
-	if err := s.UpdateCounter(); err != nil {
-		log.Fatal(err)
-	}
+	alloc := 1.00
+	s.UpdateMetricValue(model.Metrics{
+		ID:    "Alloc",
+		MType: model.MetricTypeGauge,
+		Value: &alloc,
+	})
+	buckHashSys := 2.00
+	s.UpdateMetricValue(model.Metrics{
+		ID:    "BuckHashSys",
+		MType: model.MetricTypeGauge,
+		Value: &buckHashSys,
+	})
+	frees := 3.00
+	s.UpdateMetricValue(model.Metrics{
+		ID:    "Frees",
+		MType: model.MetricTypeGauge,
+		Value: &frees,
+	})
+	gCCPUFraction := 4.00
+	s.UpdateMetricValue(model.Metrics{
+		ID:    "GCCPUFraction",
+		MType: model.MetricTypeGauge,
+		Value: &gCCPUFraction,
+	})
+	randomValue := random.Float64()
+	s.UpdateMetricValue(model.Metrics{
+		ID:    "RandomValue",
+		MType: model.MetricTypeGauge,
+		Value: &randomValue,
+	})
+	delta := int64(1)
+	s.UpdateMetricValue(model.Metrics{
+		ID:    "PollCounter",
+		MType: model.MetricTypeCounter,
+		Delta: &delta,
+	})
 }

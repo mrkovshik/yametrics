@@ -1,9 +1,9 @@
 package metrics
 
 import (
-	storage "github.com/mrkovshik/yametrics/internal/storage/agent"
+	storage "github.com/mrkovshik/yametrics/internal/storage"
 )
 
 type MetricSource interface {
-	PollMetrics(s storage.IAgentStorage)
+	PollMetrics(s storage.IStorage)
 }

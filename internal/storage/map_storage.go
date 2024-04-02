@@ -15,8 +15,8 @@ import (
 )
 
 type MapStorage struct {
-	mu      sync.Mutex
-	metrics map[string]model.Metrics
+	Mu      sync.Mutex
+	Metrics map[string]model.Metrics
 }
 
 func NewMapStorage() *MapStorage {
@@ -29,24 +29,24 @@ func NewMapStorage() *MapStorage {
 
 func (s *MapStorage) UpdateMetricValue(newMetrics model.Metrics) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	found, ok := s.metrics[key]
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	found, ok := s.Metrics[key]
 	if ok && (newMetrics.MType == model.MetricTypeCounter) {
-		newDelta := *s.metrics[key].Delta + *newMetrics.Delta
+		newDelta := *s.Metrics[key].Delta + *newMetrics.Delta
 		found.Delta = &newDelta
-		s.metrics[key] = found
+		s.Metrics[key] = found
 		return
 	}
-	s.metrics[key] = newMetrics
+	s.Metrics[key] = newMetrics
 
 }
 
-func (s *MapStorage) GetMetricValue(newMetrics model.Metrics) (model.Metrics, error) {
+func (s *MapStorage) GetMetricByModel(newMetrics model.Metrics) (model.Metrics, error) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	res, ok := s.metrics[key]
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	res, ok := s.Metrics[key]
 	if !ok {
 		return model.Metrics{}, errors.New("not found")
 	}
@@ -60,9 +60,9 @@ func (s *MapStorage) GetAllMetrics() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if err := t.ExecuteTemplate(&tpl, "list_metrics", s.metrics); err != nil {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	if err := t.ExecuteTemplate(&tpl, "list_metrics", s.Metrics); err != nil {
 		return "", err
 	}
 	return tpl.String(), nil
@@ -75,10 +75,10 @@ func (s *MapStorage) StoreMetrics(path string) error {
 		return err
 	}
 	defer file.Close() //nolint:all
-	//jsonData, err := json.MarshalIndent(s.metrics, "", "   ")
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	jsonData, err := json.Marshal(s.metrics)
+	//jsonData, err := json.MarshalIndent(s.Metrics, "", "   ")
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	jsonData, err := json.Marshal(s.Metrics)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (s *MapStorage) RestoreMetrics(path string) error {
 	if err != nil {
 		return err
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return json.Unmarshal(data, &s.metrics)
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	return json.Unmarshal(data, &s.Metrics)
 }
