@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -48,7 +47,7 @@ func (s *MapStorage) GetMetricByModel(newMetrics model.Metrics) (model.Metrics, 
 	defer s.Mu.Unlock()
 	res, ok := s.Metrics[key]
 	if !ok {
-		return model.Metrics{}, errors.New("not found")
+		return model.Metrics{}, fmt.Errorf("%v not found", key)
 	}
 
 	return res, nil

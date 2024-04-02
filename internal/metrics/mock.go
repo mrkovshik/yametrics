@@ -57,7 +57,7 @@ func (m MockMetrics) PollMetrics(s storage.IStorage) {
 	})
 	delta := int64(1)
 	s.UpdateMetricValue(model.Metrics{
-		ID:    "PollCounter",
+		ID:    "PollCount",
 		MType: model.MetricTypeCounter,
 		Delta: &delta,
 	})

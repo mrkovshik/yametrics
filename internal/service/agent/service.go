@@ -86,7 +86,7 @@ func (a *Agent) sendMetric(name string) {
 	currentMetric := model.Metrics{
 		ID: name,
 	}
-	if name == "PollCounter" {
+	if name == "PollCount" {
 		currentMetric.MType = model.MetricTypeCounter
 	} else {
 		currentMetric.MType = model.MetricTypeGauge

@@ -23,7 +23,7 @@ func Test_getMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			src.PollMetrics(strg)
 			PollCount, err1 := strg.GetMetricByModel(model.Metrics{
-				ID:    "PollCounter",
+				ID:    "PollCount",
 				MType: model.MetricTypeCounter,
 			})
 			assert.NoError(t, err1)
@@ -42,7 +42,7 @@ func Test_getMetrics(t *testing.T) {
 			assert.Equal(t, 2.00, *BuckHashSys.Value)
 			src.PollMetrics(strg)
 			PollCount2, err11 := strg.GetMetricByModel(model.Metrics{
-				ID:    "PollCounter",
+				ID:    "PollCount",
 				MType: model.MetricTypeCounter,
 			})
 			assert.NoError(t, err11)
