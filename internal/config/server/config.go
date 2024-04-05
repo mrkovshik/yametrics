@@ -21,6 +21,7 @@ type ServerConfig struct {
 	StoreEnable      bool `envDefault:"true"`
 	RestoreEnable    bool `env:"RESTORE" envDefault:"true"`
 	RestoreEnvSet    bool
+	DBAddress        string `env:"DATABASE_DSN"`
 }
 
 type ServerConfigBuilder struct {
@@ -32,6 +33,10 @@ func (c *ServerConfigBuilder) WithAddress(host string) *ServerConfigBuilder {
 	return c
 }
 
+func (c *ServerConfigBuilder) WithDSN(dsn string) *ServerConfigBuilder {
+	c.Config.DBAddress = dsn
+	return c
+}
 func (c *ServerConfigBuilder) WithStoreInterval(interval int) *ServerConfigBuilder {
 	c.Config.StoreInterval = interval
 	return c
@@ -58,11 +63,14 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	storeInterval := flag.Int("i", 300, "time interval between storing data to file")
 	storeFilePath := flag.String("f", "./tmp/metrics-db.json", "path to storing data file")
 	restoreEnable := flag.Bool("r", true, "is data restore from file enabled")
-
+	dbAddress := flag.String("d", "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable", "db address")
 	flag.Parse()
 
 	if c.Config.Address == "" {
 		c.WithAddress(*addr)
+	}
+	if c.Config.DBAddress == "" {
+		c.WithDSN(*dbAddress)
 	}
 	if !c.Config.StoreFilePathSet {
 		c.WithStoreFilePath(*storeFilePath)
