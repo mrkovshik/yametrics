@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mrkovshik/yametrics/internal/utl"
+	"github.com/mrkovshik/yametrics/internal/util"
 )
 
 type ServerConfig struct {
@@ -106,7 +106,7 @@ func (c *ServerConfigBuilder) FromEnv() *ServerConfigBuilder {
 func GetConfigs() (ServerConfig, error) {
 	var c ServerConfigBuilder
 	c.FromEnv().FromFlags()
-	if !utl.ValidateAddress(c.Config.Address) {
+	if !util.ValidateAddress(c.Config.Address) {
 		return ServerConfig{}, errors.New("need address in a form host:port")
 	}
 	return c.Config, nil

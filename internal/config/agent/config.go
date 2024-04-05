@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/mrkovshik/yametrics/internal/utl"
+	"github.com/mrkovshik/yametrics/internal/util"
 )
 
 type AgentConfig struct {
@@ -62,7 +62,7 @@ func (c *AgentConfigBuilder) FromEnv() *AgentConfigBuilder {
 func GetConfigs() (AgentConfig, error) {
 	var c AgentConfigBuilder
 	c.FromEnv().FromFlags()
-	if !utl.ValidateAddress(c.Config.Address) {
+	if !util.ValidateAddress(c.Config.Address) {
 		return AgentConfig{}, errors.New("need address in a form host:port")
 	}
 	return c.Config, nil
