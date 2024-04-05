@@ -2,26 +2,24 @@ package service
 
 import (
 	"fmt"
+	"github.com/mrkovshik/yametrics/internal/model"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 
-	"github.com/mrkovshik/yametrics/internal/model"
-
-	"go.uber.org/zap"
-
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
-	storage "github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
 type Agent struct {
 	Source  metrics.MetricSource
 	Logger  *zap.SugaredLogger
 	Config  config.AgentConfig
-	Storage storage.IStorage
+	Storage storage.Storage
 }
 
-func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.IStorage, logger *zap.SugaredLogger) *Agent {
+func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.Storage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
 		Source:  source,
 		Logger:  logger,

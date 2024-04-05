@@ -18,7 +18,7 @@ type MapStorage struct {
 	Metrics map[string]model.Metrics
 }
 
-func NewMapStorage() *MapStorage {
+func NewMapStorage() Storage {
 	s := make(map[string]model.Metrics)
 	return &MapStorage{
 		sync.Mutex{},

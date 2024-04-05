@@ -20,7 +20,7 @@ func NewRuntimeMetrics() RuntimeMetrics {
 	return m
 }
 
-func (m RuntimeMetrics) PollMetrics(s storage.IStorage) {
+func (m RuntimeMetrics) PollMetrics(s storage.Storage) {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	runtime.ReadMemStats(&m.MemStats)
 	valueAlloc := float64(m.MemStats.Alloc)

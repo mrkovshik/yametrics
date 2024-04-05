@@ -23,7 +23,7 @@ func NewMockMetrics() MockMetrics {
 	}
 }
 
-func (m MockMetrics) PollMetrics(s storage.IStorage) {
+func (m MockMetrics) PollMetrics(s storage.Storage) {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	alloc := 1.00
 	s.UpdateMetricValue(model.Metrics{

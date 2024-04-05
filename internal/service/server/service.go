@@ -7,12 +7,12 @@ import (
 )
 
 type Server struct {
-	Storage storage.IStorage
+	Storage storage.Storage
 	Config  config.ServerConfig
 	Logger  *zap.SugaredLogger
 }
 
-func NewServer(storage storage.IStorage, cfg config.ServerConfig, logger *zap.SugaredLogger) *Server {
+func NewServer(storage storage.Storage, cfg config.ServerConfig, logger *zap.SugaredLogger) *Server {
 	return &Server{
 		Storage: storage,
 		Config:  cfg,
