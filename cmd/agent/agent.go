@@ -28,7 +28,7 @@ func main() {
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
 	agent := service.NewAgent(src, cfg, strg, sugar)
-	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", agent.Config.Address, agent.Config.PollInterval, agent.Config.ReportInterval)
+	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", cfg.Address, cfg.PollInterval, cfg.ReportInterval)
 	go agent.PollMetrics()
 	go agent.SendMetrics()
 	select {}

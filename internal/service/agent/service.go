@@ -13,18 +13,18 @@ import (
 )
 
 type Agent struct {
-	Source  metrics.MetricSource
-	Logger  *zap.SugaredLogger
-	Config  config.AgentConfig
-	Storage storage.Storage
+	source  metrics.MetricSource
+	logger  *zap.SugaredLogger
+	config  config.AgentConfig
+	storage storage.Storage
 }
 
 func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.Storage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
-		Source:  source,
-		Logger:  logger,
-		Config:  cfg,
-		Storage: strg,
+		source:  source,
+		logger:  logger,
+		config:  cfg,
+		storage: strg,
 	}
 }
 
@@ -60,9 +60,9 @@ func (a *Agent) SendMetrics() {
 		"RandomValue":   {},
 		"PollCount":     {},
 	}
-	//a.Logger.Debug("Starting to send metrics")
+	//a.logger.Debug("Starting to send metrics")
 	for {
-		time.Sleep(time.Duration(a.Config.ReportInterval) * time.Second)
+		time.Sleep(time.Duration(a.config.ReportInterval) * time.Second)
 		for name := range metricNamesMap {
 			go a.sendMetric(name)
 		}
@@ -73,9 +73,9 @@ func (a *Agent) SendMetrics() {
 func (a *Agent) PollMetrics() {
 
 	for {
-		//a.Logger.Debug("Starting to update metrics")
-		a.Source.PollMetrics(a.Storage)
-		time.Sleep(time.Duration(a.Config.PollInterval) * time.Second)
+		//a.logger.Debug("Starting to update metrics")
+		a.source.PollMetrics(a.storage)
+		time.Sleep(time.Duration(a.config.PollInterval) * time.Second)
 	}
 }
 
@@ -89,29 +89,29 @@ func (a *Agent) sendMetric(name string) {
 	} else {
 		currentMetric.MType = model.MetricTypeGauge
 	}
-	foundMetric, err := a.Storage.GetMetricByModel(currentMetric)
+	foundMetric, err := a.storage.GetMetricByModel(currentMetric)
 	if err != nil {
-		a.Logger.Error("GetMetricByModel", err)
+		a.logger.Error("GetMetricByModel", err)
 		return
 	}
-	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.Config.Address)
+	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.config.Address)
 
 	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(foundMetric).Compress().SetMethod(http.MethodPost)
 	if reqBuilder.Err != nil {
-		a.Logger.Errorf("error building request: %v\nmetric name: %v", reqBuilder.Err, currentMetric.ID)
+		a.logger.Errorf("error building request: %v\nmetric name: %v", reqBuilder.Err, currentMetric.ID)
 		return
 	}
 	response, err := client.Do(&reqBuilder.R)
 	if err != nil {
-		a.Logger.Errorf("error sending request: %v\nmetric name: %v", err, currentMetric.ID)
+		a.logger.Errorf("error sending request: %v\nmetric name: %v", err, currentMetric.ID)
 		return
 	}
 	if response.StatusCode != http.StatusOK {
-		a.Logger.Errorf("status code is %v, while sending %v\n", response.StatusCode, currentMetric)
+		a.logger.Errorf("status code is %v, while sending %v\n", response.StatusCode, currentMetric)
 		return
 	}
 	if err := response.Body.Close(); err != nil {
-		a.Logger.Error("response.Body.Close()", err)
+		a.logger.Error("response.Body.Close()", err)
 		return
 	}
 }

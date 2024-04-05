@@ -26,22 +26,22 @@ func main() {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
 	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
-	if getMetricsService.Config.RestoreEnable {
-		if err := getMetricsService.Storage.RestoreMetrics(getMetricsService.Config.StoreFilePath); err != nil {
+	if cfg.RestoreEnable {
+		if err := getMetricsService.RestoreMetrics(cfg.StoreFilePath); err != nil {
 			sugar.Fatal("RestoreMetrics", err)
 		}
 	}
-	if getMetricsService.Config.StoreEnable && !getMetricsService.Config.SyncStoreEnable {
+	if cfg.StoreEnable && !cfg.SyncStoreEnable {
 		go getMetricsService.DumpMetrics()
 	}
-	run(getMetricsService)
-	if err := getMetricsService.Storage.StoreMetrics(getMetricsService.Config.StoreFilePath); err != nil {
+	run(getMetricsService, sugar, cfg)
+	if err := getMetricsService.StoreMetrics(cfg.StoreFilePath); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
 
 }
 
-func run(s *service.Server) {
+func run(s *service.Server, logger *zap.SugaredLogger, cfg config.ServerConfig) {
 	r := chi.NewRouter()
 	r.Use(s.WithLogging, s.GzipHandle)
 	r.Route("/update", func(r chi.Router) {
@@ -53,6 +53,6 @@ func run(s *service.Server) {
 		r.Get("/{type}/{name}", api.GetMetricFromURLHandler(s))
 	})
 	r.Get("/", api.GetMetricsHandler(s))
-	s.Logger.Infof("Starting server on %v\n", s.Config.Address)
-	s.Logger.Fatal(http.ListenAndServe(s.Config.Address, r))
+	logger.Infof("Starting server on %v\n", cfg.Address)
+	logger.Fatal(http.ListenAndServe(cfg.Address, r))
 }

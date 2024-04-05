@@ -22,7 +22,7 @@ func (s *Server) WithLogging(h http.Handler) http.Handler {
 		}
 		h.ServeHTTP(&lw, r)
 		duration := time.Since(start)
-		s.Logger.Infoln(
+		s.logger.Infoln(
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", responseData.Status,
