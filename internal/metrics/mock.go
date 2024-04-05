@@ -1,11 +1,12 @@
 package metrics
 
 import (
-	"github.com/mrkovshik/yametrics/internal/model"
 	"math/rand"
 	"time"
 
-	storage "github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/model"
+
+	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
 type MockMetrics struct {

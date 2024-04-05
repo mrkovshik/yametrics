@@ -2,10 +2,11 @@ package service
 
 import (
 	"fmt"
-	"github.com/mrkovshik/yametrics/internal/model"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
+
+	"github.com/mrkovshik/yametrics/internal/model"
+	"go.uber.org/zap"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"

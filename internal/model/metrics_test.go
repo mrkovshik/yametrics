@@ -3,9 +3,10 @@ package model
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMetrics_ValidateMetrics(t *testing.T) {

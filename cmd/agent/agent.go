@@ -1,13 +1,14 @@
 package main
 
 import (
-	"go.uber.org/zap"
 	"log"
+
+	"go.uber.org/zap"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 	service "github.com/mrkovshik/yametrics/internal/service/agent"
-	storage "github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
 func main() {

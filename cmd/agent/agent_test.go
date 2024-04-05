@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/mrkovshik/yametrics/internal/model"
 	"testing"
 
+	"github.com/mrkovshik/yametrics/internal/model"
+
 	"github.com/mrkovshik/yametrics/internal/metrics"
-	storage "github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 )
 

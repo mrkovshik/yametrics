@@ -3,9 +3,10 @@ package config
 import (
 	"errors"
 	"flag"
-	"github.com/caarlos0/env/v6"
 	"log"
 	"os"
+
+	"github.com/caarlos0/env/v6"
 
 	"github.com/mrkovshik/yametrics/internal/util"
 )

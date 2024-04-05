@@ -1,12 +1,13 @@
 package metrics
 
 import (
-	"github.com/mrkovshik/yametrics/internal/model"
 	"math/rand"
 	"runtime"
 	"time"
 
-	storage "github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/model"
+
+	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
 type RuntimeMetrics struct {
