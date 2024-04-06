@@ -1,16 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
-	"github.com/mrkovshik/yametrics/internal/storage"
 	"io"
 	"net/http"
 	"strconv"
 	"testing"
 	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/internal/model"
 	service2 "github.com/mrkovshik/yametrics/internal/service/agent"
+	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -249,6 +251,18 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
+		{
+			name: "positive ping #1",
+			request: request{
+				method:      http.MethodGet,
+				url:         "http://localhost:8080/ping",
+				contentType: "text/plain; charset=utf-8",
+			},
+			want: want{
+				code:        http.StatusOK,
+				contentType: "",
+			},
+		},
 	}
 
 	mapStorage := storage.NewMapStorage()
@@ -261,15 +275,14 @@ func Test_server(t *testing.T) {
 	sugar := logger.Sugar()
 	cfg, err2 := config.GetConfigs()
 	require.NoError(t, err2)
-	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
+	db, errDB := sql.Open("postgres", cfg.DBAddress)
+	require.NoError(t, errDB)
+	getMetricsService := service.NewServer(mapStorage, cfg, sugar, db)
 	go run(getMetricsService, sugar, cfg)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//err22 := json.NewEncoder(&buf).Encode(tt.request.req)
-			//require.NoError(t, err22)
 			client := &http.Client{}
-			//req, err3 := http.NewRequest(tt.request.method, tt.request.url, &buf)
 			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method)
 			if tt.request.contentType == "application/json" {
 				req.AddJSONBody(tt.request.req)

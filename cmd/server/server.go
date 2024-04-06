@@ -1,10 +1,14 @@
 package main
 
 import (
-	"github.com/mrkovshik/yametrics/internal/storage"
+	"database/sql"
 	"net/http"
 
+	"github.com/mrkovshik/yametrics/internal/storage"
+
 	"github.com/go-chi/chi/v5"
+
+	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
@@ -25,7 +29,14 @@ func main() {
 	if err != nil {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
-	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
+
+	db, err := sql.Open("postgres", cfg.DBAddress)
+	if err != nil {
+		sugar.Fatal("sql.Open", err)
+	}
+
+	defer db.Close() //nolint:all
+	getMetricsService := service.NewServer(mapStorage, cfg, sugar, db)
 	if cfg.RestoreEnable {
 		if err := getMetricsService.RestoreMetrics(cfg.StoreFilePath); err != nil {
 			sugar.Fatal("RestoreMetrics", err)
@@ -52,6 +63,7 @@ func run(s *service.Server, logger *zap.SugaredLogger, cfg config.ServerConfig) 
 		r.Post("/", api.GetMetricFromJSONHandler(s))
 		r.Get("/{type}/{name}", api.GetMetricFromURLHandler(s))
 	})
+	r.Get("/ping", api.Ping(s))
 	r.Get("/", api.GetMetricsHandler(s))
 	logger.Infof("Starting server on %v\n", cfg.Address)
 	logger.Fatal(http.ListenAndServe(cfg.Address, r))

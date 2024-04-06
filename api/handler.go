@@ -25,3 +25,7 @@ func GetMetricFromURLHandler(s *service.Server) func(http.ResponseWriter, *http.
 func GetMetricsHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
 	return s.GetMetrics
 }
+
+func Ping(s *service.Server) func(http.ResponseWriter, *http.Request) {
+	return s.Ping
+}

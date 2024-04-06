@@ -63,7 +63,7 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	storeInterval := flag.Int("i", 300, "time interval between storing data to file")
 	storeFilePath := flag.String("f", "./tmp/metrics-db.json", "path to storing data file")
 	restoreEnable := flag.Bool("r", true, "is data restore from file enabled")
-	dbAddress := flag.String("d", "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable", "db address")
+	dbAddress := flag.String("d", "host=localhost port=5432 user=yandex password=yandex dbname=yandex sslmode=disable", "db address")
 	flag.Parse()
 
 	if c.Config.Address == "" {

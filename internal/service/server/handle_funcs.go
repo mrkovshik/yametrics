@@ -1,10 +1,12 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/mrkovshik/yametrics/internal/model"
 
@@ -122,6 +124,20 @@ func (s *Server) GetMetrics(res http.ResponseWriter, _ *http.Request) {
 	}
 	res.WriteHeader(http.StatusOK)
 	if _, err := res.Write([]byte(body)); err != nil {
+		s.logger.Error("res.Write", zap.Error(err))
+		http.Error(res, "error res.Write", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) Ping(res http.ResponseWriter, _ *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	if err := s.db.PingContext(ctx); err != nil {
+		s.logger.Error("PingContext", zap.Error(err))
+		http.Error(res, "data base is not responding", http.StatusInternalServerError)
+	}
+	res.WriteHeader(http.StatusOK)
+	if _, err := res.Write([]byte("database is alive")); err != nil {
 		s.logger.Error("res.Write", zap.Error(err))
 		http.Error(res, "error res.Write", http.StatusInternalServerError)
 	}
