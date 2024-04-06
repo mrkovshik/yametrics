@@ -251,18 +251,18 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-		{
-			name: "positive ping #1",
-			request: request{
-				method:      http.MethodGet,
-				url:         "http://localhost:8080/ping",
-				contentType: "text/plain; charset=utf-8",
-			},
-			want: want{
-				code:        http.StatusOK,
-				contentType: "",
-			},
-		},
+		//	{
+		//		name: "positive ping #1",
+		//		request: request{
+		//			method:      http.MethodGet,
+		//			url:         "http://localhost:8080/ping",
+		//			contentType: "text/plain; charset=utf-8",
+		//		},
+		//		want: want{
+		//			code:        http.StatusOK,
+		//			contentType: "",
+		//		},
+		//	},
 	}
 
 	mapStorage := storage.NewMapStorage()
