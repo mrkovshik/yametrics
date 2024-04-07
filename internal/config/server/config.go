@@ -22,6 +22,8 @@ type ServerConfig struct {
 	RestoreEnable    bool `env:"RESTORE" envDefault:"true"`
 	RestoreEnvSet    bool
 	DBAddress        string `env:"DATABASE_DSN"`
+	DBAddressIsSet   bool
+	DBEnable         bool
 }
 
 type ServerConfigBuilder struct {
@@ -37,6 +39,11 @@ func (c *ServerConfigBuilder) WithDSN(dsn string) *ServerConfigBuilder {
 	c.Config.DBAddress = dsn
 	return c
 }
+func (c *ServerConfigBuilder) WithDBEnable() *ServerConfigBuilder {
+	c.Config.DBEnable = true
+	return c
+}
+
 func (c *ServerConfigBuilder) WithStoreInterval(interval int) *ServerConfigBuilder {
 	c.Config.StoreInterval = interval
 	return c
@@ -69,8 +76,11 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	if c.Config.Address == "" {
 		c.WithAddress(*addr)
 	}
-	if c.Config.DBAddress == "" {
+	if !c.Config.DBAddressIsSet {
 		c.WithDSN(*dbAddress)
+	}
+	if c.Config.DBAddress != "" {
+		c.WithDBEnable()
 	}
 	if !c.Config.StoreFilePathSet {
 		c.WithStoreFilePath(*storeFilePath)

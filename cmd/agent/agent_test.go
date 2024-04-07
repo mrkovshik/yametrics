@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 
 	"github.com/mrkovshik/yametrics/internal/model"
@@ -14,6 +15,7 @@ func Test_getMetrics(t *testing.T) {
 	var (
 		src  = metrics.NewMockMetrics()
 		strg = storage.NewMapStorage()
+		ctx  = context.Background()
 	)
 	tests := []struct {
 		name string
@@ -23,26 +25,26 @@ func Test_getMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			src.PollMetrics(strg)
-			PollCount, err1 := strg.GetMetricByModel(model.Metrics{
+			PollCount, err1 := strg.GetMetricByModel(ctx, model.Metrics{
 				ID:    "PollCount",
 				MType: model.MetricTypeCounter,
 			})
 			assert.NoError(t, err1)
 			assert.Equal(t, int64(1), *PollCount.Delta)
-			Alloc, err2 := strg.GetMetricByModel(model.Metrics{
+			Alloc, err2 := strg.GetMetricByModel(ctx, model.Metrics{
 				ID:    "Alloc",
 				MType: model.MetricTypeGauge,
 			})
 			assert.NoError(t, err2)
 			assert.Equal(t, 1.00, *Alloc.Value)
-			BuckHashSys, err3 := strg.GetMetricByModel(model.Metrics{
+			BuckHashSys, err3 := strg.GetMetricByModel(ctx, model.Metrics{
 				ID:    "BuckHashSys",
 				MType: model.MetricTypeGauge,
 			})
 			assert.NoError(t, err3)
 			assert.Equal(t, 2.00, *BuckHashSys.Value)
 			src.PollMetrics(strg)
-			PollCount2, err11 := strg.GetMetricByModel(model.Metrics{
+			PollCount2, err11 := strg.GetMetricByModel(ctx, model.Metrics{
 				ID:    "PollCount",
 				MType: model.MetricTypeCounter,
 			})

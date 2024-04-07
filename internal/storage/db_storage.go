@@ -25,12 +25,12 @@ func NewDBStorage(db *sql.DB) Storage {
 
 func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
 	query := `
-        INSERT INTO users (id, type, value, delta)
+        INSERT INTO metrics (id, type, value, delta)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id)
         DO UPDATE SET type = $2, value = $3, delta = $4
     `
-	_, err := s.db.ExecContext(ctx, query, newMetrics.ID, newMetrics.Value, newMetrics.Delta, newMetrics.ID)
+	_, err := s.db.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
 	if err != nil {
 		return err
 	}
@@ -39,12 +39,12 @@ func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metr
 
 func (s *DBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	query := `
-  SELECT * FROM metrics
+  SELECT id, type, value, delta FROM metrics
   WHERE id = $1
     `
 	row := s.db.QueryRowContext(ctx, query, newMetrics.ID)
 	var foundMetric model.Metrics
-	if err := row.Scan(foundMetric.ID, foundMetric.MType, foundMetric.Value, foundMetric.Delta); err != nil {
+	if err := row.Scan(&foundMetric.ID, &foundMetric.MType, &foundMetric.Value, &foundMetric.Delta); err != nil {
 		return model.Metrics{}, err
 	}
 	return foundMetric, nil
@@ -111,9 +111,13 @@ func (s *DBStorage) RestoreMetrics(ctx context.Context, path string) error {
 	return nil
 }
 
+func (s *DBStorage) Ping(ctx context.Context) error {
+	return s.db.PingContext(ctx)
+}
+
 func (s *DBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.Metrics, error) {
 	metricMap := make(map[string]model.Metrics)
-	query := `SELECT * FROM metrics`
+	query := `SELECT id, type, value, delta FROM metrics`
 	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
 		return map[string]model.Metrics{}, err
@@ -121,7 +125,7 @@ func (s *DBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.M
 	defer rows.Close() //nolint:all
 	for rows.Next() {
 		currentMetric := model.Metrics{}
-		if err := rows.Scan(currentMetric.ID, currentMetric.MType, currentMetric.Value, currentMetric.Delta); err != nil {
+		if err := rows.Scan(&currentMetric.ID, &currentMetric.MType, &currentMetric.Value, &currentMetric.Delta); err != nil {
 			return map[string]model.Metrics{}, err
 		}
 		metricMap[currentMetric.ID] = currentMetric

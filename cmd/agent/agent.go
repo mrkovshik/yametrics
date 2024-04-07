@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"go.uber.org/zap"
@@ -28,9 +29,11 @@ func main() {
 	}
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
+	ctx := context.Background()
 	agent := service.NewAgent(src, cfg, strg, sugar)
 	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", cfg.Address, cfg.PollInterval, cfg.ReportInterval)
+
 	go agent.PollMetrics()
-	go agent.SendMetrics()
+	go agent.SendMetrics(ctx)
 	select {}
 }

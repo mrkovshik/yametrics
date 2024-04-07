@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -24,32 +25,47 @@ func main() {
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
 
-	mapStorage := storage.NewMapStorage()
 	cfg, err := config.GetConfigs()
 	if err != nil {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
-
-	db, err := sql.Open("postgres", cfg.DBAddress)
-	if err != nil {
-		sugar.Fatal("sql.Open", err)
+	metricStorage := storage.NewMapStorage()
+	var db *sql.DB
+	if cfg.DBEnable {
+		db, err = sql.Open("postgres", cfg.DBAddress)
+		if err != nil {
+			sugar.Fatal("sql.Open", err)
+		}
+		ddl := `CREATE TABLE IF NOT EXISTS metrics  
+		(
+		    id    varchar not null
+		constraint metrics_pk
+		primary key,
+			type  varchar not null,
+			value double precision,
+			delta integer			
+		);`
+		_, err := db.Exec(ddl)
+		if err != nil {
+			sugar.Fatal("Exec", err)
+		}
+		defer db.Close() //nolint:all
+		metricStorage = storage.NewDBStorage(db)
 	}
-
-	defer db.Close() //nolint:all
-	getMetricsService := service.NewServer(mapStorage, cfg, sugar, db)
+	ctx := context.Background()
+	getMetricsService := service.NewServer(metricStorage, cfg, sugar, db)
 	if cfg.RestoreEnable {
-		if err := getMetricsService.RestoreMetrics(cfg.StoreFilePath); err != nil {
+		if err := getMetricsService.RestoreMetrics(ctx, cfg.StoreFilePath); err != nil {
 			sugar.Fatal("RestoreMetrics", err)
 		}
 	}
 	if cfg.StoreEnable && !cfg.SyncStoreEnable {
-		go getMetricsService.DumpMetrics()
+		go getMetricsService.DumpMetrics(ctx)
 	}
 	run(getMetricsService, sugar, cfg)
-	if err := getMetricsService.StoreMetrics(cfg.StoreFilePath); err != nil {
+	if err := getMetricsService.StoreMetrics(ctx, cfg.StoreFilePath); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
-
 }
 
 func run(s *service.Server, logger *zap.SugaredLogger, cfg config.ServerConfig) {
@@ -63,6 +79,7 @@ func run(s *service.Server, logger *zap.SugaredLogger, cfg config.ServerConfig) 
 		r.Post("/", api.GetMetricFromJSONHandler(s))
 		r.Get("/{type}/{name}", api.GetMetricFromURLHandler(s))
 	})
+
 	r.Get("/ping", api.Ping(s))
 	r.Get("/", api.GetMetricsHandler(s))
 	logger.Infof("Starting server on %v\n", cfg.Address)

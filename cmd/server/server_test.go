@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -251,18 +250,6 @@ func Test_server(t *testing.T) {
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
-		//	{
-		//		name: "positive ping #1",
-		//		request: request{
-		//			method:      http.MethodGet,
-		//			url:         "http://localhost:8080/ping",
-		//			contentType: "text/plain; charset=utf-8",
-		//		},
-		//		want: want{
-		//			code:        http.StatusOK,
-		//			contentType: "",
-		//		},
-		//	},
 	}
 
 	mapStorage := storage.NewMapStorage()
@@ -275,9 +262,7 @@ func Test_server(t *testing.T) {
 	sugar := logger.Sugar()
 	cfg, err2 := config.GetConfigs()
 	require.NoError(t, err2)
-	db, errDB := sql.Open("postgres", cfg.DBAddress)
-	require.NoError(t, errDB)
-	getMetricsService := service.NewServer(mapStorage, cfg, sugar, db)
+	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
 	go run(getMetricsService, sugar, cfg)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {

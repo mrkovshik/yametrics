@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"math/rand"
 	"time"
 
@@ -24,42 +25,56 @@ func NewMockMetrics() MockMetrics {
 	}
 }
 
-func (m MockMetrics) PollMetrics(s storage.Storage) {
+func (m MockMetrics) PollMetrics(s storage.Storage) error {
+	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	alloc := 1.00
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "Alloc",
 		MType: model.MetricTypeGauge,
 		Value: &alloc,
-	})
+	}); err != nil {
+		return err
+	}
 	buckHashSys := 2.00
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "BuckHashSys",
 		MType: model.MetricTypeGauge,
 		Value: &buckHashSys,
-	})
+	}); err != nil {
+		return err
+	}
 	frees := 3.00
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "Frees",
 		MType: model.MetricTypeGauge,
 		Value: &frees,
-	})
+	}); err != nil {
+		return err
+	}
 	gCCPUFraction := 4.00
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "GCCPUFraction",
 		MType: model.MetricTypeGauge,
 		Value: &gCCPUFraction,
-	})
+	}); err != nil {
+		return err
+	}
 	randomValue := random.Float64()
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "RandomValue",
 		MType: model.MetricTypeGauge,
 		Value: &randomValue,
-	})
+	}); err != nil {
+		return err
+	}
 	delta := int64(1)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "PollCount",
 		MType: model.MetricTypeCounter,
 		Delta: &delta,
-	})
+	}); err != nil {
+		return err
+	}
+	return nil
 }

@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"math/rand"
 	"runtime"
 	"time"
@@ -21,180 +22,240 @@ func NewRuntimeMetrics() RuntimeMetrics {
 	return m
 }
 
-func (m RuntimeMetrics) PollMetrics(s storage.Storage) {
+func (m RuntimeMetrics) PollMetrics(s storage.Storage) error {
+	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	runtime.ReadMemStats(&m.MemStats)
 	valueAlloc := float64(m.MemStats.Alloc)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "Alloc",
 		MType: model.MetricTypeGauge,
 		Value: &valueAlloc,
-	})
+	}); err != nil {
+		return err
+	}
 	valueBuckHashSys := float64(m.MemStats.BuckHashSys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "BuckHashSys",
 		MType: model.MetricTypeGauge,
 		Value: &valueBuckHashSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valueFrees := float64(m.MemStats.Frees)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "Frees",
 		MType: model.MetricTypeGauge,
 		Value: &valueFrees,
-	})
-	s.UpdateMetricValue(model.Metrics{
+	}); err != nil {
+		return err
+	}
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "GCCPUFraction",
 		MType: model.MetricTypeGauge,
 		Value: &m.MemStats.GCCPUFraction,
-	})
+	}); err != nil {
+		return err
+	}
 	valueGCSys := float64(m.MemStats.GCSys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "GCSys",
 		MType: model.MetricTypeGauge,
 		Value: &valueGCSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valueHeapAlloc := float64(m.MemStats.HeapAlloc)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "HeapAlloc",
 		MType: model.MetricTypeGauge,
 		Value: &valueHeapAlloc,
-	})
+	}); err != nil {
+		return err
+	}
 	valueHeapIdle := float64(m.MemStats.HeapIdle)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "HeapIdle",
 		MType: model.MetricTypeGauge,
 		Value: &valueHeapIdle,
-	})
+	}); err != nil {
+		return err
+	}
 	valueHeapInuse := float64(m.MemStats.HeapInuse)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "HeapInuse",
 		MType: model.MetricTypeGauge,
 		Value: &valueHeapInuse,
-	})
+	}); err != nil {
+		return err
+	}
 	valueHeapObjects := float64(m.MemStats.HeapObjects)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "HeapObjects",
 		MType: model.MetricTypeGauge,
 		Value: &valueHeapObjects,
-	})
+	}); err != nil {
+		return err
+	}
 	valueHeapReleased := float64(m.MemStats.HeapReleased)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "HeapReleased",
 		MType: model.MetricTypeGauge,
 		Value: &valueHeapReleased,
-	})
+	}); err != nil {
+		return err
+	}
 	valueHeapSys := float64(m.MemStats.HeapSys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "HeapSys",
 		MType: model.MetricTypeGauge,
 		Value: &valueHeapSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valueLastGC := float64(m.MemStats.LastGC)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "LastGC",
 		MType: model.MetricTypeGauge,
 		Value: &valueLastGC,
-	})
+	}); err != nil {
+		return err
+	}
 	valueLookups := float64(m.MemStats.Lookups)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "Lookups",
 		MType: model.MetricTypeGauge,
 		Value: &valueLookups,
-	})
+	}); err != nil {
+		return err
+	}
 	valueMCacheInuse := float64(m.MemStats.MCacheInuse)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "MCacheInuse",
 		MType: model.MetricTypeGauge,
 		Value: &valueMCacheInuse,
-	})
+	}); err != nil {
+		return err
+	}
 	valueMCacheSys := float64(m.MemStats.MCacheSys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "MCacheSys",
 		MType: model.MetricTypeGauge,
 		Value: &valueMCacheSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valueMSpanInuse := float64(m.MemStats.MSpanInuse)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "MSpanInuse",
 		MType: model.MetricTypeGauge,
 		Value: &valueMSpanInuse,
-	})
+	}); err != nil {
+		return err
+	}
 	valueMSpanSys := float64(m.MemStats.MSpanSys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "MSpanSys",
 		MType: model.MetricTypeGauge,
 		Value: &valueMSpanSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valueMallocs := float64(m.MemStats.Mallocs)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "Mallocs",
 		MType: model.MetricTypeGauge,
 		Value: &valueMallocs,
-	})
+	}); err != nil {
+		return err
+	}
 	valueNextGC := float64(m.MemStats.NextGC)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "NextGC",
 		MType: model.MetricTypeGauge,
 		Value: &valueNextGC,
-	})
+	}); err != nil {
+		return err
+	}
 	valueNumForcedGC := float64(m.MemStats.NumForcedGC)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "NumForcedGC",
 		MType: model.MetricTypeGauge,
 		Value: &valueNumForcedGC,
-	})
+	}); err != nil {
+		return err
+	}
 	valueNumGC := float64(m.MemStats.NumGC)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "NumGC",
 		MType: model.MetricTypeGauge,
 		Value: &valueNumGC,
-	})
+	}); err != nil {
+		return err
+	}
 	valueOtherSys := float64(m.MemStats.OtherSys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "OtherSys",
 		MType: model.MetricTypeGauge,
 		Value: &valueOtherSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valuePauseTotalNs := float64(m.MemStats.PauseTotalNs)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "PauseTotalNs",
 		MType: model.MetricTypeGauge,
 		Value: &valuePauseTotalNs,
-	})
+	}); err != nil {
+		return err
+	}
 	valueStackInuse := float64(m.MemStats.StackInuse)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "StackInuse",
 		MType: model.MetricTypeGauge,
 		Value: &valueStackInuse,
-	})
+	}); err != nil {
+		return err
+	}
 	valueStackSys := float64(m.MemStats.StackSys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "StackSys",
 		MType: model.MetricTypeGauge,
 		Value: &valueStackSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valueSys := float64(m.MemStats.Sys)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "Sys",
 		MType: model.MetricTypeGauge,
 		Value: &valueSys,
-	})
+	}); err != nil {
+		return err
+	}
 	valueTotalAlloc := float64(m.MemStats.TotalAlloc)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "TotalAlloc",
 		MType: model.MetricTypeGauge,
 		Value: &valueTotalAlloc,
-	})
+	}); err != nil {
+		return err
+	}
 	valueRandom := random.Float64()
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "RandomValue",
 		MType: model.MetricTypeGauge,
 		Value: &valueRandom,
-	})
+	}); err != nil {
+		return err
+	}
 	delta := int64(1)
-	s.UpdateMetricValue(model.Metrics{
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
 		ID:    "PollCount",
 		MType: model.MetricTypeCounter,
 		Delta: &delta,
-	})
+	}); err != nil {
+		return err
+	}
+	return nil
 }

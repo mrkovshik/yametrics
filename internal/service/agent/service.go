@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -29,7 +30,7 @@ func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.
 	}
 }
 
-func (a *Agent) SendMetrics() {
+func (a *Agent) SendMetrics(ctx context.Context) {
 	var metricNamesMap = map[string]struct{}{
 		"Alloc":         {},
 		"BuckHashSys":   {},
@@ -65,7 +66,7 @@ func (a *Agent) SendMetrics() {
 	for {
 		time.Sleep(time.Duration(a.config.ReportInterval) * time.Second)
 		for name := range metricNamesMap {
-			go a.sendMetric(name)
+			go a.sendMetric(ctx, name)
 		}
 	}
 
@@ -80,7 +81,7 @@ func (a *Agent) PollMetrics() {
 	}
 }
 
-func (a *Agent) sendMetric(name string) {
+func (a *Agent) sendMetric(ctx context.Context, name string) {
 	var client = http.Client{Timeout: 30 * time.Second}
 	currentMetric := model.Metrics{
 		ID: name,
@@ -90,7 +91,7 @@ func (a *Agent) sendMetric(name string) {
 	} else {
 		currentMetric.MType = model.MetricTypeGauge
 	}
-	foundMetric, err := a.storage.GetMetricByModel(currentMetric)
+	foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
 	if err != nil {
 		a.logger.Error("GetMetricByModel", err)
 		return
