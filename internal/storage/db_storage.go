@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 
@@ -24,13 +25,43 @@ func NewDBStorage(db *sql.DB) Storage {
 }
 
 func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
-	query := `
-        INSERT INTO metrics (id, type, value, delta)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (id)
-        DO UPDATE SET type = $2, value = $3, delta = $4
-    `
-	_, err := s.db.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
+	query := `SELECT id, type, value, delta FROM metrics WHERE id=$1 AND type= $2`
+	row := s.db.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
+	var (
+		id, mType string
+		value     sql.NullFloat64
+		delta     sql.NullInt64
+	)
+	err := row.Scan(&id, &mType, &value, &delta)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			query = `INSERT INTO metrics (id, type, value, delta)
+		VALUES ($1, $2, $3, $4)`
+			_, err := s.db.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+
+	if mType == model.MetricTypeCounter {
+		query = `UPDATE metrics value SET delta = $1`
+		if !delta.Valid {
+			return errors.New("unexpected null in delta field")
+		}
+		_, err = s.db.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	query = `UPDATE metrics value SET value = $1`
+	if !value.Valid {
+		return errors.New("unexpected null in value field")
+	}
+	_, err = s.db.ExecContext(ctx, query, newMetrics.Value)
 	if err != nil {
 		return err
 	}
