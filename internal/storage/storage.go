@@ -1,11 +1,15 @@
 package storage
 
-import "github.com/mrkovshik/yametrics/internal/model"
+import (
+	"context"
+
+	"github.com/mrkovshik/yametrics/internal/model"
+)
 
 type Storage interface {
-	UpdateMetricValue(newMetrics model.Metrics)
-	GetMetricByModel(newMetrics model.Metrics) (model.Metrics, error)
-	GetAllMetrics() (string, error)
-	StoreMetrics(path string) error
-	RestoreMetrics(path string) error
+	UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error
+	GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error)
+	GetAllMetrics(ctx context.Context) (string, error)
+	StoreMetrics(ctx context.Context, path string) error
+	RestoreMetrics(ctx context.Context, path string) error
 }

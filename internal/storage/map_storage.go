@@ -3,6 +3,7 @@ package storage
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,7 +27,7 @@ func NewMapStorage() Storage {
 	}
 }
 
-func (s *MapStorage) UpdateMetricValue(newMetrics model.Metrics) {
+func (s *MapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metrics) error {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
@@ -35,13 +36,13 @@ func (s *MapStorage) UpdateMetricValue(newMetrics model.Metrics) {
 		newDelta := *s.Metrics[key].Delta + *newMetrics.Delta
 		found.Delta = &newDelta
 		s.Metrics[key] = found
-		return
+		return nil
 	}
 	s.Metrics[key] = newMetrics
-
+	return nil
 }
 
-func (s *MapStorage) GetMetricByModel(newMetrics model.Metrics) (model.Metrics, error) {
+func (s *MapStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
@@ -53,7 +54,7 @@ func (s *MapStorage) GetMetricByModel(newMetrics model.Metrics) (model.Metrics, 
 	return res, nil
 }
 
-func (s *MapStorage) GetAllMetrics() (string, error) {
+func (s *MapStorage) GetAllMetrics(_ context.Context) (string, error) {
 	var tpl bytes.Buffer
 	t, err := templates.ParseTemplates()
 	if err != nil {
@@ -67,14 +68,13 @@ func (s *MapStorage) GetAllMetrics() (string, error) {
 	return tpl.String(), nil
 }
 
-func (s *MapStorage) StoreMetrics(path string) error {
+func (s *MapStorage) StoreMetrics(_ context.Context, path string) error {
 
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
 	defer file.Close() //nolint:all
-	//jsonData, err := json.MarshalIndent(s.Metrics, "", "   ")
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	jsonData, err := json.Marshal(s.Metrics)
@@ -85,7 +85,7 @@ func (s *MapStorage) StoreMetrics(path string) error {
 	return err
 }
 
-func (s *MapStorage) RestoreMetrics(path string) error {
+func (s *MapStorage) RestoreMetrics(_ context.Context, path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil
 	}
