@@ -122,7 +122,7 @@ func (s *Server) GetMetricFromURL(ctx context.Context) func(res http.ResponseWri
 		}
 	}
 }
-func (s *Server) GetMetrics(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
+func (s *Server) GetMetrics(_ context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, _ *http.Request) {
 		var ctx = context.Background()
 		res.Header().Set("Content-Type", "text/html")

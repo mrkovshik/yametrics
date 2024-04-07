@@ -76,7 +76,10 @@ func (a *Agent) PollMetrics() {
 
 	for {
 		//a.logger.Debug("Starting to update metrics")
-		a.source.PollMetrics(a.storage)
+		if err := a.source.PollMetrics(a.storage); err != nil {
+			a.logger.Error("PollMetrics", err)
+			return
+		}
 		time.Sleep(time.Duration(a.config.PollInterval) * time.Second)
 	}
 }
