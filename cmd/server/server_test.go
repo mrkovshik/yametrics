@@ -262,7 +262,7 @@ func Test_server(t *testing.T) {
 	sugar := logger.Sugar()
 	cfg, err2 := config.GetConfigs()
 	require.NoError(t, err2)
-	getMetricsService := service.NewServer(mapStorage, cfg, sugar)
+	getMetricsService := service.NewServer(mapStorage, cfg, sugar, nil)
 	go run(getMetricsService, sugar, cfg)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
