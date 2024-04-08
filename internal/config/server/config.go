@@ -119,6 +119,10 @@ func (c *ServerConfigBuilder) FromEnv() *ServerConfigBuilder {
 	if restoreSet {
 		c.Config.RestoreEnvSet = true
 	}
+	_, DSNSet := os.LookupEnv("DATABASE_DSN")
+	if DSNSet {
+		c.Config.DBAddressIsSet = true
+	}
 	return c
 }
 
