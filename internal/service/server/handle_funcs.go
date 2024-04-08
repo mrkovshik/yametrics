@@ -141,16 +141,19 @@ func (s *Server) GetMetrics(_ context.Context) func(res http.ResponseWriter, _ *
 
 func (s *Server) Ping(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, _ *http.Request) {
-		newCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-		if err := s.db.PingContext(newCtx); err != nil {
-			s.logger.Error("PingContext", zap.Error(err))
-			http.Error(res, "data base is not responding", http.StatusInternalServerError)
+		if s.config.DBEnable {
+			newCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			if err := s.db.PingContext(newCtx); err != nil {
+				s.logger.Error("PingContext", zap.Error(err))
+				http.Error(res, "data base is not responding", http.StatusInternalServerError)
+			}
+			res.WriteHeader(http.StatusOK)
+			if _, err := res.Write([]byte("database is alive")); err != nil {
+				s.logger.Error("res.Write", zap.Error(err))
+				http.Error(res, "error res.Write", http.StatusInternalServerError)
+			}
 		}
-		res.WriteHeader(http.StatusOK)
-		if _, err := res.Write([]byte("database is alive")); err != nil {
-			s.logger.Error("res.Write", zap.Error(err))
-			http.Error(res, "error res.Write", http.StatusInternalServerError)
-		}
+		res.WriteHeader(http.StatusInternalServerError)
 	}
 }
