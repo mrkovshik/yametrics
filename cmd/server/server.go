@@ -82,6 +82,10 @@ func run(s *service.Server, logger *zap.SugaredLogger, cfg config.ServerConfig) 
 
 	r.Get("/ping", api.Ping(s))
 	r.Get("/", api.GetMetricsHandler(s))
-	logger.Infof("Starting server on %v\n", cfg.Address)
+	logger.Infof("Starting server on %v\n StoreInterval: %v\n"+
+		"StoreIntervalSet: %v\nSyncStoreEnable: %v\nStoreFilePath: %v\nStoreFilePathSet: %v\n"+
+		"StoreEnable: %v\nRestoreEnable: %v\nRestoreEnvSet: %v\nDBAddress: %v\nDBAddressIsSet: %v\nDBEnable: %v\n", cfg.Address, cfg.StoreInterval,
+		cfg.StoreIntervalSet, cfg.SyncStoreEnable, cfg.StoreFilePath, cfg.StoreFilePathSet, cfg.StoreEnable,
+		cfg.RestoreEnable, cfg.RestoreEnvSet, cfg.DBAddress, cfg.DBAddressIsSet, cfg.DBEnable)
 	logger.Fatal(http.ListenAndServe(cfg.Address, r))
 }
