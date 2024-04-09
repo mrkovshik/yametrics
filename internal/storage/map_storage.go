@@ -41,7 +41,9 @@ func (s *MapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metri
 	s.Metrics[key] = newMetrics
 	return nil
 }
+func (s *MapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 
+}
 func (s *MapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
 	s.Mu.Lock()
