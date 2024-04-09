@@ -22,6 +22,11 @@ func GetMetricFromJSONHandler(s *service.Server) func(http.ResponseWriter, *http
 	return s.GetMetricFromJSON(ctx)
 }
 
+func UpdateMetricsFromJSONHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
+	var ctx = context.Background()
+	return s.UpdateMetricsFromJSON(ctx)
+}
+
 func GetMetricFromURLHandler(s *service.Server) func(http.ResponseWriter, *http.Request) {
 	var ctx = context.Background()
 	return s.GetMetricFromURL(ctx)

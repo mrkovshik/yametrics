@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/model"
@@ -38,6 +39,30 @@ func (s *Server) UpdateMetricFromJSON(ctx context.Context) func(res http.Respons
 			s.logger.Error("res.Write", zap.Error(err))
 			http.Error(res, "error res.Write", http.StatusInternalServerError)
 		}
+	}
+}
+
+func (s *Server) UpdateMetricsFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		var batch []model.Metrics
+		if err := json.NewDecoder(req.Body).Decode(&batch); err != nil {
+			s.logger.Error("Decode", zap.Error(err))
+			http.Error(res, "Decode", http.StatusInternalServerError)
+		}
+		wg := sync.WaitGroup{}
+		for _, metric := range batch {
+			wg.Add(1)
+			metric1 := metric
+			go func() {
+				err := s.storage.UpdateMetricValue(ctx, metric1)
+				if err != nil {
+					s.logger.Error("UpdateMetricValue", zap.Error(err))
+					http.Error(res, "UpdateMetricValue", http.StatusInternalServerError)
+				}
+				wg.Done()
+			}()
+		}
+		wg.Wait()
 	}
 }
 
