@@ -106,6 +106,9 @@ func (s *MapStorage) RestoreMetrics(_ context.Context, path string) error {
 	if err != nil {
 		return err
 	}
+	if len(data) == 0 {
+		return nil
+	}
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	return json.Unmarshal(data, &s.Metrics)

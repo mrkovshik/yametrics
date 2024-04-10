@@ -9,7 +9,6 @@ import (
 	"errors"
 	"io"
 	"os"
-	"sync"
 
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/templates"
@@ -38,32 +37,18 @@ func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metr
 	return tx.Commit()
 }
 func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
-	var (
-		wg      sync.WaitGroup
-		errChan chan error
-	)
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	for _, metric := range newMetrics {
-		wg.Add(1)
-		metric1 := metric
-		go func(wg *sync.WaitGroup, errChan chan error, tx *sql.Tx) {
-			defer wg.Done()
-			err := s.updateMetricValue(ctx, metric1, tx)
-			if err != nil {
-				errChan <- err
-				return
-			}
-		}(&wg, errChan, tx)
+		err := s.updateMetricValue(ctx, metric, tx)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
 	}
-	for err := range errChan {
-		tx.Rollback() //nolint:all
-		return err
-	}
-	wg.Wait()
-	close(errChan)
 	return tx.Commit()
 }
 
@@ -116,10 +101,6 @@ func (s *DBStorage) StoreMetrics(ctx context.Context, path string) error {
 }
 
 func (s *DBStorage) RestoreMetrics(ctx context.Context, path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil
-	}
-
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -129,6 +110,10 @@ func (s *DBStorage) RestoreMetrics(ctx context.Context, path string) error {
 	if err != nil {
 		return err
 	}
+	if len(data) == 0 {
+		return nil
+	}
+
 	metricMap := make(map[string]model.Metrics)
 	if err := json.Unmarshal(data, &metricMap); err != nil {
 		return err
@@ -189,21 +174,21 @@ func (s *DBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metr
 	}
 
 	if mType == model.MetricTypeCounter {
-		query = `UPDATE metrics value SET delta = $1`
+		query = `UPDATE metrics value SET delta = $1 WHERE id = $2 AND type = $3`
 		if !delta.Valid {
 			return errors.New("unexpected null in delta field")
 		}
-		_, err = s.db.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64)
+		_, err = tx.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64, id, mType)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	query = `UPDATE metrics value SET value = $1`
+	query = `UPDATE metrics value SET value = $1 WHERE id = $2 AND type = $3`
 	if !value.Valid {
 		return errors.New("unexpected null in value field")
 	}
-	_, err = s.db.ExecContext(ctx, query, newMetrics.Value)
+	_, err = tx.ExecContext(ctx, query, newMetrics.Value, id, mType)
 	if err != nil {
 		return err
 	}
