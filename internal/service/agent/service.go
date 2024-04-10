@@ -65,9 +65,7 @@ func (a *Agent) SendMetrics(ctx context.Context) {
 	//a.logger.Debug("Starting to send metrics")
 	for {
 		time.Sleep(time.Duration(a.config.ReportInterval) * time.Second)
-		for name := range metricNamesMap {
-			go a.sendMetric(ctx, name)
-		}
+		go a.sendMetrics(ctx, metricNamesMap)
 	}
 
 }
@@ -84,35 +82,42 @@ func (a *Agent) PollMetrics() {
 	}
 }
 
-func (a *Agent) sendMetric(ctx context.Context, name string) {
-	var client = http.Client{Timeout: 30 * time.Second}
-	currentMetric := model.Metrics{
-		ID: name,
+func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
+	var (
+		batch  []model.Metrics
+		client = http.Client{Timeout: 30 * time.Second}
+	)
+	for name := range names {
+		currentMetric := model.Metrics{
+			ID: name,
+		}
+		if name == "PollCount" {
+			currentMetric.MType = model.MetricTypeCounter
+		} else {
+			currentMetric.MType = model.MetricTypeGauge
+		}
+		foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
+		if err != nil {
+			a.logger.Error("GetMetricByModel", err)
+			return
+		}
+		batch = append(batch, foundMetric)
 	}
-	if name == "PollCount" {
-		currentMetric.MType = model.MetricTypeCounter
-	} else {
-		currentMetric.MType = model.MetricTypeGauge
-	}
-	foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
-	if err != nil {
-		a.logger.Error("GetMetricByModel", err)
-		return
-	}
+
 	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.config.Address)
 
-	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(foundMetric).Compress().SetMethod(http.MethodPost)
+	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(batch).Compress().SetMethod(http.MethodPost)
 	if reqBuilder.Err != nil {
-		a.logger.Errorf("error building request: %v\nmetric name: %v", reqBuilder.Err, currentMetric.ID)
+		a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
 		return
 	}
 	response, err := client.Do(&reqBuilder.R)
 	if err != nil {
-		a.logger.Errorf("error sending request: %v\nmetric name: %v", err, currentMetric.ID)
+		a.logger.Errorf("error sending request: %v\n", err)
 		return
 	}
 	if response.StatusCode != http.StatusOK {
-		a.logger.Errorf("status code is %v, while sending %v\n", response.StatusCode, currentMetric)
+		a.logger.Errorf("status code is %v\n", response.StatusCode)
 		return
 	}
 	if err := response.Body.Close(); err != nil {
