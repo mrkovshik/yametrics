@@ -44,7 +44,7 @@ func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metric
 	for _, metric := range newMetrics {
 		err := s.updateMetricValue(ctx, metric, tx)
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint:all
 			return err
 		}
 
