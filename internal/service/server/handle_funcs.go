@@ -48,7 +48,22 @@ func (s *Server) UpdateMetricsFromJSON(ctx context.Context) func(res http.Respon
 			s.logger.Error("Decode", zap.Error(err))
 			http.Error(res, "Decode", http.StatusInternalServerError)
 		}
-
+		if err := s.storage.UpdateMetrics(ctx, batch); err != nil {
+			s.logger.Error("UpdateMetricValue", zap.Error(err))
+			http.Error(res, "error UpdateMetricValue", http.StatusInternalServerError)
+		}
+		if s.config.SyncStoreEnable {
+			if err := s.storage.StoreMetrics(ctx, s.config.StoreFilePath); err != nil {
+				s.logger.Error("StoreMetrics", zap.Error(err))
+				http.Error(res, "error StoreMetrics", http.StatusInternalServerError)
+			}
+		}
+		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		res.WriteHeader(http.StatusOK)
+		if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
+			s.logger.Error("res.Write", zap.Error(err))
+			http.Error(res, "error res.Write", http.StatusInternalServerError)
+		}
 	}
 }
 
