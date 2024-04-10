@@ -104,7 +104,7 @@ func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
 		batch = append(batch, foundMetric)
 	}
 
-	metricUpdateURL := fmt.Sprintf("http://%v/update/", a.config.Address)
+	metricUpdateURL := fmt.Sprintf("http://%v/updates/", a.config.Address)
 
 	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(batch).Compress().SetMethod(http.MethodPost)
 	if reqBuilder.Err != nil {
