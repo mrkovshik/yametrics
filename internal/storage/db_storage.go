@@ -8,13 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"net/http"
 	"os"
 	"sync"
 
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/templates"
-	"go.uber.org/zap"
 )
 
 type DBStorage struct {
@@ -28,68 +26,47 @@ func NewDBStorage(db *sql.DB) Storage {
 }
 
 func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
-	query := `SELECT id, type, value, delta FROM metrics WHERE id=$1 AND type= $2`
-	row := s.db.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
-	var (
-		id, mType string
-		value     sql.NullFloat64
-		delta     sql.NullInt64
-	)
-	err := row.Scan(&id, &mType, &value, &delta)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			query = `INSERT INTO metrics (id, type, value, delta)
-		VALUES ($1, $2, $3, $4)`
-			_, err := s.db.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		return err
-	}
-
-	if mType == model.MetricTypeCounter {
-		query = `UPDATE metrics value SET delta = $1`
-		if !delta.Valid {
-			return errors.New("unexpected null in delta field")
-		}
-		_, err = s.db.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	query = `UPDATE metrics value SET value = $1`
-	if !value.Valid {
-		return errors.New("unexpected null in value field")
-	}
-	_, err = s.db.ExecContext(ctx, query, newMetrics.Value)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	wg := sync.WaitGroup{}
+	err1 := s.updateMetricValue(ctx, newMetrics, tx)
+	if err1 != nil {
+		tx.Rollback() //nolint:all
+		return err1
+	}
+	return tx.Commit()
+}
+func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
+	var (
+		wg      sync.WaitGroup
+		errChan chan error
+	)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
 	for _, metric := range newMetrics {
 		wg.Add(1)
 		metric1 := metric
-		go func() {
-			err := s.UpdateMetricValue(ctx, metric1)
+		go func(wg *sync.WaitGroup, errChan chan error, tx *sql.Tx) {
+			defer wg.Done()
+			err := s.updateMetricValue(ctx, metric1, tx)
 			if err != nil {
-				s.logger.Error("UpdateMetricValue", zap.Error(err))
-				http.Error(res, "UpdateMetricValue", http.StatusInternalServerError)
+				errChan <- err
+				return
 			}
-			wg.Done()
-		}()
+		}(&wg, errChan, tx)
+	}
+	for err := range errChan {
+		tx.Rollback() //nolint:all
+		return err
 	}
 	wg.Wait()
+	close(errChan)
+	return tx.Commit()
 }
+
 func (s *DBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	query := `
   SELECT id, type, value, delta FROM metrics
