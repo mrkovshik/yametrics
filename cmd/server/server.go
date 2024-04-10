@@ -75,7 +75,7 @@ func run(s *service.Server, logger *zap.SugaredLogger, cfg config.ServerConfig) 
 		r.Post("/", api.UpdateMetricFromJSONHandler(s))
 		r.Post("/{type}/{name}/{value}", api.UpdateMetricFromURLHandler(s))
 	})
-	r.Post("/updates", api.UpdateMetricsFromJSONHandler(s))
+	r.Post("/updates/", api.UpdateMetricsFromJSONHandler(s))
 	r.Route("/value", func(r chi.Router) {
 		r.Post("/", api.GetMetricFromJSONHandler(s))
 		r.Get("/{type}/{name}", api.GetMetricFromURLHandler(s))
