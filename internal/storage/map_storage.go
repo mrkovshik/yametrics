@@ -42,7 +42,12 @@ func (s *MapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metri
 	return nil
 }
 func (s *MapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
-
+	for _, metric := range newMetrics {
+		if err := s.UpdateMetricValue(ctx, metric); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 func (s *MapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
