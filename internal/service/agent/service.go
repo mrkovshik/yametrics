@@ -1,8 +1,10 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -83,10 +85,8 @@ func (a *Agent) PollMetrics() {
 }
 
 func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
-	var (
-		batch  []model.Metrics
-		client = http.Client{Timeout: 30 * time.Second}
-	)
+	var batch []model.Metrics
+
 	for name := range names {
 		currentMetric := model.Metrics{
 			ID: name,
@@ -111,7 +111,7 @@ func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
 		a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
 		return
 	}
-	response, err := client.Do(&reqBuilder.R)
+	response, err := a.retryableSend(&reqBuilder.R)
 	if err != nil {
 		a.logger.Errorf("error sending request: %v\n", err)
 		return
@@ -124,4 +124,37 @@ func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
 		a.logger.Error("response.Body.Close()", err)
 		return
 	}
+}
+
+func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
+	var (
+		bodyBytes      []byte
+		retryIntervals = []int{1, 3, 5} //TODO: move to config
+		client         = http.Client{Timeout: 5 * time.Second}
+		err            error
+	)
+	if req.Body != nil {
+		bodyBytes, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		req.Body.Close()
+		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	}
+	for i, interval := range retryIntervals {
+		response, err := client.Do(req)
+		if err == nil {
+			return response, nil
+		}
+		if i == len(retryIntervals)-1 { //TODO: поправить чтобы четвертая попытка тоже была
+			return nil, err
+		}
+		a.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, interval)
+		time.Sleep(time.Duration(interval) * time.Second)
+		if req.Body != nil {
+			req.Body.Close()
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		}
+	}
+	return nil, nil
 }
