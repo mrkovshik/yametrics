@@ -67,7 +67,7 @@ func (a *Agent) SendMetrics(ctx context.Context) {
 	//a.logger.Debug("Starting to send metrics")
 	for {
 		time.Sleep(time.Duration(a.config.ReportInterval) * time.Second)
-		go a.sendMetrics(ctx, metricNamesMap)
+		a.sendMetrics(ctx, metricNamesMap)
 	}
 
 }
@@ -141,16 +141,16 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 		req.Body.Close()
 		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	}
-	for i, interval := range retryIntervals {
+	for i := 0; i <= len(retryIntervals); i++ {
 		response, err := client.Do(req)
 		if err == nil {
 			return response, nil
 		}
-		if i == len(retryIntervals)-1 { //TODO: поправить чтобы четвертая попытка тоже была
+		if i == len(retryIntervals) { //TODO: поправить чтобы четвертая попытка тоже была
 			return nil, err
 		}
-		a.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, interval)
-		time.Sleep(time.Duration(interval) * time.Second)
+		a.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, retryIntervals[i])
+		time.Sleep(time.Duration(retryIntervals[i]) * time.Second)
 		if req.Body != nil {
 			req.Body.Close()
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
