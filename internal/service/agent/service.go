@@ -138,7 +138,7 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
-		req.Body.Close()
+		req.Body.Close() //nolint:all
 		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	}
 	for i := 0; i <= len(retryIntervals); i++ {
@@ -152,7 +152,7 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 		a.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, retryIntervals[i])
 		time.Sleep(time.Duration(retryIntervals[i]) * time.Second)
 		if req.Body != nil {
-			req.Body.Close()
+			req.Body.Close() //nolint:all
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
 	}
