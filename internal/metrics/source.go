@@ -1,9 +1,9 @@
 package metrics
 
 import (
-	"github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/service"
 )
 
 type MetricSource interface {
-	PollMetrics(s storage.Storage) error
+	PollMetrics(s service.Storage) error
 }

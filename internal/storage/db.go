@@ -11,32 +11,33 @@ import (
 	"os"
 
 	"github.com/mrkovshik/yametrics/internal/model"
+	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/templates"
 )
 
-type DBStorage struct {
+type dBStorage struct {
 	db *sql.DB
 }
 
-func NewDBStorage(db *sql.DB) Storage {
-	return &DBStorage{
+func NewDBStorage(db *sql.DB) service.Storage {
+	return &dBStorage{
 		db: db,
 	}
 }
 
-func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
+func (s *dBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback() //nolint:all
 	if err != nil {
 		return err
 	}
 	err1 := s.updateMetricValue(ctx, newMetrics, tx)
 	if err1 != nil {
-		tx.Rollback() //nolint:all
 		return err1
 	}
 	return tx.Commit()
 }
-func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
+func (s *dBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -52,7 +53,7 @@ func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metric
 	return tx.Commit()
 }
 
-func (s *DBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error) {
+func (s *dBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	query := `
   SELECT id, type, value, delta FROM metrics
   WHERE id = $1
@@ -65,7 +66,7 @@ func (s *DBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metri
 	return foundMetric, nil
 }
 
-func (s *DBStorage) GetAllMetrics(ctx context.Context) (string, error) {
+func (s *dBStorage) GetAllMetrics(ctx context.Context) (string, error) {
 	var tpl bytes.Buffer
 	t, err := templates.ParseTemplates()
 	if err != nil {
@@ -81,7 +82,7 @@ func (s *DBStorage) GetAllMetrics(ctx context.Context) (string, error) {
 	return tpl.String(), nil
 }
 
-func (s *DBStorage) StoreMetrics(ctx context.Context, path string) error {
+func (s *dBStorage) StoreMetrics(ctx context.Context, path string) error {
 
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -100,7 +101,7 @@ func (s *DBStorage) StoreMetrics(ctx context.Context, path string) error {
 	return err
 }
 
-func (s *DBStorage) RestoreMetrics(ctx context.Context, path string) error {
+func (s *dBStorage) RestoreMetrics(ctx context.Context, path string) error {
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -126,11 +127,11 @@ func (s *DBStorage) RestoreMetrics(ctx context.Context, path string) error {
 	return nil
 }
 
-func (s *DBStorage) Ping(ctx context.Context) error {
+func (s *dBStorage) Ping(ctx context.Context) error {
 	return s.db.PingContext(ctx)
 }
 
-func (s *DBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.Metrics, error) {
+func (s *dBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.Metrics, error) {
 	metricMap := make(map[string]model.Metrics)
 	query := `SELECT id, type, value, delta FROM metrics`
 	rows, err := s.db.QueryContext(ctx, query)
@@ -151,7 +152,7 @@ func (s *DBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.M
 	return metricMap, nil
 }
 
-func (s *DBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metrics, tx *sql.Tx) error {
+func (s *dBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metrics, tx *sql.Tx) error {
 	query := `SELECT id, type, value, delta FROM metrics WHERE id=$1 AND type= $2`
 	row := tx.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
 	var (

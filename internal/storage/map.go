@@ -11,23 +11,24 @@ import (
 	"sync"
 
 	"github.com/mrkovshik/yametrics/internal/model"
+	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/templates"
 )
 
-type MapStorage struct {
+type mapStorage struct {
 	Mu      sync.Mutex
 	Metrics map[string]model.Metrics
 }
 
-func NewMapStorage() Storage {
+func NewMapStorage() service.Storage {
 	s := make(map[string]model.Metrics)
-	return &MapStorage{
+	return &mapStorage{
 		sync.Mutex{},
 		s,
 	}
 }
 
-func (s *MapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metrics) error {
+func (s *mapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metrics) error {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
@@ -41,7 +42,7 @@ func (s *MapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metri
 	s.Metrics[key] = newMetrics
 	return nil
 }
-func (s *MapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
+func (s *mapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	for _, metric := range newMetrics {
 		if err := s.UpdateMetricValue(ctx, metric); err != nil {
 			return err
@@ -49,7 +50,7 @@ func (s *MapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metri
 	}
 	return nil
 }
-func (s *MapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
+func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
@@ -61,7 +62,7 @@ func (s *MapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metric
 	return res, nil
 }
 
-func (s *MapStorage) GetAllMetrics(_ context.Context) (string, error) {
+func (s *mapStorage) GetAllMetrics(_ context.Context) (string, error) {
 	var tpl bytes.Buffer
 	t, err := templates.ParseTemplates()
 	if err != nil {
@@ -75,7 +76,7 @@ func (s *MapStorage) GetAllMetrics(_ context.Context) (string, error) {
 	return tpl.String(), nil
 }
 
-func (s *MapStorage) StoreMetrics(_ context.Context, path string) error {
+func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
 
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -92,7 +93,7 @@ func (s *MapStorage) StoreMetrics(_ context.Context, path string) error {
 	return err
 }
 
-func (s *MapStorage) RestoreMetrics(_ context.Context, path string) error {
+func (s *mapStorage) RestoreMetrics(_ context.Context, path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil
 	}

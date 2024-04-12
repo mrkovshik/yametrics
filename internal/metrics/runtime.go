@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/model"
-
-	"github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/service"
 )
 
 type RuntimeMetrics struct {
@@ -22,7 +21,7 @@ func NewRuntimeMetrics() RuntimeMetrics {
 	return m
 }
 
-func (m RuntimeMetrics) PollMetrics(s storage.Storage) error {
+func (m RuntimeMetrics) PollMetrics(s service.Storage) error {
 	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	runtime.ReadMemStats(&m.MemStats)

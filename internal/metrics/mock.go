@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/model"
-
-	"github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/service"
 )
 
 type MockMetrics struct {
@@ -25,7 +24,7 @@ func NewMockMetrics() MockMetrics {
 	}
 }
 
-func (m MockMetrics) PollMetrics(s storage.Storage) error {
+func (m MockMetrics) PollMetrics(s service.Storage) error {
 	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	alloc := 1.00

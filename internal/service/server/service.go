@@ -4,18 +4,18 @@ import (
 	"database/sql"
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
-	"github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/service"
 	"go.uber.org/zap"
 )
 
 type Server struct {
-	storage storage.Storage
+	storage service.Storage
 	config  config.ServerConfig
 	logger  *zap.SugaredLogger
 	db      *sql.DB
 }
 
-func NewServer(storage storage.Storage, cfg config.ServerConfig, logger *zap.SugaredLogger, db *sql.DB) *Server {
+func NewServer(storage service.Storage, cfg config.ServerConfig, logger *zap.SugaredLogger, db *sql.DB) *Server {
 	return &Server{
 		db:      db,
 		storage: storage,

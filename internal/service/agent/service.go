@@ -9,21 +9,21 @@ import (
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/model"
+	"github.com/mrkovshik/yametrics/internal/service"
 	"go.uber.org/zap"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
-	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
 type Agent struct {
 	source  metrics.MetricSource
 	logger  *zap.SugaredLogger
 	config  config.AgentConfig
-	storage storage.Storage
+	storage service.Storage
 }
 
-func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg storage.Storage, logger *zap.SugaredLogger) *Agent {
+func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg service.Storage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
 		source:  source,
 		logger:  logger,
