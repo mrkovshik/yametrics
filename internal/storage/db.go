@@ -32,6 +32,7 @@ func (s *dBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metr
 	}
 	err1 := s.updateMetricValue(ctx, newMetrics, tx)
 	if err1 != nil {
+		tx.Rollback() //nolint:all
 		return err1
 	}
 	return tx.Commit()
@@ -44,6 +45,7 @@ func (s *dBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metric
 	for _, metric := range newMetrics {
 		err := s.updateMetricValue(ctx, metric, tx)
 		if err != nil {
+			tx.Rollback() //nolint:all
 			return err
 		}
 	}
@@ -152,7 +154,6 @@ func (s *dBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.M
 func (s *dBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metrics, tx *sql.Tx) error {
 	query := `SELECT id, type, value, delta FROM metrics WHERE id=$1 AND type= $2`
 	row := tx.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
-	//pgerrcode.UniqueViolation
 	var (
 		id, mType string
 		value     sql.NullFloat64
