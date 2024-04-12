@@ -44,7 +44,7 @@ func main() {
 		primary key,
 			type  varchar not null,
 			value double precision,
-			delta integer			
+			delta BIGINT			
 		);`
 
 		if err := retriable.ExecRetryable(func() error {
