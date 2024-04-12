@@ -39,16 +39,15 @@ func (s *dBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metr
 }
 func (s *dBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback() //nolint:all
 	if err != nil {
 		return err
 	}
 	for _, metric := range newMetrics {
 		err := s.updateMetricValue(ctx, metric, tx)
 		if err != nil {
-			tx.Rollback() //nolint:all
 			return err
 		}
-
 	}
 	return tx.Commit()
 }
@@ -155,6 +154,7 @@ func (s *dBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.M
 func (s *dBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metrics, tx *sql.Tx) error {
 	query := `SELECT id, type, value, delta FROM metrics WHERE id=$1 AND type= $2`
 	row := tx.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
+	//pgerrcode.UniqueViolation
 	var (
 		id, mType string
 		value     sql.NullFloat64

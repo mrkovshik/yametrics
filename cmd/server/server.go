@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/mrkovshik/yametrics/internal/storage"
+	"github.com/mrkovshik/yametrics/internal/util/retriable"
 
 	"github.com/go-chi/chi/v5"
 
@@ -45,10 +46,14 @@ func main() {
 			value double precision,
 			delta integer			
 		);`
-		_, err := db.Exec(ddl)
-		if err != nil {
+
+		if err := retriable.Wrap(func() error {
+			_, err := db.Exec(ddl)
+			return err
+		}); err != nil {
 			sugar.Fatal("Exec", err)
 		}
+
 		defer db.Close() //nolint:all
 		metricStorage = storage.NewDBStorage(db)
 	}

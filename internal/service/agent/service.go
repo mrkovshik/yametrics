@@ -146,7 +146,7 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 		if err == nil {
 			return response, nil
 		}
-		if i == len(retryIntervals) { //TODO: поправить чтобы четвертая попытка тоже была
+		if i == len(retryIntervals) {
 			return nil, err
 		}
 		a.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, retryIntervals[i])
