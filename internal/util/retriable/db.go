@@ -26,7 +26,7 @@ func Wrap(f func() error) error {
 		if i == len(retryIntervals) {
 			return resultErr
 		}
-		resultErr = errors.Join(resultErr, fmt.Errorf("failed: %v\n retry in %v seconds\n", err, retryIntervals[i]))
+		resultErr = errors.Join(resultErr, fmt.Errorf("failed: %v\n retry in %v seconds", err, retryIntervals[i]))
 		time.Sleep(time.Duration(retryIntervals[i]) * time.Second)
 	}
 	return resultErr

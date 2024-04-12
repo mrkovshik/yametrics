@@ -27,7 +27,6 @@ func NewDBStorage(db *sql.DB) service.Storage {
 
 func (s *dBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
-	defer tx.Rollback() //nolint:all
 	if err != nil {
 		return err
 	}
@@ -39,7 +38,6 @@ func (s *dBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metr
 }
 func (s *dBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
-	defer tx.Rollback() //nolint:all
 	if err != nil {
 		return err
 	}
