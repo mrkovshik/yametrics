@@ -13,6 +13,7 @@ import (
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/templates"
+	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
 type dBStorage struct {
@@ -57,7 +58,13 @@ func (s *dBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metri
   SELECT id, type, value, delta FROM metrics
   WHERE id = $1
     `
-	row := s.db.QueryRowContext(ctx, query, newMetrics.ID)
+	row, err := retriable.QueryRowRetryable(func() *sql.Row {
+		return s.db.QueryRowContext(ctx, query, newMetrics.ID)
+	})
+	if err != nil {
+		return model.Metrics{}, err
+	}
+
 	var foundMetric model.Metrics
 	if err := row.Scan(&foundMetric.ID, &foundMetric.MType, &foundMetric.Value, &foundMetric.Delta); err != nil {
 		return model.Metrics{}, err

@@ -47,7 +47,7 @@ func main() {
 			delta integer			
 		);`
 
-		if err := retriable.Wrap(func() error {
+		if err := retriable.ExecRetryable(func() error {
 			_, err := db.Exec(ddl)
 			return err
 		}); err != nil {
