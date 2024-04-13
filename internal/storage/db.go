@@ -140,7 +140,9 @@ func (s *dBStorage) Ping(ctx context.Context) error {
 func (s *dBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.Metrics, error) {
 	metricMap := make(map[string]model.Metrics)
 	query := `SELECT id, type, value, delta FROM metrics`
-	rows, err := s.db.QueryContext(ctx, query)
+	rows, err := retriable.QueryRetryable(func() (*sql.Rows, error) {
+		return s.db.QueryContext(ctx, query)
+	})
 	if err != nil {
 		return map[string]model.Metrics{}, err
 	}
@@ -160,19 +162,26 @@ func (s *dBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.M
 
 func (s *dBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metrics, tx *sql.Tx) error {
 	query := `SELECT id, type, value, delta FROM metrics WHERE id=$1 AND type= $2`
-	row := tx.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
+	row, err := retriable.QueryRowRetryable(func() *sql.Row {
+		return tx.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
+	})
+	if err != nil {
+		return err
+	}
 	var (
 		id, mType string
 		value     sql.NullFloat64
 		delta     sql.NullInt64
 	)
-	err := row.Scan(&id, &mType, &value, &delta)
-	if err != nil {
+	if err := row.Scan(&id, &mType, &value, &delta); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			query = `INSERT INTO metrics (id, type, value, delta)
 		VALUES ($1, $2, $3, $4)`
-			_, err := tx.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
-			if err != nil {
+
+			if err := retriable.ExecRetryable(func() error {
+				_, err := tx.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
+				return err
+			}); err != nil {
 				return err
 			}
 			return nil
@@ -185,8 +194,11 @@ func (s *dBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metr
 		if !delta.Valid {
 			return errors.New("unexpected null in delta field")
 		}
-		_, err = tx.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64, id, mType)
-		if err != nil {
+
+		if err := retriable.ExecRetryable(func() error {
+			_, err = tx.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64, id, mType)
+			return err
+		}); err != nil {
 			return err
 		}
 		return nil
@@ -195,8 +207,10 @@ func (s *dBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metr
 	if !value.Valid {
 		return errors.New("unexpected null in value field")
 	}
-	_, err = tx.ExecContext(ctx, query, newMetrics.Value, id, mType)
-	if err != nil {
+	if err := retriable.ExecRetryable(func() error {
+		_, err = tx.ExecContext(ctx, query, newMetrics.Value, id, mType)
+		return err
+	}); err != nil {
 		return err
 	}
 	return nil

@@ -57,3 +57,28 @@ func QueryRowRetryable(f func() *sql.Row) (*sql.Row, error) {
 	}
 	return row, resultErr
 }
+
+func QueryRetryable(f func() (*sql.Rows, error)) (*sql.Rows, error) {
+	var (
+		retryIntervals = []int{1, 3, 5}
+		resultErr      error
+		rows           *sql.Rows
+		err            error
+	)
+	for i := 0; i <= len(retryIntervals); i++ {
+		rows, err = f()
+		var sysErr *os.SyscallError
+		if err == nil || !errors.As(err, &sysErr) {
+			return rows, err
+		}
+		if !pgerrcode.IsConnectionException(sysErr.Err.Error()) {
+			return rows, err
+		}
+		if i == len(retryIntervals) {
+			return rows, resultErr
+		}
+		resultErr = errors.Join(resultErr, fmt.Errorf("failed: %v\n retry in %v seconds", err, retryIntervals[i]))
+		time.Sleep(time.Duration(retryIntervals[i]) * time.Second)
+	}
+	return rows, resultErr
+}
