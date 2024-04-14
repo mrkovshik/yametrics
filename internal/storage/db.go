@@ -93,10 +93,10 @@ func (s *dBStorage) StoreMetrics(ctx context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	})
-	defer file.Close() //nolint:all
 	if err != nil {
 		return err
 	}
+	defer file.Close() //nolint:all
 	metricMap, err := s.scanAllMetricsToMap(ctx)
 	if err != nil {
 		return err
@@ -113,10 +113,10 @@ func (s *dBStorage) RestoreMetrics(ctx context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
 	})
-	defer file.Close() //nolint:all
 	if err != nil {
 		return err
 	}
+	defer file.Close() //nolint:all
 	reader := bufio.NewReader(file)
 	data, err := io.ReadAll(reader)
 	if err != nil {
