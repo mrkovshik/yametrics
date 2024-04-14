@@ -21,7 +21,7 @@ func ExecRetryable(f func() error) error {
 		if err == nil || !errors.As(err, &sysErr) {
 			return err
 		}
-		if pgerrcode.IsConnectionException(sysErr.Err.Error()) {
+		if !pgerrcode.IsConnectionException(sysErr.Err.Error()) {
 			return err
 		}
 		if i == len(retryIntervals) {
