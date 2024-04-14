@@ -13,6 +13,7 @@ import (
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/templates"
+	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
 type mapStorage struct {
@@ -77,8 +78,9 @@ func (s *mapStorage) GetAllMetrics(_ context.Context) (string, error) {
 }
 
 func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
-
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := retriable.OpenRetryable(func() (*os.File, error) {
+		return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	})
 	if err != nil {
 		return err
 	}
@@ -94,11 +96,9 @@ func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
 }
 
 func (s *mapStorage) RestoreMetrics(_ context.Context, path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil
-	}
-
-	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
+	file, err := retriable.OpenRetryable(func() (*os.File, error) {
+		return os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
+	})
 	if err != nil {
 		return err
 	}

@@ -90,11 +90,13 @@ func (s *dBStorage) GetAllMetrics(ctx context.Context) (string, error) {
 
 func (s *dBStorage) StoreMetrics(ctx context.Context, path string) error {
 
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := retriable.OpenRetryable(func() (*os.File, error) {
+		return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	})
+	defer file.Close() //nolint:all
 	if err != nil {
 		return err
 	}
-	defer file.Close() //nolint:all
 	metricMap, err := s.scanAllMetricsToMap(ctx)
 	if err != nil {
 		return err
@@ -108,7 +110,10 @@ func (s *dBStorage) StoreMetrics(ctx context.Context, path string) error {
 }
 
 func (s *dBStorage) RestoreMetrics(ctx context.Context, path string) error {
-	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
+	file, err := retriable.OpenRetryable(func() (*os.File, error) {
+		return os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
+	})
+	defer file.Close() //nolint:all
 	if err != nil {
 		return err
 	}

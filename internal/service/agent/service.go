@@ -138,6 +138,7 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
+		// Нужно сбрасывать тело запроса, иначе при повторных попытках не будет отображаться реальная ошибка
 		req.Body.Close() //nolint:all
 		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	}
