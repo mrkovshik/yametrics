@@ -17,14 +17,14 @@ import (
 )
 
 type mapStorage struct {
-	Mu      sync.Mutex
+	Mu      sync.RWMutex
 	Metrics map[string]model.Metrics
 }
 
 func NewMapStorage() service.Storage {
 	s := make(map[string]model.Metrics)
 	return &mapStorage{
-		sync.Mutex{},
+		sync.RWMutex{},
 		s,
 	}
 }
@@ -53,8 +53,8 @@ func (s *mapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metri
 }
 func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
 	res, ok := s.Metrics[key]
 	if !ok {
 		return model.Metrics{}, fmt.Errorf("%v not found", key)
@@ -69,8 +69,8 @@ func (s *mapStorage) GetAllMetrics(_ context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
 	if err := t.ExecuteTemplate(&tpl, "list_metrics", s.Metrics); err != nil {
 		return "", err
 	}
@@ -85,8 +85,8 @@ func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
 		return err
 	}
 	defer file.Close() //nolint:all
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
 	jsonData, err := json.Marshal(s.Metrics)
 	if err != nil {
 		return err
