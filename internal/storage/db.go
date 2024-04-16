@@ -31,9 +31,9 @@ func (s *dBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metr
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback() //nolint:all
 	err1 := s.updateMetricValue(ctx, newMetrics, tx)
 	if err1 != nil {
-		tx.Rollback() //nolint:all
 		return err1
 	}
 	return tx.Commit()
@@ -43,10 +43,10 @@ func (s *dBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metric
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback() //nolint:all
 	for _, metric := range newMetrics {
 		err := s.updateMetricValue(ctx, metric, tx)
 		if err != nil {
-			tx.Rollback() //nolint:all
 			return err
 		}
 	}
