@@ -10,6 +10,7 @@ import (
 )
 
 type AgentConfig struct {
+	Key            string `env:"KEY"`
 	Address        string `env:"ADDRESS"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
@@ -17,6 +18,11 @@ type AgentConfig struct {
 
 type AgentConfigBuilder struct {
 	Config AgentConfig
+}
+
+func (c *AgentConfigBuilder) WithKey(key string) *AgentConfigBuilder {
+	c.Config.Key = key
+	return c
 }
 
 func (c *AgentConfigBuilder) WithAddress(host string) *AgentConfigBuilder {
@@ -38,8 +44,12 @@ func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
 	pollInterval := flag.Int("p", 2, "metrics polling interval")
 	reportInterval := flag.Int("r", 10, "metrics sending to server interval")
+	key := flag.String("k", "", "secret auth key")
 	flag.Parse()
 
+	if c.Config.Key == "" {
+		c.WithKey(*key)
+	}
 	if c.Config.Address == "" {
 		c.WithAddress(*addr)
 	}
