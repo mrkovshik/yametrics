@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/mrkovshik/yametrics/internal/signature"
 )
 
 type RequestBuilder struct {
@@ -47,6 +49,24 @@ func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
 			rb.WithHeader("Content-Type", "application/json")
 		}
 	}
+	return rb
+}
+
+func (rb *RequestBuilder) Sign(key string) *RequestBuilder {
+	var body []byte
+	if rb.Err == nil && rb.R.Body != nil {
+		body, rb.Err = io.ReadAll(rb.R.Body)
+		if rb.Err == nil {
+			sigSrv := signature.NewSha256Sig(key, body)
+			sig, err := sigSrv.Generate()
+			if err != nil {
+				rb.Err = err
+				return rb
+			}
+			rb.WithHeader("HashSHA256", sig)
+		}
+	}
+
 	return rb
 }
 
