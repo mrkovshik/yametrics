@@ -3,6 +3,7 @@ package signature
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/mrkovshik/yametrics/internal/service"
 )
@@ -25,5 +26,5 @@ func (s *sha256Sig) Generate() (string, error) {
 		return "", err
 	}
 	dst := h.Sum(nil)
-	return string(dst), nil
+	return hex.EncodeToString(dst), nil
 }

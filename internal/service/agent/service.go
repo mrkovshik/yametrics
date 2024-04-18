@@ -106,7 +106,7 @@ func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
 
 	metricUpdateURL := fmt.Sprintf("http://%v/updates/", a.config.Address)
 
-	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(batch).Compress().SetMethod(http.MethodPost)
+	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(batch).Sign(a.config.Key).Compress().SetMethod(http.MethodPost)
 	if reqBuilder.Err != nil {
 		a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
 		return

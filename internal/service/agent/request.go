@@ -53,8 +53,10 @@ func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
 }
 
 func (rb *RequestBuilder) Sign(key string) *RequestBuilder {
+
 	var body []byte
-	if rb.Err == nil && rb.R.Body != nil {
+
+	if key != "" && rb.Err == nil && rb.R.Body != nil {
 		body, rb.Err = io.ReadAll(rb.R.Body)
 		if rb.Err == nil {
 			sigSrv := signature.NewSha256Sig(key, body)
