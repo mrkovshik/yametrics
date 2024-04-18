@@ -13,6 +13,7 @@ import (
 
 type ServerConfig struct {
 	Address          string `env:"ADDRESS"`
+	Key              string `env:"KEY"`
 	StoreInterval    int    `env:"STORE_INTERVAL" envDefault:"300"`
 	StoreIntervalSet bool
 	SyncStoreEnable  bool   `envDefault:"false"`
@@ -30,6 +31,10 @@ type ServerConfigBuilder struct {
 	Config ServerConfig
 }
 
+func (c *ServerConfigBuilder) WithKey(key string) *ServerConfigBuilder {
+	c.Config.Key = key
+	return c
+}
 func (c *ServerConfigBuilder) WithAddress(host string) *ServerConfigBuilder {
 	c.Config.Address = host
 	return c
@@ -71,8 +76,11 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	storeFilePath := flag.String("f", "./tmp/metrics-db.json", "path to storing data file")
 	restoreEnable := flag.Bool("r", true, "is data restore from file enabled")
 	dbAddress := flag.String("d", "", "db address") //host=localhost port=5432 user=yandex password=yandex dbname=yandex sslmode=disable
+	key := flag.String("k", "", "secret auth key")
 	flag.Parse()
-
+	if c.Config.Key == "" {
+		c.WithKey(*key)
+	}
 	if c.Config.Address == "" {
 		c.WithAddress(*addr)
 	}
