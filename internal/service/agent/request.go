@@ -58,6 +58,7 @@ func (rb *RequestBuilder) Sign(key string) *RequestBuilder {
 
 	if key != "" && rb.Err == nil && rb.R.Body != nil {
 		body, rb.Err = io.ReadAll(rb.R.Body)
+		rb.R.Body = io.NopCloser(bytes.NewBuffer(body))
 		if rb.Err == nil {
 			sigSrv := signature.NewSha256Sig(key, body)
 			sig, err := sigSrv.Generate()
