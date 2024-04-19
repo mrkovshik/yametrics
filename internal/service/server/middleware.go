@@ -1,12 +1,16 @@
 package service
 
 import (
+	"bytes"
+	"crypto/hmac"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/compress"
 	"github.com/mrkovshik/yametrics/internal/logger"
+	"github.com/mrkovshik/yametrics/internal/signature"
 )
 
 func (s *Server) WithLogging(h http.Handler) http.Handler {
@@ -65,5 +69,30 @@ func (s *Server) GzipHandle(next http.Handler) http.Handler {
 		defer cw.Close() //nolint:all
 
 		next.ServeHTTP(cw, r)
+	})
+}
+
+func (s *Server) Authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		clientSig := r.Header.Get(`HashSHA256`)
+		if clientSig != "" && r.Body != nil {
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			r.Body = io.NopCloser(bytes.NewBuffer(body))
+			sigSrv := signature.NewSha256Sig(s.config.Key, body)
+			sig, err := sigSrv.Generate()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if !hmac.Equal([]byte(clientSig), []byte(sig)) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
 	})
 }

@@ -75,7 +75,7 @@ func main() {
 
 func run(s *service.Server, logger *zap.SugaredLogger, cfg config.ServerConfig) {
 	r := chi.NewRouter()
-	r.Use(s.WithLogging, s.GzipHandle)
+	r.Use(s.WithLogging, s.GzipHandle, s.Authenticate)
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", api.UpdateMetricFromJSONHandler(s))
 		r.Post("/{type}/{name}/{value}", api.UpdateMetricFromURLHandler(s))
