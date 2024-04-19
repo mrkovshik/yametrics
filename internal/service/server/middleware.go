@@ -113,6 +113,12 @@ func (s *Server) SignResponse(next http.Handler) http.Handler {
 				return
 			}
 			w.Header().Set("HashSHA256", sig)
+			w.WriteHeader(rw.Code())
+			_, err = w.Write(rw.Body())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	})
 }

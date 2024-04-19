@@ -26,11 +26,13 @@ func (s *Server) UpdateMetricFromJSON(ctx context.Context) func(res http.Respons
 		if err := s.storage.UpdateMetricValue(ctx, newMetrics); err != nil {
 			s.logger.Error("UpdateMetricValue", zap.Error(err))
 			http.Error(res, "error UpdateMetricValue", http.StatusInternalServerError)
+			return
 		}
 		if s.config.SyncStoreEnable {
 			if err := s.storage.StoreMetrics(ctx, s.config.StoreFilePath); err != nil {
 				s.logger.Error("StoreMetrics", zap.Error(err))
 				http.Error(res, "error StoreMetrics", http.StatusInternalServerError)
+				return
 			}
 		}
 		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -38,6 +40,7 @@ func (s *Server) UpdateMetricFromJSON(ctx context.Context) func(res http.Respons
 		if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
 			s.logger.Error("res.Write", zap.Error(err))
 			http.Error(res, "error res.Write", http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -48,15 +51,18 @@ func (s *Server) UpdateMetricsFromJSON(ctx context.Context) func(res http.Respon
 		if err := json.NewDecoder(req.Body).Decode(&batch); err != nil {
 			s.logger.Error("Decode", zap.Error(err))
 			http.Error(res, "Decode", http.StatusInternalServerError)
+			return
 		}
 		if err := s.storage.UpdateMetrics(ctx, batch); err != nil {
 			s.logger.Error("UpdateMetricValue", zap.Error(err))
 			http.Error(res, "error UpdateMetricValue", http.StatusInternalServerError)
+			return
 		}
 		if s.config.SyncStoreEnable {
 			if err := s.storage.StoreMetrics(ctx, s.config.StoreFilePath); err != nil {
 				s.logger.Error("StoreMetrics", zap.Error(err))
 				http.Error(res, "error StoreMetrics", http.StatusInternalServerError)
+				return
 			}
 		}
 		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -64,6 +70,7 @@ func (s *Server) UpdateMetricsFromJSON(ctx context.Context) func(res http.Respon
 		if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
 			s.logger.Error("res.Write", zap.Error(err))
 			http.Error(res, "error res.Write", http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -79,11 +86,13 @@ func (s *Server) UpdateMetricFromURL(ctx context.Context) func(res http.Response
 		if err := s.storage.UpdateMetricValue(ctx, newMetrics); err != nil {
 			s.logger.Error("UpdateMetricValue", zap.Error(err))
 			http.Error(res, "error UpdateMetricValue", http.StatusInternalServerError)
+			return
 		}
 		if s.config.SyncStoreEnable {
 			if err := s.storage.StoreMetrics(ctx, s.config.StoreFilePath); err != nil {
 				s.logger.Error("StoreMetrics", zap.Error(err))
 				http.Error(res, "error StoreMetrics", http.StatusInternalServerError)
+				return
 			}
 		}
 		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -91,6 +100,7 @@ func (s *Server) UpdateMetricFromURL(ctx context.Context) func(res http.Response
 		if _, err := res.Write([]byte("Gauge successfully updated")); err != nil {
 			s.logger.Error("res.Write", zap.Error(err))
 			http.Error(res, "error res.Write", http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -107,12 +117,14 @@ func (s *Server) GetMetricFromJSON(ctx context.Context) func(res http.ResponseWr
 		if err2 != nil {
 			s.logger.Error("s.storage.GetMetricByModel", zap.Error(err2))
 			http.Error(res, "error getting value from server", http.StatusNotFound)
+			return
 		}
 		res.Header().Set("Content-Type", "application/json")
 		res.WriteHeader(http.StatusOK)
 		if err3 := json.NewEncoder(res).Encode(metric); err3 != nil {
 			s.logger.Error("Encode", zap.Error(err3))
 			http.Error(res, err3.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -129,6 +141,7 @@ func (s *Server) GetMetricFromURL(ctx context.Context) func(res http.ResponseWri
 		if err2 != nil {
 			s.logger.Error("s.storage.GetMetricByModel", zap.Error(err2))
 			http.Error(res, "error getting value from server", http.StatusNotFound)
+			return
 		}
 
 		var stringValue string
@@ -140,12 +153,14 @@ func (s *Server) GetMetricFromURL(ctx context.Context) func(res http.ResponseWri
 		default:
 			s.logger.Error("invalid metric type", zap.Error(errors.New("ErrInvalidMetricType")))
 			http.Error(res, "error res.Write", http.StatusInternalServerError)
+			return
 		}
 		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		res.WriteHeader(http.StatusOK)
 		if _, err := res.Write([]byte(stringValue)); err != nil {
 			s.logger.Error("res.Write", zap.Error(err))
 			http.Error(res, "error res.Write", http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -157,11 +172,13 @@ func (s *Server) GetMetrics(_ context.Context) func(res http.ResponseWriter, _ *
 		if err != nil {
 			s.logger.Error("s.storage.GetAllMetrics", zap.Error(err))
 			http.Error(res, "s.storage.GetAllMetrics", http.StatusInternalServerError)
+			return
 		}
 		res.WriteHeader(http.StatusOK)
 		if _, err := res.Write([]byte(body)); err != nil {
 			s.logger.Error("res.Write", zap.Error(err))
 			http.Error(res, "error res.Write", http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -174,11 +191,13 @@ func (s *Server) Ping(ctx context.Context) func(res http.ResponseWriter, _ *http
 			if err := s.db.PingContext(newCtx); err != nil {
 				s.logger.Error("PingContext", zap.Error(err))
 				http.Error(res, "data base is not responding", http.StatusInternalServerError)
+				return
 			}
 			res.WriteHeader(http.StatusOK)
 			if _, err := res.Write([]byte("database is alive")); err != nil {
 				s.logger.Error("res.Write", zap.Error(err))
 				http.Error(res, "error res.Write", http.StatusInternalServerError)
+				return
 			}
 		}
 		res.WriteHeader(http.StatusInternalServerError)

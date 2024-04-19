@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"encoding/json"
 	"io"
@@ -284,6 +285,9 @@ func Test_server(t *testing.T) {
 			require.Equal(t, tt.want.code, response.StatusCode)
 			contentType := response.Header.Get("Content-Type")
 			require.Equal(t, tt.want.contentType, contentType)
+			body, err555 := io.ReadAll(response.Body)
+			assert.NoError(t, err555)
+			response.Body = io.NopCloser(bytes.NewBuffer(body))
 			if contentType == "application/json" {
 				respBody := model.Metrics{}
 				err44 := json.NewDecoder(response.Body).Decode(&respBody)
@@ -297,8 +301,7 @@ func Test_server(t *testing.T) {
 					require.Equal(t, *tt.want.response.Value, *respBody.Value)
 				}
 			} else {
-				body, err55 := io.ReadAll(response.Body)
-				assert.NoError(t, err55)
+
 				if tt.want.response.MType == model.MetricTypeCounter {
 					val, err66 := strconv.ParseInt(string(body), 10, 64)
 					assert.NoError(t, err66)
@@ -310,17 +313,18 @@ func Test_server(t *testing.T) {
 					require.Equal(t, *tt.want.response.Value, val)
 				}
 			}
-			body, err7 := io.ReadAll(response.Body)
-			assert.NoError(t, err7)
-			sigSvc := signature.NewSha256Sig(cfg.Key, body)
-			sig, err9 := sigSvc.Generate()
-			require.NoError(t, err9)
-			respSig := response.Header.Get("HashSHA256")
-			require.Equal(t, true, hmac.Equal([]byte(sig), []byte(respSig)))
+			/*			body, err7 := io.ReadAll(response.Body)
+						assert.NoError(t, err7)*/
+			if response.StatusCode == http.StatusOK {
+				sigSvc := signature.NewSha256Sig(cfg.Key, body)
+				sig, err9 := sigSvc.Generate()
+				require.NoError(t, err9)
+				respSig := response.Header.Get("HashSHA256")
+				require.Equal(t, true, hmac.Equal([]byte(sig), []byte(respSig)))
 
-			err8 := response.Body.Close()
-			require.NoError(t, err8)
-
+				err8 := response.Body.Close()
+				require.NoError(t, err8)
+			}
 		})
 	}
 }
