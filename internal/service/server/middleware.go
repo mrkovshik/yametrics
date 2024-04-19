@@ -89,7 +89,7 @@ func (s *Server) Authenticate(next http.Handler) http.Handler {
 				return
 			}
 			if !hmac.Equal([]byte(clientSig), []byte(sig)) {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, "invalid signature", http.StatusBadRequest)
 				return
 			}
 		}
