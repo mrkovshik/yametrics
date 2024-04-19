@@ -96,3 +96,23 @@ func (s *Server) Authenticate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (s *Server) SignResponse(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.Key == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		rw := signature.NewCapturingResponseWriter(w)
+		next.ServeHTTP(rw, r)
+		if len(rw.Body()) != 0 {
+			sigSrv := signature.NewSha256Sig(s.config.Key, rw.Body())
+			sig, err := sigSrv.Generate()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("HashSHA256", sig)
+		}
+	})
+}

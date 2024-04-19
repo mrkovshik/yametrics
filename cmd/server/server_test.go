@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/hmac"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/internal/model"
 	service2 "github.com/mrkovshik/yametrics/internal/service/agent"
+	"github.com/mrkovshik/yametrics/internal/signature"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -261,6 +263,7 @@ func Test_server(t *testing.T) {
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
 	cfg, err2 := config.GetConfigs()
+	cfg.Key = "some_test_key"
 	require.NoError(t, err2)
 	getMetricsService := service.NewServer(mapStorage, cfg, sugar, nil)
 	go run(getMetricsService, sugar, cfg)
@@ -268,7 +271,7 @@ func Test_server(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{}
-			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method)
+			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method).Sign(cfg.Key)
 			if tt.request.contentType == "application/json" {
 				req.AddJSONBody(tt.request.req)
 			}
@@ -294,24 +297,30 @@ func Test_server(t *testing.T) {
 					require.Equal(t, *tt.want.response.Value, *respBody.Value)
 				}
 			} else {
+				body, err55 := io.ReadAll(response.Body)
+				assert.NoError(t, err55)
 				if tt.want.response.MType == model.MetricTypeCounter {
-					body, err55 := io.ReadAll(response.Body)
-					assert.NoError(t, err55)
 					val, err66 := strconv.ParseInt(string(body), 10, 64)
 					assert.NoError(t, err66)
 					require.Equal(t, *tt.want.response.Delta, val)
 				}
 				if tt.want.response.MType == model.MetricTypeGauge {
-					body, err55 := io.ReadAll(response.Body)
-					assert.NoError(t, err55)
 					val, err66 := strconv.ParseFloat(string(body), 64)
 					assert.NoError(t, err66)
 					require.Equal(t, *tt.want.response.Value, val)
 				}
 			}
+			body, err7 := io.ReadAll(response.Body)
+			assert.NoError(t, err7)
+			sigSvc := signature.NewSha256Sig(cfg.Key, body)
+			sig, err9 := sigSvc.Generate()
+			require.NoError(t, err9)
+			respSig := response.Header.Get("HashSHA256")
+			require.Equal(t, true, hmac.Equal([]byte(sig), []byte(respSig)))
 
-			err5 := response.Body.Close()
-			require.NoError(t, err5)
+			err8 := response.Body.Close()
+			require.NoError(t, err8)
+
 		})
 	}
 }
