@@ -85,5 +85,8 @@ func GetConfigs() (AgentConfig, error) {
 	if !util.ValidateAddress(c.Config.Address) {
 		return AgentConfig{}, errors.New("need address in a form host:port")
 	}
+	if c.Config.RateLimit == 0 {
+		return AgentConfig{}, errors.New("rate limit must be larger than 0")
+	}
 	return c.Config, nil
 }
