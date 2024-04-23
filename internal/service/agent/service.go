@@ -34,35 +34,38 @@ func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg service.
 
 func (a *Agent) SendMetrics(ctx context.Context) {
 	var metricNamesMap = map[string]struct{}{
-		"Alloc":         {},
-		"BuckHashSys":   {},
-		"Frees":         {},
-		"GCCPUFraction": {},
-		"GCSys":         {},
-		"HeapAlloc":     {},
-		"HeapIdle":      {},
-		"HeapInuse":     {},
-		"HeapObjects":   {},
-		"HeapReleased":  {},
-		"HeapSys":       {},
-		"LastGC":        {},
-		"Lookups":       {},
-		"MCacheInuse":   {},
-		"MCacheSys":     {},
-		"MSpanInuse":    {},
-		"MSpanSys":      {},
-		"Mallocs":       {},
-		"NextGC":        {},
-		"NumForcedGC":   {},
-		"NumGC":         {},
-		"OtherSys":      {},
-		"PauseTotalNs":  {},
-		"StackInuse":    {},
-		"StackSys":      {},
-		"Sys":           {},
-		"TotalAlloc":    {},
-		"RandomValue":   {},
-		"PollCount":     {},
+		"Alloc":           {},
+		"BuckHashSys":     {},
+		"Frees":           {},
+		"GCCPUFraction":   {},
+		"GCSys":           {},
+		"HeapAlloc":       {},
+		"HeapIdle":        {},
+		"HeapInuse":       {},
+		"HeapObjects":     {},
+		"HeapReleased":    {},
+		"HeapSys":         {},
+		"LastGC":          {},
+		"Lookups":         {},
+		"MCacheInuse":     {},
+		"MCacheSys":       {},
+		"MSpanInuse":      {},
+		"MSpanSys":        {},
+		"Mallocs":         {},
+		"NextGC":          {},
+		"NumForcedGC":     {},
+		"NumGC":           {},
+		"OtherSys":        {},
+		"PauseTotalNs":    {},
+		"StackInuse":      {},
+		"StackSys":        {},
+		"Sys":             {},
+		"TotalAlloc":      {},
+		"RandomValue":     {},
+		"PollCount":       {},
+		"TotalMemory":     {},
+		"FreeMemory":      {},
+		"CPUutilization1": {},
 	}
 	//a.logger.Debug("Starting to send metrics")
 	for {
@@ -76,8 +79,19 @@ func (a *Agent) PollMetrics() {
 
 	for {
 		//a.logger.Debug("Starting to update metrics")
-		if err := a.source.PollMetrics(a.storage); err != nil {
-			a.logger.Error("PollMetrics", err)
+		if err := a.source.PollMemStats(a.storage); err != nil {
+			a.logger.Error("PollMemStats", err)
+			return
+		}
+		time.Sleep(time.Duration(a.config.PollInterval) * time.Second)
+	}
+}
+
+func (a *Agent) PollUitlMetrics() {
+
+	for {
+		if err := a.source.PollVirtMemStats(a.storage); err != nil {
+			a.logger.Error("PollVirtMemStats", err)
 			return
 		}
 		time.Sleep(time.Duration(a.config.PollInterval) * time.Second)

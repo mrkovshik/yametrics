@@ -8,20 +8,23 @@ import (
 
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/service"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 type RuntimeMetrics struct {
-	MemStats runtime.MemStats
+	MemStats     runtime.MemStats
+	VirtMemStats *mem.VirtualMemoryStat
 }
 
 func NewRuntimeMetrics() RuntimeMetrics {
 	m := RuntimeMetrics{
-		MemStats: runtime.MemStats{},
+		MemStats:     runtime.MemStats{},
+		VirtMemStats: &mem.VirtualMemoryStat{},
 	}
 	return m
 }
 
-func (m RuntimeMetrics) PollMetrics(s service.Storage) error {
+func (m RuntimeMetrics) PollMemStats(s service.Storage) error {
 	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	runtime.ReadMemStats(&m.MemStats)
@@ -253,6 +256,40 @@ func (m RuntimeMetrics) PollMetrics(s service.Storage) error {
 		ID:    "PollCount",
 		MType: model.MetricTypeCounter,
 		Delta: &delta,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m RuntimeMetrics) PollVirtMemStats(s service.Storage) error {
+	ctx := context.Background()
+	var err error
+	m.VirtMemStats, err = mem.VirtualMemory()
+	if err != nil {
+		return err
+	}
+	valueTotalMemory := float64(m.VirtMemStats.Total)
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
+		ID:    "TotalMemory",
+		MType: model.MetricTypeGauge,
+		Value: &valueTotalMemory,
+	}); err != nil {
+		return err
+	}
+	valueFreeMemory := float64(m.VirtMemStats.Free)
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
+		ID:    "FreeMemory",
+		MType: model.MetricTypeGauge,
+		Value: &valueFreeMemory,
+	}); err != nil {
+		return err
+	}
+	valueCPUutilization1 := float64(runtime.NumCPU())
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
+		ID:    "CPUutilization1",
+		MType: model.MetricTypeGauge,
+		Value: &valueCPUutilization1,
 	}); err != nil {
 		return err
 	}

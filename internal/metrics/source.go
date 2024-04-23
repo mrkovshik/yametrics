@@ -5,5 +5,6 @@ import (
 )
 
 type MetricSource interface {
-	PollMetrics(s service.Storage) error
+	PollMemStats(s service.Storage) error
+	PollVirtMemStats(s service.Storage) error
 }

@@ -17,9 +17,14 @@ func main() {
 		strg = storage.NewMapStorage()
 		src  = metrics.NewRuntimeMetrics()
 	)
+
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatal("zap.NewDevelopment",
+			zap.Error(err))
+	}
+	if err != nil {
+		logger.Fatal("metrics.NewUtilMetrics",
 			zap.Error(err))
 	}
 	cfg, err := config.GetConfigs()
@@ -34,6 +39,7 @@ func main() {
 	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", cfg.Address, cfg.PollInterval, cfg.ReportInterval)
 
 	go agent.PollMetrics()
+	go agent.PollUitlMetrics()
 	go agent.SendMetrics(ctx)
 	select {}
 }

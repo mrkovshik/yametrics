@@ -24,7 +24,7 @@ func NewMockMetrics() MockMetrics {
 	}
 }
 
-func (m MockMetrics) PollMetrics(s service.Storage) error {
+func (m MockMetrics) PollMemStats(s service.Storage) error {
 	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	alloc := 1.00
