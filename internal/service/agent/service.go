@@ -70,7 +70,7 @@ func (a *Agent) SendMetrics(ctx context.Context) {
 	//a.logger.Debug("Starting to send metrics")
 	for {
 		time.Sleep(time.Duration(a.config.ReportInterval) * time.Second)
-		a.sendMetrics(ctx, metricNamesMap)
+		a.sendMetricsByPool(ctx, metricNamesMap)
 	}
 
 }
@@ -98,7 +98,7 @@ func (a *Agent) PollUitlMetrics() {
 	}
 }
 
-func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
+func (a *Agent) sendMetricsBatch(ctx context.Context, names map[string]struct{}) {
 	var batch []model.Metrics
 
 	for name := range names {
@@ -140,6 +140,30 @@ func (a *Agent) sendMetrics(ctx context.Context, names map[string]struct{}) {
 	}
 }
 
+func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}) {
+	jobs := make(chan model.Metrics, len(names))
+	for w := 1; w <= a.config.RateLimit; w++ {
+		go a.worker(w, jobs)
+	}
+	for name := range names {
+		currentMetric := model.Metrics{
+			ID: name,
+		}
+		if name == "PollCount" {
+			currentMetric.MType = model.MetricTypeCounter
+		} else {
+			currentMetric.MType = model.MetricTypeGauge
+		}
+		foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
+		if err != nil {
+			a.logger.Error("GetMetricByModel", err)
+			return
+		}
+		jobs <- foundMetric
+	}
+	close(jobs)
+}
+
 func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 	var (
 		bodyBytes      []byte
@@ -172,4 +196,30 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 		}
 	}
 	return nil, nil
+}
+
+func (a *Agent) worker(id int, jobs <-chan model.Metrics) {
+	for j := range jobs {
+		a.logger.Debugf("worker #%v is sending %v", id, j.ID)
+		metricUpdateURL := fmt.Sprintf("http://%v/update/", a.config.Address)
+
+		reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(j).Sign(a.config.Key).Compress().SetMethod(http.MethodPost)
+		if reqBuilder.Err != nil {
+			a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
+			return
+		}
+		response, err := a.retryableSend(&reqBuilder.R)
+		if err != nil {
+			a.logger.Errorf("error sending request: %v\n", err)
+			return
+		}
+		if response.StatusCode != http.StatusOK {
+			a.logger.Errorf("status code is %v\n", response.StatusCode)
+			return
+		}
+		if err := response.Body.Close(); err != nil {
+			a.logger.Error("response.Body.Close()", err)
+			return
+		}
+	}
 }
