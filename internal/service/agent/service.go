@@ -98,47 +98,47 @@ func (a *Agent) PollUitlMetrics() {
 	}
 }
 
-func (a *Agent) sendMetricsBatch(ctx context.Context, names map[string]struct{}) {
-	var batch []model.Metrics
-
-	for name := range names {
-		currentMetric := model.Metrics{
-			ID: name,
-		}
-		if name == "PollCount" {
-			currentMetric.MType = model.MetricTypeCounter
-		} else {
-			currentMetric.MType = model.MetricTypeGauge
-		}
-		foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
-		if err != nil {
-			a.logger.Error("GetMetricByModel", err)
-			return
-		}
-		batch = append(batch, foundMetric)
-	}
-
-	metricUpdateURL := fmt.Sprintf("http://%v/updates/", a.config.Address)
-
-	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(batch).Sign(a.config.Key).Compress().SetMethod(http.MethodPost)
-	if reqBuilder.Err != nil {
-		a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
-		return
-	}
-	response, err := a.retryableSend(&reqBuilder.R)
-	if err != nil {
-		a.logger.Errorf("error sending request: %v\n", err)
-		return
-	}
-	if response.StatusCode != http.StatusOK {
-		a.logger.Errorf("status code is %v\n", response.StatusCode)
-		return
-	}
-	if err := response.Body.Close(); err != nil {
-		a.logger.Error("response.Body.Close()", err)
-		return
-	}
-}
+//func (a *Agent) sendMetricsBatch(ctx context.Context, names map[string]struct{}) {
+//	var batch []model.Metrics
+//
+//	for name := range names {
+//		currentMetric := model.Metrics{
+//			ID: name,
+//		}
+//		if name == "PollCount" {
+//			currentMetric.MType = model.MetricTypeCounter
+//		} else {
+//			currentMetric.MType = model.MetricTypeGauge
+//		}
+//		foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
+//		if err != nil {
+//			a.logger.Error("GetMetricByModel", err)
+//			return
+//		}
+//		batch = append(batch, foundMetric)
+//	}
+//
+//	metricUpdateURL := fmt.Sprintf("http://%v/updates/", a.config.Address)
+//
+//	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(batch).Sign(a.config.Key).Compress().SetMethod(http.MethodPost)
+//	if reqBuilder.Err != nil {
+//		a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
+//		return
+//	}
+//	response, err := a.retryableSend(&reqBuilder.R)
+//	if err != nil {
+//		a.logger.Errorf("error sending request: %v\n", err)
+//		return
+//	}
+//	if response.StatusCode != http.StatusOK {
+//		a.logger.Errorf("status code is %v\n", response.StatusCode)
+//		return
+//	}
+//	if err := response.Body.Close(); err != nil {
+//		a.logger.Error("response.Body.Close()", err)
+//		return
+//	}
+//}
 
 func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}) {
 	jobs := make(chan model.Metrics, len(names))
