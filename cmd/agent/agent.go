@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -38,8 +39,15 @@ func main() {
 	agent := service.NewAgent(src, cfg, strg, sugar)
 	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", cfg.Address, cfg.PollInterval, cfg.ReportInterval)
 
-	go agent.PollMetrics()
-	go agent.PollUitlMetrics()
-	go agent.SendMetrics(ctx)
+	pollTicker := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
+	defer pollTicker.Stop()
+	pollUtilTicker := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
+	defer pollUtilTicker.Stop()
+	sendTicker := time.NewTicker(time.Duration(cfg.ReportInterval) * time.Second)
+	defer sendTicker.Stop()
+
+	go agent.PollMetrics(pollTicker.C)
+	go agent.PollUitlMetrics(pollUtilTicker.C)
+	go agent.SendMetrics(ctx, sendTicker.C)
 	select {}
 }

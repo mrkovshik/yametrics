@@ -32,7 +32,7 @@ func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg service.
 	}
 }
 
-func (a *Agent) SendMetrics(ctx context.Context) {
+func (a *Agent) SendMetrics(ctx context.Context, ch <-chan time.Time) {
 	var metricNamesMap = map[string]struct{}{
 		"Alloc":           {},
 		"BuckHashSys":     {},
@@ -68,77 +68,32 @@ func (a *Agent) SendMetrics(ctx context.Context) {
 		"CPUutilization1": {},
 	}
 	//a.logger.Debug("Starting to send metrics")
-	for {
-		time.Sleep(time.Duration(a.config.ReportInterval) * time.Second)
+	for range ch {
 		a.sendMetricsByPool(ctx, metricNamesMap)
 	}
 
 }
 
-func (a *Agent) PollMetrics() {
+func (a *Agent) PollMetrics(ch <-chan time.Time) {
 
-	for {
-		//a.logger.Debug("Starting to update metrics")
+	for range ch {
+		a.logger.Debug("Starting to update metrics")
 		if err := a.source.PollMemStats(a.storage); err != nil {
 			a.logger.Error("PollMemStats", err)
 			return
 		}
-		time.Sleep(time.Duration(a.config.PollInterval) * time.Second)
 	}
 }
 
-func (a *Agent) PollUitlMetrics() {
+func (a *Agent) PollUitlMetrics(ch <-chan time.Time) {
 
-	for {
+	for range ch {
 		if err := a.source.PollVirtMemStats(a.storage); err != nil {
 			a.logger.Error("PollVirtMemStats", err)
 			return
 		}
-		time.Sleep(time.Duration(a.config.PollInterval) * time.Second)
 	}
 }
-
-//func (a *Agent) sendMetricsBatch(ctx context.Context, names map[string]struct{}) {
-//	var batch []model.metrics
-//
-//	for name := range names {
-//		currentMetric := model.metrics{
-//			ID: name,
-//		}
-//		if name == "PollCount" {
-//			currentMetric.MType = model.MetricTypeCounter
-//		} else {
-//			currentMetric.MType = model.MetricTypeGauge
-//		}
-//		foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
-//		if err != nil {
-//			a.logger.Error("GetMetricByModel", err)
-//			return
-//		}
-//		batch = append(batch, foundMetric)
-//	}
-//
-//	metricUpdateURL := fmt.Sprintf("http://%v/updates/", a.config.Address)
-//
-//	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(batch).Sign(a.config.Key).Compress().SetMethod(http.MethodPost)
-//	if reqBuilder.Err != nil {
-//		a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
-//		return
-//	}
-//	response, err := a.retryableSend(&reqBuilder.R)
-//	if err != nil {
-//		a.logger.Errorf("error sending request: %v\n", err)
-//		return
-//	}
-//	if response.StatusCode != http.StatusOK {
-//		a.logger.Errorf("status code is %v\n", response.StatusCode)
-//		return
-//	}
-//	if err := response.Body.Close(); err != nil {
-//		a.logger.Error("response.Body.Close()", err)
-//		return
-//	}
-//}
 
 func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}) {
 	jobs := make(chan model.Metrics, len(names))
