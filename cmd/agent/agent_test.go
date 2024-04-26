@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mrkovshik/yametrics/internal/model"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/mrkovshik/yametrics/internal/metrics"
+	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/storage"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_getMetrics(t *testing.T) {

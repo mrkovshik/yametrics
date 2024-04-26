@@ -11,16 +11,16 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/mrkovshik/yametrics/internal/model"
-	service2 "github.com/mrkovshik/yametrics/internal/service/agent"
-	"github.com/mrkovshik/yametrics/internal/signature"
-	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
+	"github.com/mrkovshik/yametrics/internal/model"
+	service2 "github.com/mrkovshik/yametrics/internal/service/agent"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
-	"github.com/stretchr/testify/require"
+	"github.com/mrkovshik/yametrics/internal/signature"
+	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
 func Test_server(t *testing.T) {

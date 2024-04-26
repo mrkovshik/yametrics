@@ -6,9 +6,10 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/shirou/gopsutil/v3/mem"
+
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/service"
-	"github.com/shirou/gopsutil/v3/mem"
 )
 
 type RuntimeMetrics struct {

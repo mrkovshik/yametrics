@@ -3,9 +3,10 @@ package service
 import (
 	"database/sql"
 
-	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/service"
 	"go.uber.org/zap"
+
+	config "github.com/mrkovshik/yametrics/internal/config/server"
 )
 
 type Server struct {

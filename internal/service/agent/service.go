@@ -99,10 +99,10 @@ func (a *Agent) PollUitlMetrics() {
 }
 
 //func (a *Agent) sendMetricsBatch(ctx context.Context, names map[string]struct{}) {
-//	var batch []model.Metrics
+//	var batch []model.metrics
 //
 //	for name := range names {
-//		currentMetric := model.Metrics{
+//		currentMetric := model.metrics{
 //			ID: name,
 //		}
 //		if name == "PollCount" {

@@ -5,16 +5,15 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
+	"go.uber.org/zap"
 
-	"github.com/go-chi/chi/v5"
-
-	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
-	"go.uber.org/zap"
 )
 
 func main() {
