@@ -119,6 +119,20 @@ func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}
 	close(jobs)
 }
 
+func (a *Agent) LoadServer(ch <-chan time.Time) {
+	metricUpdateURL := fmt.Sprintf("http://%v", a.config.Address)
+	client := http.Client{Timeout: 5 * time.Second}
+	reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).Sign(a.config.Key).SetMethod(http.MethodGet)
+	if reqBuilder.Err != nil {
+		a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
+		return
+	}
+	for range ch {
+		go client.Do(&reqBuilder.R)
+	}
+
+}
+
 func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 	var (
 		bodyBytes      []byte
