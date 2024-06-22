@@ -128,7 +128,7 @@ func (a *Agent) LoadServer(ch <-chan time.Time) {
 		return
 	}
 	for range ch {
-		go client.Do(&reqBuilder.R)
+		go client.Do(&reqBuilder.R) //nolint:all
 	}
 
 }

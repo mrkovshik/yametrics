@@ -67,7 +67,6 @@ func main() {
 	if cfg.StoreEnable && !cfg.SyncStoreEnable {
 		go getMetricsService.DumpMetrics(ctx)
 	}
-	go http.ListenAndServe(":8081", nil) // запускаем сервер
 	run(getMetricsService, sugar, cfg)
 	if err := getMetricsService.StoreMetrics(ctx, cfg.StoreFilePath); err != nil {
 		sugar.Fatal("StoreMetrics", err)
