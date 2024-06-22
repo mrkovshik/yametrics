@@ -55,24 +55,3 @@ func Test_getMetrics(t *testing.T) {
 		})
 	}
 }
-
-func BenchmarkPollMemStats(b *testing.B) {
-	var (
-		src  = metrics.NewMockMetrics()
-		strg = storage.NewMapStorage()
-		ctx  = context.Background()
-	)
-	b.Run("poll", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			src.PollMemStats(strg)
-		}
-	})
-	b.Run("get", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			strg.GetMetricByModel(ctx, model.Metrics{
-				ID:    "BuckHashSys",
-				MType: model.MetricTypeGauge,
-			})
-		}
-	})
-}

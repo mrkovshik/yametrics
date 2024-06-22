@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/go-chi/chi/v5"
 	_ "github.com/lib/pq"
@@ -66,6 +67,7 @@ func main() {
 	if cfg.StoreEnable && !cfg.SyncStoreEnable {
 		go getMetricsService.DumpMetrics(ctx)
 	}
+	go http.ListenAndServe(":8081", nil) // запускаем сервер
 	run(getMetricsService, sugar, cfg)
 	if err := getMetricsService.StoreMetrics(ctx, cfg.StoreFilePath); err != nil {
 		sugar.Fatal("StoreMetrics", err)

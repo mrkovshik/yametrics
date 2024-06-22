@@ -1,12 +1,15 @@
-package storage
+package yametrics
 
 import (
 	"context"
 	"database/sql"
+	_ "net/http/pprof"
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/mrkovshik/yametrics/internal/metrics"
 	"github.com/mrkovshik/yametrics/internal/model"
+	"github.com/mrkovshik/yametrics/internal/storage"
 	"go.uber.org/zap"
 )
 
@@ -57,8 +60,8 @@ func BenchmarkUpdateMetricValue(b *testing.B) {
 	}
 	ctx := context.Background()
 	defer db.Close() //nolint:all
-	postgresStorage := NewDBStorage(db)
-	runtimeStorage := NewMapStorage()
+	postgresStorage := storage.NewDBStorage(db)
+	runtimeStorage := storage.NewMapStorage()
 	if err := postgresStorage.RestoreMetrics(ctx, "/metrics-db_bm.json"); err != nil {
 		sugar.Fatal("RestoreMetrics", err)
 	}
@@ -125,4 +128,25 @@ func BenchmarkUpdateMetricValue(b *testing.B) {
 		}
 	})
 
+}
+
+func BenchmarkPollMemStats(b *testing.B) {
+	var (
+		src  = metrics.NewRuntimeMetrics()
+		strg = storage.NewMapStorage()
+		ctx  = context.Background()
+	)
+	b.Run("poll", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			src.PollMemStats(strg)
+		}
+	})
+	b.Run("get", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			strg.GetMetricByModel(ctx, model.Metrics{
+				ID:    "BuckHashSys",
+				MType: model.MetricTypeGauge,
+			})
+		}
+	})
 }

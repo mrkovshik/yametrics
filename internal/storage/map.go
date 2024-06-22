@@ -30,7 +30,7 @@ func NewMapStorage() service.Storage {
 }
 
 func (s *mapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metrics) error {
-	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
+	key := newMetrics.MType + ":" + newMetrics.ID
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	found, ok := s.metrics[key]
@@ -52,7 +52,7 @@ func (s *mapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metri
 	return nil
 }
 func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
-	key := fmt.Sprintf("%v:%v", newMetrics.MType, newMetrics.ID)
+	key := newMetrics.MType + ":" + newMetrics.ID
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	res, ok := s.metrics[key]

@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	_ "github.com/lib/pq"
+
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/stretchr/testify/assert"
 )
