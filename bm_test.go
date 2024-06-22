@@ -3,6 +3,7 @@ package yametrics
 import (
 	"context"
 	"database/sql"
+	"log"
 	_ "net/http/pprof"
 	"testing"
 
@@ -138,15 +139,22 @@ func BenchmarkPollMemStats(b *testing.B) {
 	)
 	b.Run("poll", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			src.PollMemStats(strg)
+			err := src.PollMemStats(strg)
+			if err != nil {
+				log.Fatal("UpdateMetrics", err)
+			}
 		}
 	})
+
 	b.Run("get", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			strg.GetMetricByModel(ctx, model.Metrics{
+			_, err := strg.GetMetricByModel(ctx, model.Metrics{
 				ID:    "BuckHashSys",
 				MType: model.MetricTypeGauge,
 			})
+			if err != nil {
+				log.Fatal("UpdateMetrics", err)
+			}
 		}
 	})
 }

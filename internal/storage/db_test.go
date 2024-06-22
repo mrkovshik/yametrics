@@ -82,7 +82,7 @@ TRUNCATE TABLE metrics;`
 		assert.NoError(t, errUpdateMetrics)
 	})
 	_, errCreate := os.Create("/test.json")
-	defer os.RemoveAll(testFilePath)
+	defer os.RemoveAll(testFilePath) //nolint:all
 	assert.NoError(t, errCreate)
 
 	t.Run("store", func(t *testing.T) {
