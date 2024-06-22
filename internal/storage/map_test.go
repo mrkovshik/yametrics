@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_mapStorage_UpdateMetricValue(t *testing.T) {
+func Test_mapStorage(t *testing.T) {
 	testMapStorage := NewMapStorage()
 	ctx := context.Background()
 	const testFilePath = "/test.json"
@@ -80,5 +80,12 @@ func Test_mapStorage_UpdateMetricValue(t *testing.T) {
 		assert.NoError(t, errGetMetricByModel2)
 		assert.Equal(t, testGaugeMetric2, metric2)
 	})
+
+	t.Run("get all metrics", func(t *testing.T) {
+		_, errGetMetricByModel1 := testMapStorage2.GetAllMetrics(ctx)
+		assert.NoError(t, errGetMetricByModel1)
+
+	})
+
 	_ = os.RemoveAll(testFilePath)
 }
