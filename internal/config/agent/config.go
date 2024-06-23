@@ -16,6 +16,7 @@ type AgentConfig struct {
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	RateLimit      int    `env:"RATE_LIMIT"`
+	LoadRateLimit  int    `env:"LOAD_RATE_LIMIT"`
 }
 
 type AgentConfigBuilder struct {
@@ -47,12 +48,18 @@ func (c *AgentConfigBuilder) WithRateLimit(rateLimit int) *AgentConfigBuilder {
 	return c
 }
 
+func (c *AgentConfigBuilder) WithLoadRateLimit(loadRateLimit int) *AgentConfigBuilder {
+	c.Config.LoadRateLimit = loadRateLimit
+	return c
+}
+
 func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
 	pollInterval := flag.Int("p", 2, "metrics polling interval")
 	reportInterval := flag.Int("r", 10, "metrics sending to server interval")
 	key := flag.String("k", "", "secret auth key")
 	rateLimit := flag.Int("l", 1, "agent rate limit")
+	loadRateLimit := flag.Int("b", 0, "load rate limit")
 	flag.Parse()
 
 	if c.Config.Key == "" {
@@ -69,6 +76,9 @@ func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	}
 	if c.Config.RateLimit == 0 {
 		c.WithRateLimit(*rateLimit)
+	}
+	if c.Config.LoadRateLimit == 0 {
+		c.WithLoadRateLimit(*loadRateLimit)
 	}
 	return c
 }

@@ -313,8 +313,6 @@ func Test_server(t *testing.T) {
 					require.Equal(t, *tt.want.response.Value, val)
 				}
 			}
-			/*			body, err7 := io.ReadAll(response.Body)
-						assert.NoError(t, err7)*/
 			if response.StatusCode == http.StatusOK {
 				sigSvc := signature.NewSha256Sig(cfg.Key, body)
 				sig, err9 := sigSvc.Generate()
