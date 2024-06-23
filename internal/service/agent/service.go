@@ -1,3 +1,4 @@
+// Package service provides utilities for building and sending HTTP requests with metrics to server.
 package service
 
 import (
@@ -16,13 +17,15 @@ import (
 	"github.com/mrkovshik/yametrics/internal/metrics"
 )
 
+// Agent represents a metric collection agent that polls and sends metrics.
 type Agent struct {
-	source  metrics.MetricSource
-	logger  *zap.SugaredLogger
-	config  config.AgentConfig
-	storage service.Storage
+	source  metrics.MetricSource // Source of the metrics
+	logger  *zap.SugaredLogger   // Logger for logging messages
+	config  config.AgentConfig   // Configuration for the agent
+	storage service.Storage      // Storage for metrics
 }
 
+// NewAgent initializes a new Agent.
 func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg service.Storage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
 		source:  source,
@@ -32,6 +35,7 @@ func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg service.
 	}
 }
 
+// SendMetrics sends metrics at intervals specified by the channel.
 func (a *Agent) SendMetrics(ctx context.Context, ch <-chan time.Time) {
 	var metricNamesMap = map[string]struct{}{
 		"Alloc":           {},
@@ -71,11 +75,10 @@ func (a *Agent) SendMetrics(ctx context.Context, ch <-chan time.Time) {
 	for range ch {
 		a.sendMetricsByPool(ctx, metricNamesMap)
 	}
-
 }
 
+// PollMetrics polls metrics at intervals specified by the channel.
 func (a *Agent) PollMetrics(ch <-chan time.Time) {
-
 	for range ch {
 		a.logger.Debug("Starting to update metrics")
 		if err := a.source.PollMemStats(a.storage); err != nil {
@@ -85,8 +88,8 @@ func (a *Agent) PollMetrics(ch <-chan time.Time) {
 	}
 }
 
+// PollUitlMetrics polls utilization metrics at intervals specified by the channel.
 func (a *Agent) PollUitlMetrics(ch <-chan time.Time) {
-
 	for range ch {
 		if err := a.source.PollVirtMemStats(a.storage); err != nil {
 			a.logger.Error("PollVirtMemStats", err)
@@ -95,6 +98,7 @@ func (a *Agent) PollUitlMetrics(ch <-chan time.Time) {
 	}
 }
 
+// sendMetricsByPool sends metrics using a pool of workers.
 func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}) {
 	jobs := make(chan model.Metrics, len(names))
 	for w := 1; w <= a.config.RateLimit; w++ {
@@ -119,6 +123,7 @@ func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}
 	close(jobs)
 }
 
+// LoadServer loads metrics to the server at intervals specified by the channel.
 func (a *Agent) LoadServer(ch <-chan time.Time) {
 	metricUpdateURL := fmt.Sprintf("http://%v", a.config.Address)
 	client := http.Client{Timeout: 5 * time.Second}
@@ -130,9 +135,9 @@ func (a *Agent) LoadServer(ch <-chan time.Time) {
 	for range ch {
 		go client.Do(&reqBuilder.R) //nolint:all
 	}
-
 }
 
+// retryableSend sends an HTTP request with retries.
 func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 	var (
 		bodyBytes      []byte
@@ -145,7 +150,7 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Нужно сбрасывать тело запроса, иначе при повторных попытках не будет отображаться реальная ошибка
+		// Reset the request body for retries.
 		req.Body.Close() //nolint:all
 		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	}
@@ -167,6 +172,7 @@ func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
 	return nil, nil
 }
 
+// worker processes metrics and sends them to the server.
 func (a *Agent) worker(id int, jobs <-chan model.Metrics) {
 	for j := range jobs {
 		a.logger.Debugf("worker #%v is sending %v", id, j.ID)

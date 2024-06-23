@@ -1,3 +1,4 @@
+// Package service methods for handling various HTTP endpoints related to metrics and database operations.
 package service
 
 import (
@@ -15,6 +16,7 @@ import (
 
 var errInvalidRequestData = errors.New("invalid request data")
 
+// UpdateMetricFromJSON handles HTTP requests to update a metric from JSON data.
 func (s *Server) UpdateMetricFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
@@ -45,6 +47,7 @@ func (s *Server) UpdateMetricFromJSON(ctx context.Context) func(res http.Respons
 	}
 }
 
+// UpdateMetricsFromJSON handles HTTP requests to update multiple metrics from JSON data.
 func (s *Server) UpdateMetricsFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var batch []model.Metrics
@@ -75,6 +78,7 @@ func (s *Server) UpdateMetricsFromJSON(ctx context.Context) func(res http.Respon
 	}
 }
 
+// UpdateMetricFromURL handles HTTP requests to update a metric from URL parameters.
 func (s *Server) UpdateMetricFromURL(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
@@ -105,6 +109,7 @@ func (s *Server) UpdateMetricFromURL(ctx context.Context) func(res http.Response
 	}
 }
 
+// GetMetricFromJSON handles HTTP requests to retrieve a metric using JSON data.
 func (s *Server) GetMetricFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
@@ -129,6 +134,7 @@ func (s *Server) GetMetricFromJSON(ctx context.Context) func(res http.ResponseWr
 	}
 }
 
+// GetMetricFromURL handles HTTP requests to retrieve a metric using URL parameters.
 func (s *Server) GetMetricFromURL(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
@@ -164,6 +170,8 @@ func (s *Server) GetMetricFromURL(ctx context.Context) func(res http.ResponseWri
 		}
 	}
 }
+
+// GetMetrics handles HTTP requests to retrieve all metrics.
 func (s *Server) GetMetrics(_ context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, _ *http.Request) {
 		var ctx = context.Background()
@@ -183,6 +191,7 @@ func (s *Server) GetMetrics(_ context.Context) func(res http.ResponseWriter, _ *
 	}
 }
 
+// Ping handles HTTP requests to ping the server/database.
 func (s *Server) Ping(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, _ *http.Request) {
 		if s.config.DBEnable {

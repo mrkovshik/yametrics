@@ -1,3 +1,4 @@
+// Package storage provides implementations of the service.Storage interface for metrics storage.
 package storage
 
 import (
@@ -16,19 +17,20 @@ import (
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
+// mapStorage implements the service.Storage interface using an in-memory map for storing metrics.
 type mapStorage struct {
-	mu      sync.RWMutex
-	metrics map[string]model.Metrics
+	mu      sync.RWMutex             // Mutex for thread-safe access to metrics map
+	metrics map[string]model.Metrics // Map to store metrics
 }
 
+// NewMapStorage creates a new instance of mapStorage.
 func NewMapStorage() service.Storage {
-	s := make(map[string]model.Metrics)
 	return &mapStorage{
-		sync.RWMutex{},
-		s,
+		metrics: make(map[string]model.Metrics),
 	}
 }
 
+// UpdateMetricValue updates or inserts a metric into the metrics map.
 func (s *mapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metrics) error {
 	key := newMetrics.MType + ":" + newMetrics.ID
 	s.mu.Lock()
@@ -43,6 +45,8 @@ func (s *mapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metri
 	s.metrics[key] = newMetrics
 	return nil
 }
+
+// UpdateMetrics updates multiple metrics in the metrics map.
 func (s *mapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	for _, metric := range newMetrics {
 		if err := s.UpdateMetricValue(ctx, metric); err != nil {
@@ -51,6 +55,8 @@ func (s *mapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metri
 	}
 	return nil
 }
+
+// GetMetricByModel retrieves a metric from the metrics map based on the provided model.
 func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	key := newMetrics.MType + ":" + newMetrics.ID
 	s.mu.RLock()
@@ -59,10 +65,10 @@ func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metric
 	if !ok {
 		return model.Metrics{}, fmt.Errorf("%v not found", key)
 	}
-
 	return res, nil
 }
 
+// GetAllMetrics retrieves all metrics from the metrics map and returns them as a JSON string.
 func (s *mapStorage) GetAllMetrics(_ context.Context) (string, error) {
 	var tpl bytes.Buffer
 	t, err := templates.ParseTemplates()
@@ -77,6 +83,7 @@ func (s *mapStorage) GetAllMetrics(_ context.Context) (string, error) {
 	return tpl.String(), nil
 }
 
+// StoreMetrics stores all metrics from the metrics map into a JSON file at the specified path.
 func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
@@ -95,6 +102,7 @@ func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
 	return err
 }
 
+// RestoreMetrics restores metrics from a JSON file at the specified path into the metrics map.
 func (s *mapStorage) RestoreMetrics(_ context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
@@ -102,6 +110,7 @@ func (s *mapStorage) RestoreMetrics(_ context.Context, path string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close() //nolint:all
 	reader := bufio.NewReader(file)
 	data, err := io.ReadAll(reader)
 	if err != nil {

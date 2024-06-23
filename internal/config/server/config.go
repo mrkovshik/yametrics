@@ -1,3 +1,5 @@
+// Package config provides configuration handling for the server, allowing
+// configurations to be set via environment variables or command-line flags.
 package config
 
 import (
@@ -11,6 +13,7 @@ import (
 	"github.com/mrkovshik/yametrics/internal/util"
 )
 
+// ServerConfig holds the configuration settings for the server.
 type ServerConfig struct {
 	Address          string `env:"ADDRESS"`
 	Key              string `env:"KEY"`
@@ -27,49 +30,66 @@ type ServerConfig struct {
 	DBEnable         bool
 }
 
+// ServerConfigBuilder is a builder for constructing a ServerConfig instance.
 type ServerConfigBuilder struct {
 	Config ServerConfig
 }
 
+// WithKey sets the key in the ServerConfig.
 func (c *ServerConfigBuilder) WithKey(key string) *ServerConfigBuilder {
 	c.Config.Key = key
 	return c
 }
-func (c *ServerConfigBuilder) WithAddress(host string) *ServerConfigBuilder {
-	c.Config.Address = host
+
+// WithAddress sets the address in the ServerConfig.
+func (c *ServerConfigBuilder) WithAddress(address string) *ServerConfigBuilder {
+	c.Config.Address = address
 	return c
 }
 
+// WithDSN sets the database DSN in the ServerConfig.
 func (c *ServerConfigBuilder) WithDSN(dsn string) *ServerConfigBuilder {
 	c.Config.DBAddress = dsn
 	return c
 }
+
+// WithDBEnable enables the database in the ServerConfig.
 func (c *ServerConfigBuilder) WithDBEnable() *ServerConfigBuilder {
 	c.Config.DBEnable = true
 	return c
 }
 
+// WithStoreInterval sets the store interval in the ServerConfig.
 func (c *ServerConfigBuilder) WithStoreInterval(interval int) *ServerConfigBuilder {
 	c.Config.StoreInterval = interval
 	return c
 }
+
+// WithStoreFilePath sets the store file path in the ServerConfig.
 func (c *ServerConfigBuilder) WithStoreFilePath(path string) *ServerConfigBuilder {
 	c.Config.StoreFilePath = path
 	return c
 }
+
+// WithRestoreEnable sets the restore enable flag in the ServerConfig.
 func (c *ServerConfigBuilder) WithRestoreEnable(restore bool) *ServerConfigBuilder {
 	c.Config.RestoreEnable = restore
 	return c
 }
+
+// WithStoreEnable sets the store enable flag in the ServerConfig.
 func (c *ServerConfigBuilder) WithStoreEnable(store bool) *ServerConfigBuilder {
 	c.Config.StoreEnable = store
 	return c
 }
+
+// WithSyncStoreEnable sets the sync store enable flag in the ServerConfig.
 func (c *ServerConfigBuilder) WithSyncStoreEnable(sync bool) *ServerConfigBuilder {
 	c.Config.SyncStoreEnable = sync
 	return c
 }
 
+// FromFlags populates the ServerConfig from command-line flags.
 func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
 	storeInterval := flag.Int("i", 300, "time interval between storing data to file")
@@ -78,6 +98,7 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	dbAddress := flag.String("d", "", "db address") //host=localhost port=5432 user=yandex password=yandex dbname=yandex sslmode=disable
 	key := flag.String("k", "", "secret auth key")
 	flag.Parse()
+
 	if c.Config.Key == "" {
 		c.WithKey(*key)
 	}
@@ -96,23 +117,21 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	if c.Config.StoreFilePath == "" {
 		c.WithStoreEnable(false)
 	}
-
 	if !c.Config.StoreIntervalSet {
 		c.WithStoreInterval(*storeInterval)
 	}
-	if c.Config.StoreInterval == 0 && c.Config.StoreEnable { //Если функция записи в файл отключена, то и эта опция будет отключена
+	if c.Config.StoreInterval == 0 && c.Config.StoreEnable { // If file storage is disabled, this option will be disabled as well
 		c.WithSyncStoreEnable(true)
 	}
-
 	if !c.Config.RestoreEnvSet {
 		c.WithRestoreEnable(*restoreEnable)
 	}
 	return c
 }
 
+// FromEnv populates the ServerConfig from environment variables.
 func (c *ServerConfigBuilder) FromEnv() *ServerConfigBuilder {
-
-	if err := env.Parse(c); err != nil {
+	if err := env.Parse(&c.Config); err != nil {
 		log.Fatal(err)
 	}
 	_, storeIntSet := os.LookupEnv("STORE_INTERVAL")
@@ -134,6 +153,9 @@ func (c *ServerConfigBuilder) FromEnv() *ServerConfigBuilder {
 	return c
 }
 
+// GetConfigs returns the fully constructed ServerConfig by combining
+// configurations from environment variables and command-line flags.
+// It validates the address to ensure it is properly set.
 func GetConfigs() (ServerConfig, error) {
 	var c ServerConfigBuilder
 	c.FromEnv().FromFlags()

@@ -1,3 +1,4 @@
+// Package metrics provides functionality to collect runtime and virtual memory metrics.
 package metrics
 
 import (
@@ -12,11 +13,13 @@ import (
 	"github.com/mrkovshik/yametrics/internal/service"
 )
 
+// RuntimeMetrics holds memory statistics from the runtime package and virtual memory statistics.
 type RuntimeMetrics struct {
-	MemStats     runtime.MemStats
-	VirtMemStats *mem.VirtualMemoryStat
+	MemStats     runtime.MemStats       // Statistics on the memory allocator.
+	VirtMemStats *mem.VirtualMemoryStat // Virtual memory statistics.
 }
 
+// NewRuntimeMetrics creates a new RuntimeMetrics instance with initialized memory statistics.
 func NewRuntimeMetrics() RuntimeMetrics {
 	m := RuntimeMetrics{
 		MemStats:     runtime.MemStats{},
@@ -25,6 +28,7 @@ func NewRuntimeMetrics() RuntimeMetrics {
 	return m
 }
 
+// PollMemStats collects memory statistics and updates them in the provided storage service.
 func (m RuntimeMetrics) PollMemStats(s service.Storage) error {
 	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -263,6 +267,7 @@ func (m RuntimeMetrics) PollMemStats(s service.Storage) error {
 	return nil
 }
 
+// PollVirtMemStats collects virtual memory statistics and updates them in the provided storage service.
 func (m RuntimeMetrics) PollVirtMemStats(s service.Storage) error {
 	ctx := context.Background()
 	var err error
