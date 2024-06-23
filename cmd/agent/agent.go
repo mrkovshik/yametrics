@@ -45,9 +45,5 @@ func main() {
 	go agent.PollMetrics(pollTicker.C)
 	go agent.PollUitlMetrics(pollUtilTicker.C)
 	go agent.SendMetrics(ctx, sendTicker.C)
-	if cfg.LoadRateLimit > 0 {
-		loadTicker := time.NewTicker(time.Duration(cfg.LoadRateLimit) * time.Millisecond)
-		go agent.LoadServer(loadTicker.C)
-	}
 	select {}
 }
