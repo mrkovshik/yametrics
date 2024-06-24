@@ -16,13 +16,10 @@ type Storage interface {
 
 	// GetMetricByModel retrieves a metric from the storage based on the provided model.
 	GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error)
-
-	// GetAllMetrics retrieves all metrics stored in the system as a formatted string.
-	GetAllMetrics(ctx context.Context) (string, error)
-
-	// StoreMetrics stores the current state of metrics to the specified path.
+	GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error)
 	StoreMetrics(ctx context.Context, path string) error
 
 	// RestoreMetrics restores metrics from the specified path into the storage.
 	RestoreMetrics(ctx context.Context, path string) error
+	Ping(ctx context.Context) error
 }

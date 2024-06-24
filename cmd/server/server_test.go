@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"encoding/json"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/mrkovshik/yametrics/api/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -255,7 +257,7 @@ func Test_server(t *testing.T) {
 		},
 	}
 
-	mapStorage := storage.NewMapStorage()
+	metricStorage := storage.NewMapStorage()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		logger.Fatal("zap.NewDevelopment",
@@ -266,8 +268,9 @@ func Test_server(t *testing.T) {
 	cfg, err2 := config.GetConfigs()
 	cfg.Key = "some_test_key"
 	require.NoError(t, err2)
-	getMetricsService := service.NewServer(mapStorage, cfg, sugar, nil)
-	go run(getMetricsService, sugar, cfg)
+	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
+	apiService := rest.NewRestAPIServer(metricService, &cfg, sugar)
+	go apiService.RunServer(context.Background())
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

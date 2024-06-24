@@ -1,4 +1,4 @@
-package service
+package server
 
 import (
 	"database/sql"
@@ -12,10 +12,10 @@ import (
 // Server represents the main application server containing configurations,
 // logger, database connection, and storage service interface.
 type Server struct {
-	storage service.Storage     // storage service for handling metrics data
-	config  config.ServerConfig // server configuration
-	logger  *zap.SugaredLogger  // logger instance for logging
-	db      *sql.DB             // database connection
+	storage service.Storage
+	config  config.ServerConfig
+	Logger  *zap.SugaredLogger
+	db      *sql.DB
 }
 
 // NewServer creates a new instance of Server with the provided dependencies.
@@ -26,6 +26,6 @@ func NewServer(storage service.Storage, cfg config.ServerConfig, logger *zap.Sug
 		db:      db,
 		storage: storage,
 		config:  cfg,
-		logger:  logger,
+		Logger:  logger,
 	}
 }
