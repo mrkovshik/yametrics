@@ -1,4 +1,4 @@
-package service
+package rest
 
 import (
 	"bytes"
@@ -13,7 +13,9 @@ import (
 	"github.com/mrkovshik/yametrics/internal/signature"
 )
 
-func (s *Server) WithLogging(h http.Handler) http.Handler {
+// WithLogging wraps an http.Handler with logging functionality.
+// It logs incoming HTTP requests and their corresponding responses.
+func (s *restAPIServer) WithLogging(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		responseData := &logger.ResponseData{
@@ -37,7 +39,9 @@ func (s *Server) WithLogging(h http.Handler) http.Handler {
 	return http.HandlerFunc(logFn)
 }
 
-func (s *Server) GzipHandle(next http.Handler) http.Handler {
+// GzipHandle returns an http.Handler that handles gzip compression for request and response bodies.
+// It checks the request headers for gzip encoding and wraps the response writer with gzip compression if supported.
+func (s *restAPIServer) GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var isEncodingSupported = false
 
@@ -72,7 +76,9 @@ func (s *Server) GzipHandle(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) Authenticate(next http.Handler) http.Handler {
+// Authenticate returns an http.Handler that authenticates incoming requests using HMAC-SHA256 signatures.
+// It verifies the integrity of the request body against the provided signature.
+func (s *restAPIServer) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		clientSig := r.Header.Get(`HashSHA256`)
 		if clientSig != "" && r.Body != nil {
@@ -97,7 +103,9 @@ func (s *Server) Authenticate(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) SignResponse(next http.Handler) http.Handler {
+// SignResponse returns an http.Handler that signs outgoing response bodies using HMAC-SHA256 signatures.
+// If a signing key is configured, it computes the signature of the response body and sets the HashSHA256 header.
+func (s *restAPIServer) SignResponse(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.config.Key == "" {
 			next.ServeHTTP(w, r)

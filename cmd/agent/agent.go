@@ -24,10 +24,6 @@ func main() {
 		log.Fatal("zap.NewDevelopment",
 			zap.Error(err))
 	}
-	if err != nil {
-		logger.Fatal("metrics.NewUtilMetrics",
-			zap.Error(err))
-	}
 	cfg, err := config.GetConfigs()
 	if err != nil {
 		logger.Fatal("config.GetConfigs",

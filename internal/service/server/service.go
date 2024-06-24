@@ -1,4 +1,4 @@
-package service
+package server
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 type Server struct {
 	storage service.Storage
 	config  config.ServerConfig
-	logger  *zap.SugaredLogger
+	Logger  *zap.SugaredLogger
 	db      *sql.DB
 }
 
@@ -21,6 +21,6 @@ func NewServer(storage service.Storage, cfg config.ServerConfig, logger *zap.Sug
 		db:      db,
 		storage: storage,
 		config:  cfg,
-		logger:  logger,
+		Logger:  logger,
 	}
 }

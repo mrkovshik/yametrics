@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/service"
-	"github.com/mrkovshik/yametrics/internal/templates"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
@@ -72,20 +70,27 @@ func (s *dBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metri
 	return foundMetric, nil
 }
 
-func (s *dBStorage) GetAllMetrics(ctx context.Context) (string, error) {
-	var tpl bytes.Buffer
-	t, err := templates.ParseTemplates()
+func (s *dBStorage) GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error) {
+	metricMap := make(map[string]model.Metrics)
+	query := `SELECT id, type, value, delta FROM metrics`
+	rows, err := retriable.QueryRetryable(func() (*sql.Rows, error) {
+		return s.db.QueryContext(ctx, query)
+	})
 	if err != nil {
-		return "", err
+		return map[string]model.Metrics{}, err
 	}
-	metricMap, err := s.scanAllMetricsToMap(ctx)
-	if err != nil {
-		return "", err
+	defer rows.Close() //nolint:all
+	for rows.Next() {
+		currentMetric := model.Metrics{}
+		if err := rows.Scan(&currentMetric.ID, &currentMetric.MType, &currentMetric.Value, &currentMetric.Delta); err != nil {
+			return map[string]model.Metrics{}, err
+		}
+		metricMap[currentMetric.ID] = currentMetric
 	}
-	if err := t.ExecuteTemplate(&tpl, "list_metrics", metricMap); err != nil {
-		return "", err
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
-	return tpl.String(), nil
+	return metricMap, nil
 }
 
 func (s *dBStorage) StoreMetrics(ctx context.Context, path string) error {

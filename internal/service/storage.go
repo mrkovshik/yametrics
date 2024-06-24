@@ -10,7 +10,8 @@ type Storage interface {
 	UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error
 	UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error
 	GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error)
-	GetAllMetrics(ctx context.Context) (string, error)
+	GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error)
 	StoreMetrics(ctx context.Context, path string) error
 	RestoreMetrics(ctx context.Context, path string) error
+	Ping(ctx context.Context) error
 }

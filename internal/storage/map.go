@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/service"
-	"github.com/mrkovshik/yametrics/internal/templates"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
@@ -63,18 +61,8 @@ func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metric
 	return res, nil
 }
 
-func (s *mapStorage) GetAllMetrics(_ context.Context) (string, error) {
-	var tpl bytes.Buffer
-	t, err := templates.ParseTemplates()
-	if err != nil {
-		return "", err
-	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	if err := t.ExecuteTemplate(&tpl, "list_metrics", s.metrics); err != nil {
-		return "", err
-	}
-	return tpl.String(), nil
+func (s *mapStorage) GetAllMetrics(_ context.Context) (map[string]model.Metrics, error) {
+	return s.metrics, nil
 }
 
 func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
@@ -113,4 +101,8 @@ func (s *mapStorage) RestoreMetrics(_ context.Context, path string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return json.Unmarshal(data, &s.metrics)
+}
+
+func (s *mapStorage) Ping(_ context.Context) error {
+	return nil
 }
