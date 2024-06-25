@@ -55,11 +55,9 @@ func main() {
 		}
 
 		defer db.Close() //nolint:all
-		metricStorage := storage.NewDBStorage(db)
-		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
+		dbStorage := storage.NewDBStorage(db)
+		metricService = service.NewMetricService(dbStorage, &cfg, sugar)
 	}
-
-	metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	apiService := rest.NewServer(metricService, &cfg, sugar)
 	if cfg.RestoreEnable {
 		if err := metricStorage.RestoreMetrics(ctx, cfg.StoreFilePath); err != nil {
