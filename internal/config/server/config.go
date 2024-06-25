@@ -164,3 +164,12 @@ func GetConfigs() (ServerConfig, error) {
 	}
 	return c.Config, nil
 }
+
+func GetTestConfig() (ServerConfig, error) {
+	var c ServerConfigBuilder
+	c.WithRestoreEnable(false).WithAddress("localhost:8080")
+	if !util.ValidateAddress(c.Config.Address) {
+		return ServerConfig{}, errors.New("need address in a form host:port")
+	}
+	return c.Config, nil
+}

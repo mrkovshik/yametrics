@@ -20,7 +20,7 @@ func Example() {
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
 
-	cfg, err := config.GetConfigs()
+	cfg, err := config.GetTestConfig()
 	if err != nil {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
