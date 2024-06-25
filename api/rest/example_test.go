@@ -17,7 +17,7 @@ func Example() {
 		logger.Fatal("zap.NewDevelopment",
 			zap.Error(err))
 	}
-	defer logger.Sync()
+	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
 
 	cfg, err := config.GetConfigs()
@@ -39,25 +39,28 @@ func Example() {
 		MType: model.MetricTypeCounter,
 		Delta: &counter,
 	}
-	if err := metricService.UpdateMetrics(ctx, []model.Metrics{
+	if err1 := metricService.UpdateMetrics(ctx, []model.Metrics{
 		metric1,
 		metric2,
-	}); err != nil {
-		sugar.Fatal("metricService.UpdateMetrics", err)
+	}); err1 != nil {
+		sugar.Fatal("metricService.UpdateMetrics", err1)
 	}
 
-	m1, err := metricService.GetMetric(ctx, model.Metrics{
+	m1, err2 := metricService.GetMetric(ctx, model.Metrics{
 		ID:    "test_counter",
 		MType: model.MetricTypeCounter,
 	})
+	if err2 != nil {
+		sugar.Fatal("metricService.GetMetric", err2)
+	}
 
-	m2, err := metricService.GetMetric(ctx, model.Metrics{
+	m2, err3 := metricService.GetMetric(ctx, model.Metrics{
 		ID:    "test_gauge",
 		MType: model.MetricTypeGauge,
 	})
 
-	if err != nil {
-		sugar.Fatal("metricService.UpdateMetrics", err)
+	if err3 != nil {
+		sugar.Fatal("metricService.GetMetric", err3)
 	}
 	fmt.Println(*m1.Delta, m1.ID, m1.MType)
 	fmt.Println(*m2.Value, m2.ID, m2.MType)
