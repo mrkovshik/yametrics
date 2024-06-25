@@ -11,25 +11,31 @@ import (
 	"sync"
 
 	"github.com/mrkovshik/yametrics/internal/model"
-	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
-// mapStorage implements the service.Storage interface using an in-memory map for storing metrics.
-type mapStorage struct {
+// MapStorage implements the service.Storage interface using an in-memory map for storing metrics.
+type MapStorage struct {
 	mu      sync.RWMutex             // Mutex for thread-safe access to metrics map
 	metrics map[string]model.Metrics // Map to store metrics
 }
 
-// NewMapStorage creates a new instance of mapStorage.
-func NewMapStorage() service.Storage {
-	return &mapStorage{
+// NewMapStorage creates a new instance of MapStorage.
+// Returns:
+// - a pointer to the new MapStorage instance.
+func NewMapStorage() *MapStorage {
+	return &MapStorage{
 		metrics: make(map[string]model.Metrics),
 	}
 }
 
 // UpdateMetricValue updates or inserts a metric into the metrics map.
-func (s *mapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metrics) error {
+// Parameters:
+// - ctx: the context to control the update operation.
+// - newMetrics: the Metrics model containing the metric data to be updated or inserted.
+// Returns:
+// - an error if the update operation fails.
+func (s *MapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metrics) error {
 	key := newMetrics.MType + ":" + newMetrics.ID
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -45,7 +51,12 @@ func (s *mapStorage) UpdateMetricValue(_ context.Context, newMetrics model.Metri
 }
 
 // UpdateMetrics updates multiple metrics in the metrics map.
-func (s *mapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
+// Parameters:
+// - ctx: the context to control the update operation.
+// - newMetrics: a slice of Metrics models containing the metric data to be updated or inserted.
+// Returns:
+// - an error if the update operation fails.
+func (s *MapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	for _, metric := range newMetrics {
 		if err := s.UpdateMetricValue(ctx, metric); err != nil {
 			return err
@@ -55,7 +66,13 @@ func (s *mapStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metri
 }
 
 // GetMetricByModel retrieves a metric from the metrics map based on the provided model.
-func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
+// Parameters:
+// - ctx: the context to control the retrieval operation.
+// - newMetrics: the Metrics model specifying the metric to be retrieved.
+// Returns:
+// - the retrieved Metrics model.
+// - an error if the retrieval operation fails.
+func (s *MapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	key := newMetrics.MType + ":" + newMetrics.ID
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -66,12 +83,23 @@ func (s *mapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metric
 	return res, nil
 }
 
-func (s *mapStorage) GetAllMetrics(_ context.Context) (map[string]model.Metrics, error) {
+// GetAllMetrics retrieves all metrics from the metrics map.
+// Parameters:
+// - ctx: the context to control the retrieval operation.
+// Returns:
+// - a map of metric names to Metrics models representing all stored metrics.
+// - an error if the retrieval operation fails.
+func (s *MapStorage) GetAllMetrics(_ context.Context) (map[string]model.Metrics, error) {
 	return s.metrics, nil
 }
 
 // StoreMetrics stores all metrics from the metrics map into a JSON file at the specified path.
-func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
+// Parameters:
+// - ctx: the context to control the store operation.
+// - path: the file path where metrics should be stored.
+// Returns:
+// - an error if the store operation fails.
+func (s *MapStorage) StoreMetrics(_ context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	})
@@ -90,7 +118,12 @@ func (s *mapStorage) StoreMetrics(_ context.Context, path string) error {
 }
 
 // RestoreMetrics restores metrics from a JSON file at the specified path into the metrics map.
-func (s *mapStorage) RestoreMetrics(_ context.Context, path string) error {
+// Parameters:
+// - ctx: the context to control the restore operation.
+// - path: the file path from where metrics should be restored.
+// Returns:
+// - an error if the restore operation fails.
+func (s *MapStorage) RestoreMetrics(_ context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
 	})
@@ -111,6 +144,11 @@ func (s *mapStorage) RestoreMetrics(_ context.Context, path string) error {
 	return json.Unmarshal(data, &s.metrics)
 }
 
-func (s *mapStorage) Ping(_ context.Context) error {
+// Ping checks the availability of the MapStorage.
+// Parameters:
+// - ctx: the context to control the ping operation.
+// Returns:
+// - an error if the storage is not available.
+func (s *MapStorage) Ping(_ context.Context) error {
 	return nil
 }

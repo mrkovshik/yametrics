@@ -28,7 +28,9 @@ func main() {
 	if err != nil {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
+	ctx := context.Background()
 	metricStorage := storage.NewMapStorage()
+	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
 	var db *sql.DB
 	if cfg.DBEnable {
 		db, err = sql.Open("postgres", cfg.DBAddress)
@@ -53,11 +55,12 @@ func main() {
 		}
 
 		defer db.Close() //nolint:all
-		metricStorage = storage.NewDBStorage(db)
+		metricStorage := storage.NewDBStorage(db)
+		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
-	ctx := context.Background()
-	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
-	apiService := rest.NewRestAPIServer(metricService, &cfg, sugar)
+
+	metricService = service.NewMetricService(metricStorage, &cfg, sugar)
+	apiService := rest.NewServer(metricService, &cfg, sugar)
 	if cfg.RestoreEnable {
 		if err := metricStorage.RestoreMetrics(ctx, cfg.StoreFilePath); err != nil {
 			sugar.Fatal("RestoreMetrics", err)

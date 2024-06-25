@@ -1,4 +1,4 @@
-package main
+package rest
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/mrkovshik/yametrics/api/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -269,7 +268,7 @@ func Test_server(t *testing.T) {
 	cfg.Key = "some_test_key"
 	require.NoError(t, err2)
 	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
-	apiService := rest.NewRestAPIServer(metricService, &cfg, sugar)
+	apiService := NewServer(metricService, &cfg, sugar)
 	go apiService.RunServer(context.Background())
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {

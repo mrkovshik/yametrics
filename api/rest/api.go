@@ -10,20 +10,32 @@ import (
 	"go.uber.org/zap"
 )
 
-type restAPIServer struct {
+// Server represents the server configuration and dependencies.
+type Server struct {
 	service api.Service
 	config  *config.ServerConfig
 	logger  *zap.SugaredLogger
 }
 
-func NewRestAPIServer(service api.Service, config *config.ServerConfig, logger *zap.SugaredLogger) api.Server {
-	return &restAPIServer{
+// NewServer creates a new Server instance.
+// Parameters:
+// - service: an implementation of the api.Service interface.
+// - config: server configuration settings.
+// - logger: a sugared logger instance.
+// Returns:
+// - a pointer to the new Server instance.
+func NewServer(service api.Service, config *config.ServerConfig, logger *zap.SugaredLogger) *Server {
+	return &Server{
 		service: service,
 		config:  config,
 		logger:  logger,
 	}
 }
-func (s *restAPIServer) RunServer(ctx context.Context) {
+
+// RunServer starts the HTTP server with the configured routes and middleware.
+// Parameters:
+// - ctx: the context to control server shutdown and other operations.
+func (s *Server) RunServer(ctx context.Context) {
 	r := chi.NewRouter()
 	r.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
 	r.Route("/update", func(r chi.Router) {

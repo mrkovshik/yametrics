@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+// ValidateAddress checks if the given address is valid.
+// An address is considered valid if it contains a valid host and port.
+// Parameters:
+// - addr: the address to be validated.
+// Returns:
+// - true if the address is valid, false otherwise.
 func ValidateAddress(addr string) bool {
 	parts := strings.Split(addr, ":")
 	if len(parts) != 2 {

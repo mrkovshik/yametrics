@@ -1,4 +1,3 @@
-// Package service methods for handling various HTTP endpoints related to metrics and database operations.
 package rest
 
 import (
@@ -16,7 +15,7 @@ import (
 var errInvalidRequestData = errors.New("invalid request data")
 
 // UpdateMetricFromJSON handles HTTP requests to update a metric from JSON data.
-func (s *restAPIServer) UpdateMetricFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
+func (s *Server) UpdateMetricFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
 		if err := newMetrics.MapMetricsFromReqJSON(req); err != nil {
@@ -42,7 +41,7 @@ func (s *restAPIServer) UpdateMetricFromJSON(ctx context.Context) func(res http.
 }
 
 // UpdateMetricsFromJSON handles HTTP requests to update multiple metrics from JSON data.
-func (s *restAPIServer) UpdateMetricsFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
+func (s *Server) UpdateMetricsFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var batch []model.Metrics
 		if err := json.NewDecoder(req.Body).Decode(&batch); err != nil {
@@ -66,7 +65,7 @@ func (s *restAPIServer) UpdateMetricsFromJSON(ctx context.Context) func(res http
 }
 
 // UpdateMetricFromURL handles HTTP requests to update a metric from URL parameters.
-func (s *restAPIServer) UpdateMetricFromURL(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
+func (s *Server) UpdateMetricFromURL(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
 		if err := newMetrics.MapMetricsFromReqURL(req); err != nil {
@@ -90,7 +89,7 @@ func (s *restAPIServer) UpdateMetricFromURL(ctx context.Context) func(res http.R
 }
 
 // GetMetricFromJSON handles HTTP requests to retrieve a metric using JSON data.
-func (s *restAPIServer) GetMetricFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
+func (s *Server) GetMetricFromJSON(ctx context.Context) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
 		if err1 := json.NewDecoder(req.Body).Decode(&newMetrics); err1 != nil {
@@ -115,7 +114,7 @@ func (s *restAPIServer) GetMetricFromJSON(ctx context.Context) func(res http.Res
 }
 
 // GetMetricFromURL handles HTTP requests to retrieve a metric using URL parameters.
-func (s *restAPIServer) GetMetricFromURL(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
+func (s *Server) GetMetricFromURL(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var newMetrics model.Metrics
 		if err := newMetrics.MapMetricsFromReqURL(req); err != nil {
@@ -152,7 +151,7 @@ func (s *restAPIServer) GetMetricFromURL(ctx context.Context) func(res http.Resp
 }
 
 // GetMetrics handles HTTP requests to retrieve all metrics.
-func (s *restAPIServer) GetMetrics(_ context.Context) func(res http.ResponseWriter, _ *http.Request) {
+func (s *Server) GetMetrics(_ context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, _ *http.Request) {
 		var ctx = context.Background()
 		res.Header().Set("Content-Type", "text/html")
@@ -172,7 +171,7 @@ func (s *restAPIServer) GetMetrics(_ context.Context) func(res http.ResponseWrit
 }
 
 // Ping handles HTTP requests to ping the server/database.
-func (s *restAPIServer) Ping(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
+func (s *Server) Ping(ctx context.Context) func(res http.ResponseWriter, _ *http.Request) {
 	return func(res http.ResponseWriter, _ *http.Request) {
 		if s.config.DBEnable {
 			newCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
