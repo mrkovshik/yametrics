@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mrkovshik/yametrics/internal/model"
 	"go.uber.org/zap"
+
+	"github.com/mrkovshik/yametrics/internal/model"
 )
 
 var errInvalidRequestData = errors.New("invalid request data")

@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/model"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
 	"github.com/mrkovshik/yametrics/internal/storage"
-	"go.uber.org/zap"
 )
 
 func Example() {
