@@ -16,6 +16,7 @@ import (
 )
 
 func main() {
+	var metricService *service.MetricService
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		logger.Fatal("zap.NewDevelopment",
@@ -29,8 +30,6 @@ func main() {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
 	ctx := context.Background()
-	metricStorage := storage.NewMapStorage()
-	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
 	var db *sql.DB
 	if cfg.DBEnable {
 		db, err = sql.Open("postgres", cfg.DBAddress)
@@ -57,10 +56,13 @@ func main() {
 		defer db.Close() //nolint:all
 		dbStorage := storage.NewDBStorage(db)
 		metricService = service.NewMetricService(dbStorage, &cfg, sugar)
+	} else {
+		metricStorage := storage.NewMapStorage()
+		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
 	apiService := rest.NewServer(metricService, &cfg, sugar)
 	if cfg.RestoreEnable {
-		if err := metricStorage.RestoreMetrics(ctx, cfg.StoreFilePath); err != nil {
+		if err := metricService.RestoreMetrics(ctx); err != nil {
 			sugar.Fatal("RestoreMetrics", err)
 		}
 	}
@@ -69,7 +71,7 @@ func main() {
 		storeTicker := time.NewTicker(time.Duration(cfg.StoreInterval) * time.Second)
 		go func() {
 			for range storeTicker.C {
-				if err := metricStorage.StoreMetrics(ctx, cfg.StoreFilePath); err != nil {
+				if err := metricService.StoreMetrics(ctx); err != nil {
 					sugar.Fatal("StoreMetrics", err)
 				}
 			}
@@ -77,7 +79,7 @@ func main() {
 	}
 
 	apiService.RunServer(ctx)
-	if err := metricStorage.StoreMetrics(ctx, cfg.StoreFilePath); err != nil {
+	if err := metricService.StoreMetrics(ctx); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
 }

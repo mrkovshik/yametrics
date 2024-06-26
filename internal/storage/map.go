@@ -90,6 +90,10 @@ func (s *MapStorage) GetMetricByModel(_ context.Context, newMetrics model.Metric
 // - a map of metric names to Metrics models representing all stored metrics.
 // - an error if the retrieval operation fails.
 func (s *MapStorage) GetAllMetrics(_ context.Context) (map[string]model.Metrics, error) {
+	//newMap := make(map[string]model.Metrics, len(s.metrics))
+	//for _,v:=range s.metrics{
+	//	newMap[id]
+	//}
 	return s.metrics, nil
 }
 

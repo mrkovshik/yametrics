@@ -1,3 +1,5 @@
+// Package server provides the implementation of the metric service
+// which includes methods to update, retrieve, and store metrics.
 package server
 
 import (
@@ -5,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/model"
 	"github.com/mrkovshik/yametrics/internal/service"
@@ -13,23 +14,34 @@ import (
 	"go.uber.org/zap"
 )
 
-type (
-	metricService struct {
-		storage service.Storage
-		config  *config.ServerConfig
-		logger  *zap.SugaredLogger
-	}
-)
+// MetricService represents the service for managing metrics.
+type MetricService struct {
+	storage service.Storage
+	config  *config.ServerConfig
+	logger  *zap.SugaredLogger
+}
 
-func NewMetricService(storage service.Storage, config *config.ServerConfig, logger *zap.SugaredLogger) api.Service {
-	return &metricService{
+// NewMetricService creates a new instance of MetricService.
+//
+// storage: an implementation of the Storage interface for managing metric data.
+// config: the server configuration settings.
+// logger: a logger for logging messages.
+func NewMetricService(storage service.Storage, config *config.ServerConfig, logger *zap.SugaredLogger) *MetricService {
+	return &MetricService{
 		storage: storage,
 		config:  config,
 		logger:  logger,
 	}
 }
 
-func (s *metricService) UpdateMetrics(ctx context.Context, batch []model.Metrics) error {
+// UpdateMetrics updates the metrics in the storage. If SyncStoreEnable is true in the config,
+// it also stores the metrics to the file specified in StoreFilePath.
+//
+// ctx: the context for managing request-scoped values and cancelation.
+// batch: a slice of metrics to be updated.
+//
+// Returns an error if the update or store operation fails.
+func (s *MetricService) UpdateMetrics(ctx context.Context, batch []model.Metrics) error {
 	if err := s.storage.UpdateMetrics(ctx, batch); err != nil {
 		errMsg := fmt.Errorf("UpdateMetrics: %s", err.Error())
 		s.logger.Error(errMsg)
@@ -44,7 +56,14 @@ func (s *metricService) UpdateMetrics(ctx context.Context, batch []model.Metrics
 	}
 	return nil
 }
-func (s *metricService) GetMetric(ctx context.Context, metricModel model.Metrics) (model.Metrics, error) {
+
+// GetMetric retrieves a specific metric from the storage based on the provided metric model.
+//
+// ctx: the context for managing request-scoped values and cancelation.
+// metricModel: the model of the metric to be retrieved.
+//
+// Returns the retrieved metric and an error if the retrieval fails.
+func (s *MetricService) GetMetric(ctx context.Context, metricModel model.Metrics) (model.Metrics, error) {
 	metric, err := s.storage.GetMetricByModel(ctx, metricModel)
 	if err != nil {
 		errMsg := fmt.Errorf("GetMetricByModel: %s", err.Error())
@@ -53,13 +72,19 @@ func (s *metricService) GetMetric(ctx context.Context, metricModel model.Metrics
 	}
 	return metric, nil
 }
-func (s *metricService) GetAllMetrics(ctx context.Context) (string, error) {
+
+// GetAllMetrics retrieves all metrics from the storage and returns them as a formatted string.
+//
+// ctx: the context for managing request-scoped values and cancelation.
+//
+// Returns a formatted string of all metrics and an error if the retrieval or template execution fails.
+func (s *MetricService) GetAllMetrics(ctx context.Context) (string, error) {
 	var tpl bytes.Buffer
 	t, err := templates.ParseTemplates()
 	if err != nil {
 		return "", err
 	}
-	metricMap, err := s.GetAllMetrics(ctx)
+	metricMap, err := s.storage.GetAllMetrics(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +94,19 @@ func (s *metricService) GetAllMetrics(ctx context.Context) (string, error) {
 	return tpl.String(), nil
 }
 
-func (s *metricService) Ping(ctx context.Context) error {
+func (s *MetricService) StoreMetrics(ctx context.Context) error {
+	return s.storage.StoreMetrics(ctx, s.config.StoreFilePath)
+}
 
+func (s *MetricService) RestoreMetrics(ctx context.Context) error {
+	return s.storage.RestoreMetrics(ctx, s.config.StoreFilePath)
+}
+
+// Ping checks the connectivity to the storage.
+//
+// ctx: the context for managing request-scoped values and cancelation.
+//
+// Returns an error if the ping operation fails.
+func (s *MetricService) Ping(ctx context.Context) error {
 	return s.storage.Ping(ctx)
 }
