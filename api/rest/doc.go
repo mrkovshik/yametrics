@@ -15,7 +15,8 @@
 //
 // - Server: Represents the server configuration and dependencies.
 // - NewServer: Creates a new Server instance with the provided service, configuration, and logger.
-// - RunServer: Starts the HTTP server with the configured routes and middleware.
+// - ConfigureRouter: configures routes and middleware.
+// - RunServer: Starts the HTTP server with the configured router.
 //
 // ## Routes
 //

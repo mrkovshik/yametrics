@@ -16,6 +16,7 @@ type Server struct {
 	service api.Service
 	config  *config.ServerConfig
 	logger  *zap.SugaredLogger
+	router  *chi.Mux
 }
 
 // NewServer creates a new Server instance.
@@ -30,31 +31,38 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 		service: service,
 		config:  config,
 		logger:  logger,
+		router:  chi.NewRouter(),
 	}
 }
 
-// RunServer starts the HTTP server with the configured routes and middleware.
+// RunServer starts the HTTP server with the configured router.
 // Parameters:
 // - ctx: the context to control server shutdown and other operations.
 func (s *Server) RunServer(ctx context.Context) {
-	r := chi.NewRouter()
-	r.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
-	r.Route("/update", func(r chi.Router) {
-		r.Post("/", s.UpdateMetricFromJSON(ctx))
-		r.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL(ctx))
+	s.ConfigureRouter(ctx)
+	s.logger.Fatal(http.ListenAndServe(s.config.Address, s.router))
+}
+
+// ConfigureRouter configures routes and middleware.
+// Parameters:
+// - ctx: the context to control server shutdown and other operations.
+func (s *Server) ConfigureRouter(ctx context.Context) {
+	s.router.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
+	s.router.Route("/update", func(r chi.Router) {
+		s.router.Post("/", s.UpdateMetricFromJSON(ctx))
+		s.router.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL(ctx))
 	})
-	r.Post("/updates/", s.UpdateMetricsFromJSON(ctx))
-	r.Route("/value", func(r chi.Router) {
-		r.Post("/", s.GetMetricFromJSON(ctx))
-		r.Get("/{type}/{name}", s.GetMetricFromURL(ctx))
+	s.router.Post("/updates/", s.UpdateMetricsFromJSON(ctx))
+	s.router.Route("/value", func(r chi.Router) {
+		s.router.Post("/", s.GetMetricFromJSON(ctx))
+		s.router.Get("/{type}/{name}", s.GetMetricFromURL(ctx))
 	})
 
-	r.Get("/ping", s.Ping(ctx))
-	r.Get("/", s.GetMetrics(ctx))
+	s.router.Get("/ping", s.Ping(ctx))
+	s.router.Get("/", s.GetMetrics(ctx))
 	s.logger.Infof("Starting server on %v\n StoreInterval: %v\n"+
 		"StoreIntervalSet: %v\nSyncStoreEnable: %v\nStoreFilePath: %v\nStoreFilePathSet: %v\n"+
 		"StoreEnable: %v\nRestoreEnable: %v\nRestoreEnvSet: %v\nDBAddress: %v\nDBAddressIsSet: %v\nDBEnable: %v\n", s.config.Address, s.config.StoreInterval,
 		s.config.StoreIntervalSet, s.config.SyncStoreEnable, s.config.StoreFilePath, s.config.StoreFilePathSet, s.config.StoreEnable,
 		s.config.RestoreEnable, s.config.RestoreEnvSet, s.config.DBAddress, s.config.DBAddressIsSet, s.config.DBEnable)
-	s.logger.Fatal(http.ListenAndServe(s.config.Address, r))
 }
