@@ -83,6 +83,7 @@ func (s *Server) Authenticate(next http.Handler) http.Handler {
 		clientSig := r.Header.Get(`HashSHA256`)
 		if clientSig != "" && r.Body != nil {
 			body, err := io.ReadAll(r.Body)
+			defer r.Body.Close() //nolint:all
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
