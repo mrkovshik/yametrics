@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/mrkovshik/yametrics/api"
 	"github.com/mrkovshik/yametrics/api/rest"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
@@ -61,6 +62,7 @@ func main() {
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
 	apiService := rest.NewServer(metricService, &cfg, sugar)
+	apiService.ConfigureRouter(ctx)
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {
 			sugar.Fatal("RestoreMetrics", err)
@@ -78,8 +80,12 @@ func main() {
 		}()
 	}
 
-	apiService.RunServer(ctx)
+	run(apiService)
 	if err := metricService.StoreMetrics(ctx); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
+}
+
+func run(srv api.Server) {
+	srv.RunServer()
 }

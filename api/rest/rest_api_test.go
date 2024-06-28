@@ -12,6 +12,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/mrkovshik/yametrics/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -42,8 +43,7 @@ func Test_server(t *testing.T) {
 			url           string
 			contentType   string
 			contentEncode string
-			//acceptEncoding string
-			req model.Metrics
+			req           model.Metrics
 		}
 	)
 	tests := []struct {
@@ -264,12 +264,13 @@ func Test_server(t *testing.T) {
 	}
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
-	cfg, err2 := config.GetConfigs()
+	cfg, err2 := config.GetTestConfig()
 	cfg.Key = "some_test_key"
 	require.NoError(t, err2)
 	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
 	apiService := NewServer(metricService, &cfg, sugar)
-	go apiService.RunServer(context.Background())
+	apiService.ConfigureRouter(context.Background())
+	go run(apiService)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -327,4 +328,8 @@ func Test_server(t *testing.T) {
 			}
 		})
 	}
+}
+
+func run(srv api.Server) {
+	srv.RunServer()
 }

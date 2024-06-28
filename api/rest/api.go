@@ -38,8 +38,7 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 // RunServer starts the HTTP server with the configured router.
 // Parameters:
 // - ctx: the context to control server shutdown and other operations.
-func (s *Server) RunServer(ctx context.Context) {
-	s.ConfigureRouter(ctx)
+func (s *Server) RunServer() {
 	s.logger.Fatal(http.ListenAndServe(s.config.Address, s.router))
 }
 
@@ -49,13 +48,13 @@ func (s *Server) RunServer(ctx context.Context) {
 func (s *Server) ConfigureRouter(ctx context.Context) {
 	s.router.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
 	s.router.Route("/update", func(r chi.Router) {
-		s.router.Post("/", s.UpdateMetricFromJSON(ctx))
-		s.router.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL(ctx))
+		r.Post("/", s.UpdateMetricFromJSON(ctx))
+		r.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL(ctx))
 	})
 	s.router.Post("/updates/", s.UpdateMetricsFromJSON(ctx))
 	s.router.Route("/value", func(r chi.Router) {
-		s.router.Post("/", s.GetMetricFromJSON(ctx))
-		s.router.Get("/{type}/{name}", s.GetMetricFromURL(ctx))
+		r.Post("/", s.GetMetricFromJSON(ctx))
+		r.Get("/{type}/{name}", s.GetMetricFromURL(ctx))
 	})
 
 	s.router.Get("/ping", s.Ping(ctx))
