@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"testing"
@@ -269,8 +270,8 @@ func Test_server(t *testing.T) {
 	require.NoError(t, err2)
 	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
 	apiService := NewServer(metricService, &cfg, sugar)
-	apiService.ConfigureRouter(context.Background())
-	go run(apiService)
+	apiService.ConfigureRouter()
+	go run(context.Background(), apiService)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -330,6 +331,6 @@ func Test_server(t *testing.T) {
 	}
 }
 
-func run(srv api.Server) {
-	srv.RunServer()
+func run(ctx context.Context, srv api.Server) {
+	log.Fatal(srv.RunServer(ctx))
 }
