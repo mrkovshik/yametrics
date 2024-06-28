@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -62,7 +63,7 @@ func main() {
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
 	apiService := rest.NewServer(metricService, &cfg, sugar)
-	apiService.ConfigureRouter(ctx)
+	apiService.ConfigureRouter()
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {
 			sugar.Fatal("RestoreMetrics", err)
@@ -80,12 +81,12 @@ func main() {
 		}()
 	}
 
-	run(apiService)
-	if err := metricService.StoreMetrics(ctx); err != nil {
+	run(ctx, apiService)
+	if err := metricService.StoreMetrics(context.Background()); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
 }
 
-func run(srv api.Server) {
-	srv.RunServer()
+func run(ctx context.Context, srv api.Server) {
+	log.Fatal(srv.RunServer(ctx))
 }

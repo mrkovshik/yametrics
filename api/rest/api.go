@@ -36,29 +36,36 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 }
 
 // RunServer starts the HTTP server with the configured router.
-// Parameters:
-// - ctx: the context to control server shutdown and other operations.
-func (s *Server) RunServer() {
-	s.logger.Fatal(http.ListenAndServe(s.config.Address, s.router))
+func (s *Server) RunServer(ctx context.Context) error {
+	errCh := make(chan error)
+	go func() {
+		if err := http.ListenAndServe(s.config.Address, s.router); err != nil {
+			errCh <- err
+		}
+	}()
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+		return nil
+	}
 }
 
 // ConfigureRouter configures routes and middleware.
-// Parameters:
-// - ctx: the context to control server shutdown and other operations.
-func (s *Server) ConfigureRouter(ctx context.Context) {
+func (s *Server) ConfigureRouter() {
 	s.router.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
 	s.router.Route("/update", func(r chi.Router) {
-		r.Post("/", s.UpdateMetricFromJSON(ctx))
-		r.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL(ctx))
+		r.Post("/", s.UpdateMetricFromJSON())
+		r.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL())
 	})
-	s.router.Post("/updates/", s.UpdateMetricsFromJSON(ctx))
+	s.router.Post("/updates/", s.UpdateMetricsFromJSON())
 	s.router.Route("/value", func(r chi.Router) {
-		r.Post("/", s.GetMetricFromJSON(ctx))
-		r.Get("/{type}/{name}", s.GetMetricFromURL(ctx))
+		r.Post("/", s.GetMetricFromJSON())
+		r.Get("/{type}/{name}", s.GetMetricFromURL())
 	})
 
-	s.router.Get("/ping", s.Ping(ctx))
-	s.router.Get("/", s.GetMetrics(ctx))
+	s.router.Get("/ping", s.Ping())
+	s.router.Get("/", s.GetMetrics())
 	s.logger.Infof("Starting server on %v\n StoreInterval: %v\n"+
 		"StoreIntervalSet: %v\nSyncStoreEnable: %v\nStoreFilePath: %v\nStoreFilePathSet: %v\n"+
 		"StoreEnable: %v\nRestoreEnable: %v\nRestoreEnvSet: %v\nDBAddress: %v\nDBAddressIsSet: %v\nDBEnable: %v\n", s.config.Address, s.config.StoreInterval,
