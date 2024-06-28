@@ -79,7 +79,7 @@ func (s *Server) UpdateMetricFromURL() func(w http.ResponseWriter, r *http.Reque
 		}
 		if err := s.service.UpdateMetrics(ctx, []model.Metrics{newMetrics}); err != nil {
 			s.logger.Error("UpdateMetrics", zap.Error(err))
-			http.Error(w, "error w.Write", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
