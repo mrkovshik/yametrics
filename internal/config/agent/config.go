@@ -1,3 +1,5 @@
+// Package config provides configuration handling for the agent, allowing
+// configurations to be set via environment variables or command-line flags.
 package config
 
 import (
@@ -6,10 +8,10 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v6"
-
 	"github.com/mrkovshik/yametrics/internal/util"
 )
 
+// AgentConfig holds the configuration settings for the agent.
 type AgentConfig struct {
 	Key            string `env:"KEY"`
 	Address        string `env:"ADDRESS"`
@@ -18,35 +20,42 @@ type AgentConfig struct {
 	RateLimit      int    `env:"RATE_LIMIT"`
 }
 
+// AgentConfigBuilder is a builder for constructing an AgentConfig instance.
 type AgentConfigBuilder struct {
 	Config AgentConfig
 }
 
+// WithKey sets the key in the AgentConfig.
 func (c *AgentConfigBuilder) WithKey(key string) *AgentConfigBuilder {
 	c.Config.Key = key
 	return c
 }
 
-func (c *AgentConfigBuilder) WithAddress(host string) *AgentConfigBuilder {
-	c.Config.Address = host
+// WithAddress sets the address in the AgentConfig.
+func (c *AgentConfigBuilder) WithAddress(address string) *AgentConfigBuilder {
+	c.Config.Address = address
 	return c
 }
 
+// WithReportInterval sets the report interval in the AgentConfig.
 func (c *AgentConfigBuilder) WithReportInterval(reportInterval int) *AgentConfigBuilder {
 	c.Config.ReportInterval = reportInterval
 	return c
 }
 
+// WithPollInterval sets the poll interval in the AgentConfig.
 func (c *AgentConfigBuilder) WithPollInterval(pollInterval int) *AgentConfigBuilder {
 	c.Config.PollInterval = pollInterval
 	return c
 }
 
+// WithRateLimit sets the rate limit in the AgentConfig.
 func (c *AgentConfigBuilder) WithRateLimit(rateLimit int) *AgentConfigBuilder {
 	c.Config.RateLimit = rateLimit
 	return c
 }
 
+// FromFlags populates the AgentConfig from command-line flags.
 func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
 	pollInterval := flag.Int("p", 2, "metrics polling interval")
@@ -73,13 +82,17 @@ func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	return c
 }
 
+// FromEnv populates the AgentConfig from environment variables.
 func (c *AgentConfigBuilder) FromEnv() *AgentConfigBuilder {
-	if err := env.Parse(c); err != nil {
+	if err := env.Parse(&c.Config); err != nil {
 		log.Fatal(err)
 	}
 	return c
 }
 
+// GetConfigs returns the fully constructed AgentConfig by combining
+// configurations from environment variables and command-line flags.
+// It validates the address and rate limit to ensure they are properly set.
 func GetConfigs() (AgentConfig, error) {
 	var c AgentConfigBuilder
 	c.FromEnv().FromFlags()

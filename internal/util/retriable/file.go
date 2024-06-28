@@ -7,9 +7,14 @@ import (
 	"time"
 )
 
+// OpenRetryable attempts to open a file with retry logic for handling file system errors.
+// Parameters:
+// - f: the function to be executed with retry logic that returns a file and an error.
+// Returns:
+// - a file pointer if successful, otherwise returns an error if the function fails after the specified retries.
 func OpenRetryable(f func() (*os.File, error)) (*os.File, error) {
 	var (
-		retryIntervals = []int{1, 3, 5}
+		retryIntervals = []int{1, 3, 5} // Retry intervals in seconds
 		resultErr, err error
 		file           *os.File
 	)
