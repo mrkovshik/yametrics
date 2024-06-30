@@ -36,7 +36,7 @@ TRUNCATE TABLE metrics;`
 	defer db.Exec(`TRUNCATE TABLE metrics;`) //nolint:all
 	defer db.Close()                         //nolint:all
 	testDBStorage := NewDBStorage(db)
-	const testFilePath = "/test.json"
+	const testFilePath = "test.json"
 
 	var (
 		testGaugeMetricValue1 = 10.1
@@ -83,12 +83,11 @@ TRUNCATE TABLE metrics;`
 		errUpdateMetrics := testDBStorage.UpdateMetrics(ctx, []model.Metrics{testCounterMetric2, testGaugeMetric2})
 		assert.NoError(t, errUpdateMetrics)
 	})
-	_, errCreate := os.Create("/test.json")
-	defer os.RemoveAll(testFilePath) //nolint:all
+	f, errCreate := os.CreateTemp("", testFilePath)
 	assert.NoError(t, errCreate)
-
+	defer os.Remove(f.Name()) //nolint:all
 	t.Run("store", func(t *testing.T) {
-		errUpdateMetrics := testDBStorage.StoreMetrics(ctx, testFilePath)
+		errUpdateMetrics := testDBStorage.StoreMetrics(ctx, f.Name())
 		assert.NoError(t, errUpdateMetrics)
 	})
 
@@ -97,7 +96,7 @@ TRUNCATE TABLE metrics;`
 	assert.NoError(t, err)
 
 	t.Run("restore", func(t *testing.T) {
-		errUpdateMetrics := testDBStorage.RestoreMetrics(ctx, testFilePath)
+		errUpdateMetrics := testDBStorage.RestoreMetrics(ctx, f.Name())
 		assert.NoError(t, errUpdateMetrics)
 	})
 	t.Run("get all metrics", func(t *testing.T) {

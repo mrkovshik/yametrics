@@ -14,7 +14,7 @@ import (
 func Test_mapStorage(t *testing.T) {
 	testMapStorage := NewMapStorage()
 	ctx := context.Background()
-	const testFilePath = "/test.json"
+	const testFilePath = "test.json"
 
 	var (
 		testGaugeMetricValue1 = 10.1
@@ -61,17 +61,18 @@ func Test_mapStorage(t *testing.T) {
 		errUpdateMetrics := testMapStorage.UpdateMetrics(ctx, []model.Metrics{testCounterMetric2, testGaugeMetric2})
 		assert.NoError(t, errUpdateMetrics)
 	})
-	_, err := os.Create("/test.json")
+	f, err := os.CreateTemp("", testFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer os.Remove(f.Name()) //nolint:all
 	t.Run("store", func(t *testing.T) {
-		errUpdateMetrics := testMapStorage.StoreMetrics(ctx, testFilePath)
+		errUpdateMetrics := testMapStorage.StoreMetrics(ctx, f.Name())
 		assert.NoError(t, errUpdateMetrics)
 	})
 	testMapStorage2 := NewMapStorage()
 	t.Run("restore", func(t *testing.T) {
-		errUpdateMetrics := testMapStorage2.RestoreMetrics(ctx, testFilePath)
+		errUpdateMetrics := testMapStorage2.RestoreMetrics(ctx, f.Name())
 		assert.NoError(t, errUpdateMetrics)
 	})
 	t.Run("get metric", func(t *testing.T) {
@@ -89,5 +90,4 @@ func Test_mapStorage(t *testing.T) {
 
 	})
 
-	_ = os.RemoveAll(testFilePath)
 }
