@@ -55,17 +55,17 @@ func (s *Server) RunServer(ctx context.Context) error {
 func (s *Server) ConfigureRouter() {
 	s.router.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
 	s.router.Route("/update", func(r chi.Router) {
-		r.Post("/", s.UpdateMetricFromJSON())
-		r.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL())
+		r.Post("/", s.UpdateMetricFromJSON)
+		r.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL)
 	})
-	s.router.Post("/updates/", s.UpdateMetricsFromJSON())
+	s.router.Post("/updates/", s.UpdateMetricsFromJSON)
 	s.router.Route("/value", func(r chi.Router) {
-		r.Post("/", s.GetMetricFromJSON())
-		r.Get("/{type}/{name}", s.GetMetricFromURL())
+		r.Post("/", s.GetMetricFromJSON)
+		r.Get("/{type}/{name}", s.GetMetricFromURL)
 	})
 
-	s.router.Get("/ping", s.Ping())
-	s.router.Get("/", s.GetMetrics())
+	s.router.Get("/ping", s.Ping)
+	s.router.Get("/", s.GetMetrics)
 	s.logger.Infof("Starting server on %v\n StoreInterval: %v\n"+
 		"StoreIntervalSet: %v\nSyncStoreEnable: %v\nStoreFilePath: %v\nStoreFilePathSet: %v\n"+
 		"StoreEnable: %v\nRestoreEnable: %v\nRestoreEnvSet: %v\nDBAddress: %v\nDBAddressIsSet: %v\nDBEnable: %v\n", s.config.Address, s.config.StoreInterval,
