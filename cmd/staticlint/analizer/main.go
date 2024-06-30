@@ -7,8 +7,8 @@ import (
 )
 
 var OSExitAnalyzer = &analysis.Analyzer{
-	Name: "os_exit_analyzer",
-	Doc:  "check for os.Exit in main",
+	Name: "osExit",
+	Doc:  "check for usage of os.Exit in main function",
 	Run:  run,
 }
 
