@@ -1,3 +1,4 @@
+// Package model represents structure models
 package model
 
 import (

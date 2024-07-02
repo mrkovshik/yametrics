@@ -14,7 +14,7 @@ import (
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
-// dBStorage implements the service.Storage interface using a SQL database.
+// DBStorage implements the service.Storage interface using a SQL database.
 type DBStorage struct {
 	db *sql.DB
 }
@@ -191,16 +191,16 @@ func (s *DBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metr
 		value     sql.NullFloat64
 		delta     sql.NullInt64
 	)
-	if err := row.Scan(&id, &mType, &value, &delta); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if errScan := row.Scan(&id, &mType, &value, &delta); errScan != nil {
+		if errors.Is(errScan, sql.ErrNoRows) {
 			query = `INSERT INTO metrics (id, type, value, delta)
 		VALUES ($1, $2, $3, $4)`
 
-			if err := retriable.ExecRetryable(func() error {
-				_, err := tx.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
-				return err
-			}); err != nil {
-				return err
+			if errExecRetryable := retriable.ExecRetryable(func() error {
+				_, errExecContext := tx.ExecContext(ctx, query, newMetrics.ID, newMetrics.MType, newMetrics.Value, newMetrics.Delta)
+				return errExecContext
+			}); errExecRetryable != nil {
+				return errExecRetryable
 			}
 			return nil
 		}
@@ -213,11 +213,11 @@ func (s *DBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metr
 			return errors.New("unexpected null in delta field")
 		}
 
-		if err := retriable.ExecRetryable(func() error {
-			_, err = tx.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64, id, mType)
-			return err
-		}); err != nil {
-			return err
+		if errExecRetryable := retriable.ExecRetryable(func() error {
+			_, errExecContext := tx.ExecContext(ctx, query, *newMetrics.Delta+delta.Int64, id, mType)
+			return errExecContext
+		}); errExecRetryable != nil {
+			return errExecRetryable
 		}
 		return nil
 	}
@@ -225,11 +225,11 @@ func (s *DBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metr
 	if !value.Valid {
 		return errors.New("unexpected null in value field")
 	}
-	if err := retriable.ExecRetryable(func() error {
-		_, err = tx.ExecContext(ctx, query, newMetrics.Value, id, mType)
-		return err
-	}); err != nil {
-		return err
+	if errExecRetryable := retriable.ExecRetryable(func() error {
+		_, errExecContext := tx.ExecContext(ctx, query, newMetrics.Value, id, mType)
+		return errExecContext
+	}); errExecRetryable != nil {
+		return errExecRetryable
 	}
 	return nil
 }

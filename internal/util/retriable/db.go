@@ -1,3 +1,4 @@
+// Package retriable provides utilities for executing database operations with retry logic to handle connection exceptions.
 package retriable
 
 import (

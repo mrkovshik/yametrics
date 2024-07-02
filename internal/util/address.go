@@ -1,3 +1,4 @@
+// Package util provides utility functions for common tasks related to networking and string manipulation.
 package util
 
 import (

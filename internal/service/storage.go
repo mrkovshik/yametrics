@@ -1,3 +1,4 @@
+// Package service provides interfaces for managing metrics data storage operations.
 package service
 
 import (

@@ -1,3 +1,4 @@
+// Package api defines interfaces and utilities for server-related operations.
 package api
 
 import "context"
