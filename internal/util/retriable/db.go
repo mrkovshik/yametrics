@@ -1,3 +1,4 @@
+// Package retriable provides utilities for executing database operations with retry logic to handle connection exceptions.
 package retriable
 
 import (
@@ -10,9 +11,14 @@ import (
 	"github.com/jackc/pgerrcode"
 )
 
+// ExecRetryable executes a function with retry logic for handling connection exceptions.
+// Parameters:
+// - f: the function to be executed with retry logic.
+// Returns:
+// - an error if the function fails after the specified retries.
 func ExecRetryable(f func() error) error {
 	var (
-		retryIntervals = []int{1, 3, 5}
+		retryIntervals = []int{1, 3, 5} // Retry intervals in seconds
 		resultErr      error
 	)
 	for i := 0; i <= len(retryIntervals); i++ {
