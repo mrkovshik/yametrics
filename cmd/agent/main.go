@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -13,7 +14,21 @@ import (
 	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
+var (
+	buildVersion, buildDate, buildCommit string
+)
+
 func main() {
+	if buildVersion == "" {
+		buildVersion = "N/A"
+	}
+	if buildCommit == "" {
+		buildCommit = "N/A"
+	}
+	if buildDate == "" {
+		buildDate = "N/A"
+	}
+	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 	// Initialize storage and metrics source
 	strg := storage.NewMapStorage()
 	src := metrics.NewRuntimeMetrics()

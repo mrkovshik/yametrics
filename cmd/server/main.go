@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
@@ -17,7 +18,21 @@ import (
 	service "github.com/mrkovshik/yametrics/internal/service/server"
 )
 
+var (
+	buildVersion, buildDate, buildCommit string
+)
+
 func main() {
+	if buildVersion == "" {
+		buildVersion = "N/A"
+	}
+	if buildCommit == "" {
+		buildCommit = "N/A"
+	}
+	if buildDate == "" {
+		buildDate = "N/A"
+	}
+	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 	var metricService *service.MetricService
 	logger, err := zap.NewDevelopment()
 	if err != nil {
