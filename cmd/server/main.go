@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -96,13 +99,15 @@ func main() {
 			}
 		}()
 	}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	run(ctx, apiService)
+	run(stop, apiService)
 	if err := metricService.StoreMetrics(context.Background()); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
 }
 
-func run(ctx context.Context, srv api.Server) {
-	log.Fatal(srv.RunServer(ctx))
+func run(stop chan os.Signal, srv api.Server) {
+	log.Fatal(srv.RunServer(stop))
 }

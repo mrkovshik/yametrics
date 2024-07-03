@@ -2,13 +2,15 @@ package rest
 
 import (
 	"bytes"
-	"context"
 	"crypto/hmac"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"testing"
 	"time"
 
@@ -271,7 +273,9 @@ func Test_server(t *testing.T) {
 	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
 	apiService := NewServer(metricService, &cfg, sugar)
 	apiService.ConfigureRouter()
-	go run(context.Background(), apiService)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	go run(stop, apiService)
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -331,6 +335,6 @@ func Test_server(t *testing.T) {
 	}
 }
 
-func run(ctx context.Context, srv api.Server) {
-	log.Fatal(srv.RunServer(ctx))
+func run(stop chan os.Signal, srv api.Server) {
+	log.Fatal(srv.RunServer(stop))
 }

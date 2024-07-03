@@ -2,7 +2,9 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -36,19 +38,31 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 }
 
 // RunServer starts the HTTP server with the configured router.
-func (s *Server) RunServer(ctx context.Context) error {
+func (s *Server) RunServer(stop chan os.Signal) error {
 	errCh := make(chan error)
-	go func() {
-		if err := http.ListenAndServe(s.config.Address, s.router); err != nil {
+	server := &http.Server{
+		Addr:    s.config.Address,
+		Handler: s.router,
+	}
+	go func(server *http.Server) {
+		if err := server.ListenAndServe(); err != nil {
 			errCh <- err
 		}
-	}()
+	}(server)
+
 	select {
 	case err := <-errCh:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
 		return err
-	case <-ctx.Done():
-		return nil
+	case <-stop:
+		err := server.Shutdown(context.Background())
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // ConfigureRouter configures routes and middleware.
