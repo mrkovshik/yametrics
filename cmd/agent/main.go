@@ -35,10 +35,10 @@ func main() {
 	}
 
 	// Create agent instance with dependencies
-	agent := service.NewAgent(src, cfg, strg, sugar)
+	agent := service.NewAgent(src, cfg.ServiceConfig, strg, sugar)
 
 	// Log agent configuration
-	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", cfg.Address, cfg.PollInterval, cfg.ReportInterval)
+	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", cfg.ServiceConfig.Address, cfg.PollInterval, cfg.ReportInterval)
 
 	// Create tickers for polling and sending metrics
 	pollTicker := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)

@@ -9,14 +9,29 @@ import (
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/model"
-	"github.com/mrkovshik/yametrics/internal/service"
 	"github.com/mrkovshik/yametrics/internal/templates"
 	"go.uber.org/zap"
 )
 
+type storage interface {
+	UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error
+
+	UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error
+
+	GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error)
+
+	GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error)
+
+	StoreMetrics(ctx context.Context, path string) error
+
+	RestoreMetrics(ctx context.Context, path string) error
+
+	Ping(ctx context.Context) error
+}
+
 // MetricService represents the service for managing metrics.
 type MetricService struct {
-	storage service.Storage
+	storage storage
 	config  *config.ServerConfig
 	logger  *zap.SugaredLogger
 }
@@ -26,7 +41,7 @@ type MetricService struct {
 // storage: an implementation of the Storage interface for managing metric data.
 // config: the server configuration settings.
 // logger: a logger for logging messages.
-func NewMetricService(storage service.Storage, config *config.ServerConfig, logger *zap.SugaredLogger) *MetricService {
+func NewMetricService(storage storage, config *config.ServerConfig, logger *zap.SugaredLogger) *MetricService {
 	return &MetricService{
 		storage: storage,
 		config:  config,

@@ -31,7 +31,8 @@ func main() {
 	if err != nil {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	var db *sql.DB
 	if cfg.DBEnable {
 		db, err = sql.Open("postgres", cfg.DBAddress)

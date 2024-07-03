@@ -13,20 +13,25 @@ import (
 	"github.com/mrkovshik/yametrics/internal/service"
 	"go.uber.org/zap"
 
-	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
 )
+
+type Config struct {
+	RateLimit int    `env:"RATE_LIMIT"`
+	Key       string `env:"KEY"`
+	Address   string `env:"ADDRESS"`
+}
 
 // Agent represents a metric collection agent that polls and sends metrics.
 type Agent struct {
 	source  metrics.MetricSource // Source of the metrics
 	logger  *zap.SugaredLogger   // Logger for logging messages
-	config  config.AgentConfig   // Configuration for the agent
+	config  Config               // Configuration for the agent
 	storage service.Storage      // Storage for metrics
 }
 
 // NewAgent initializes a new Agent.
-func NewAgent(source metrics.MetricSource, cfg config.AgentConfig, strg service.Storage, logger *zap.SugaredLogger) *Agent {
+func NewAgent(source metrics.MetricSource, cfg Config, strg service.Storage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
 		source:  source,
 		logger:  logger,

@@ -11,7 +11,7 @@
 // - assign: Checks for useless assignments.
 // - atomic: Detects common mistakes with the sync/atomic package.
 // - bools: Checks for common mistakes involving booleans.
-// - buildtag: Ensures that +build tags are correctly formed.
+// - buildtag: Ensures that go:build tags are correctly formed.
 // - cgocall: Detects violations of the cgo pointer passing rules.
 // - composite: Checks for unkeyed composite literals.
 // - copylock: Reports locks erroneously passed by value.

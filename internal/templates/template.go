@@ -2,25 +2,18 @@
 package templates
 
 import (
-	"embed"
+	_ "embed"
 	"html/template"
-	"log"
 )
 
 //go:embed htmlTemplates.tpl
-var templateFile embed.FS
+var templateFile string
 
 // ParseTemplates reads and parses the embedded HTML template file.
 // It returns a pointer to a template.Template instance and any error encountered.
 func ParseTemplates() (*template.Template, error) {
-	// Read the contents of the embedded template file
-	content, err := templateFile.ReadFile("htmlTemplates.tpl")
-	if err != nil {
-		log.Fatalf("Error reading template file: %v", err)
-	}
-
 	// Parse the template content into a new template named "metrics"
-	t, err := template.New("metrics").Parse(string(content))
+	t, err := template.New("metrics").Parse(templateFile)
 	if err != nil {
 		return nil, err
 	}
