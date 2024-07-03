@@ -10,11 +10,20 @@ import (
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/model"
-	"github.com/mrkovshik/yametrics/internal/service"
 	"go.uber.org/zap"
 
 	"github.com/mrkovshik/yametrics/internal/metrics"
 )
+
+type storage interface {
+	UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error
+
+	UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error
+
+	GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error)
+
+	GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error)
+}
 
 type Config struct {
 	RateLimit int    `env:"RATE_LIMIT"`
@@ -27,11 +36,11 @@ type Agent struct {
 	source  metrics.MetricSource // Source of the metrics
 	logger  *zap.SugaredLogger   // Logger for logging messages
 	config  Config               // Configuration for the agent
-	storage service.Storage      // Storage for metrics
+	storage storage              // Storage for metrics
 }
 
 // NewAgent initializes a new Agent.
-func NewAgent(source metrics.MetricSource, cfg Config, strg service.Storage, logger *zap.SugaredLogger) *Agent {
+func NewAgent(source metrics.MetricSource, cfg Config, strg storage, logger *zap.SugaredLogger) *Agent {
 	return &Agent{
 		source:  source,
 		logger:  logger,

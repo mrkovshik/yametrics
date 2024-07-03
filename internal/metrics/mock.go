@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/model"
-	"github.com/mrkovshik/yametrics/internal/service"
 )
 
 // MockMetrics provides a mock implementation of MetricSource for testing purposes.
@@ -29,7 +28,7 @@ func NewMockMetrics() MockMetrics {
 
 // PollMemStats polls mock memory statistics and updates the provided storage.
 // It implements the MetricSource interface.
-func (m MockMetrics) PollMemStats(s service.Storage) error {
+func (m MockMetrics) PollMemStats(s storage) error {
 	ctx := context.Background()
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 
