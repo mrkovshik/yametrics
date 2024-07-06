@@ -99,6 +99,7 @@ TRUNCATE TABLE metrics;`
 		errUpdateMetrics := testDBStorage.RestoreMetrics(ctx, f.Name())
 		assert.NoError(t, errUpdateMetrics)
 	})
+
 	t.Run("get all metrics", func(t *testing.T) {
 		_, errGetMetricByModel1 := testDBStorage.GetAllMetrics(ctx)
 		assert.NoError(t, errGetMetricByModel1)

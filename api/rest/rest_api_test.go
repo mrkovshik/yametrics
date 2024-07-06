@@ -270,12 +270,14 @@ func Test_server(t *testing.T) {
 	cfg, err2 := config.GetTestConfig()
 	cfg.Key = "some_test_key"
 	require.NoError(t, err2)
+
 	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
 	apiService := NewServer(metricService, &cfg, sugar)
 	apiService.ConfigureRouter()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	go run(stop, apiService)
+
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

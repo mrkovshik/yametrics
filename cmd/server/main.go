@@ -81,8 +81,8 @@ func main() {
 		metricStorage := storage.NewMapStorage()
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
-	apiService := rest.NewServer(metricService, &cfg, sugar)
-	apiService.ConfigureRouter()
+	apiService := rest.NewServer(metricService, &cfg, sugar).ConfigureRouter()
+
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {
 			sugar.Fatal("RestoreMetrics", err)

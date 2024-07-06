@@ -91,3 +91,37 @@ func (m MockMetrics) PollMemStats(s storage) error {
 
 	return nil
 }
+
+func (m MockMetrics) PollVirtMemStats(s storage) error {
+	ctx := context.Background()
+
+	// Update mock memory statistics as gauge metrics
+	totalMemory := 1.00
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
+		ID:    "TotalMemory",
+		MType: model.MetricTypeGauge,
+		Value: &totalMemory,
+	}); err != nil {
+		return err
+	}
+
+	freeMemory := 2.00
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
+		ID:    "FreeMemory",
+		MType: model.MetricTypeGauge,
+		Value: &freeMemory,
+	}); err != nil {
+		return err
+	}
+
+	cpuUtilization1 := 3.00
+	if err := s.UpdateMetricValue(ctx, model.Metrics{
+		ID:    "CPUutilization1",
+		MType: model.MetricTypeGauge,
+		Value: &cpuUtilization1,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

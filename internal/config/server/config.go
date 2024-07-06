@@ -167,7 +167,7 @@ func GetConfigs() (ServerConfig, error) {
 
 func GetTestConfig() (ServerConfig, error) {
 	var c ServerConfigBuilder
-	c.WithRestoreEnable(false).WithAddress("localhost:8080")
+	c.WithRestoreEnable(false).WithAddress("localhost:8080").WithStoreEnable(true).WithStoreFilePath("./tmp/metrics-test.json")
 	if !util.ValidateAddress(c.Config.Address) {
 		return ServerConfig{}, errors.New("need address in a form host:port")
 	}

@@ -66,6 +66,7 @@ func TestMetricService(t *testing.T) {
 	defer ctrl.Finish()
 	mockStorage := defineStorage(ctx, ctrl)
 	basicSvs := NewMetricService(mockStorage, &cfg, logger.Sugar())
+
 	t.Run("update", func(t *testing.T) {
 		err := basicSvs.UpdateMetrics(ctx, []model.Metrics{testCounter1, testGauge1})
 		assert.NoError(t, err)
@@ -82,6 +83,16 @@ func TestMetricService(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEqual(t, "", s)
 	})
+
+	t.Run("store", func(t *testing.T) {
+		err := basicSvs.StoreMetrics(ctx)
+		assert.NoError(t, err)
+	})
+
+	t.Run("restore", func(t *testing.T) {
+		err := basicSvs.RestoreMetrics(ctx)
+		assert.NoError(t, err)
+	})
 }
 
 func defineStorage(ctx context.Context, ctrl *gomock.Controller) *mock_storage.MockStorage {
@@ -89,5 +100,7 @@ func defineStorage(ctx context.Context, ctrl *gomock.Controller) *mock_storage.M
 	strg.EXPECT().UpdateMetrics(ctx, []model.Metrics{testCounter1, testGauge1}).Return(nil).AnyTimes()
 	strg.EXPECT().GetMetricByModel(ctx, model.Metrics{ID: testCounterID1}).Return(testCounter1, nil).AnyTimes()
 	strg.EXPECT().GetAllMetrics(ctx).Return(map[string]model.Metrics{testGauge1.ID: testGauge1, testCounter1.ID: testCounter1}, nil).AnyTimes()
+	strg.EXPECT().StoreMetrics(ctx, "./tmp/metrics-test.json").Return(nil).AnyTimes()
+	strg.EXPECT().RestoreMetrics(ctx, "./tmp/metrics-test.json").Return(nil).AnyTimes()
 	return strg
 }
