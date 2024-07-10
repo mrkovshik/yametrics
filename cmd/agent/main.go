@@ -30,7 +30,7 @@ func main() {
 	}
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 	// Initialize storage and metrics source
-	strg := storage.NewMapStorage()
+	strg := storage.NewInMemoryStorage()
 	src := metrics.NewRuntimeMetrics()
 
 	// Initialize logging with zap

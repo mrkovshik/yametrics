@@ -12,7 +12,7 @@ import (
 )
 
 func Test_mapStorage(t *testing.T) {
-	testMapStorage := NewMapStorage()
+	testMapStorage := NewInMemoryStorage()
 	ctx := context.Background()
 	const testFilePath = "test.json"
 
@@ -70,7 +70,7 @@ func Test_mapStorage(t *testing.T) {
 		errUpdateMetrics := testMapStorage.StoreMetrics(ctx, f.Name())
 		assert.NoError(t, errUpdateMetrics)
 	})
-	testMapStorage2 := NewMapStorage()
+	testMapStorage2 := NewInMemoryStorage()
 	t.Run("restore", func(t *testing.T) {
 		errUpdateMetrics := testMapStorage2.RestoreMetrics(ctx, f.Name())
 		assert.NoError(t, errUpdateMetrics)

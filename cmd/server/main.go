@@ -78,7 +78,7 @@ func main() {
 		dbStorage := storage.NewDBStorage(db)
 		metricService = service.NewMetricService(dbStorage, &cfg, sugar)
 	} else {
-		metricStorage := storage.NewMapStorage()
+		metricStorage := storage.NewInMemoryStorage()
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
 	apiService := rest.NewServer(metricService, &cfg, sugar).ConfigureRouter()

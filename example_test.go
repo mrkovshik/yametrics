@@ -26,7 +26,7 @@ func Example() {
 		sugar.Fatal("cfg.GetConfigs", err)
 	}
 	ctx := context.Background()
-	metricStorage := storage.NewMapStorage()
+	metricStorage := storage.NewInMemoryStorage()
 	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
 	gauge := 2.5
 	counter := int64(2)

@@ -259,7 +259,7 @@ func Test_server(t *testing.T) {
 		},
 	}
 
-	metricStorage := storage.NewMapStorage()
+	metricStorage := storage.NewInMemoryStorage()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		logger.Fatal("zap.NewDevelopment",

@@ -14,7 +14,7 @@ import (
 func Test_getMetrics(t *testing.T) {
 	var (
 		src  = metrics.NewMockMetrics()
-		strg = storage.NewMapStorage()
+		strg = storage.NewInMemoryStorage()
 		ctx  = context.Background()
 	)
 	tests := []struct {

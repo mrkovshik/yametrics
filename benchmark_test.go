@@ -62,7 +62,7 @@ func BenchmarkUpdateMetricValue(b *testing.B) {
 	ctx := context.Background()
 	defer db.Close() //nolint:all
 	postgresStorage := storage.NewDBStorage(db)
-	runtimeStorage := storage.NewMapStorage()
+	runtimeStorage := storage.NewInMemoryStorage()
 	if err := postgresStorage.RestoreMetrics(ctx, "/metrics-db_bm.json"); err != nil {
 		sugar.Fatal("RestoreMetrics", err)
 	}
@@ -134,7 +134,7 @@ func BenchmarkUpdateMetricValue(b *testing.B) {
 func BenchmarkPollMemStats(b *testing.B) {
 	var (
 		src  = metrics.NewRuntimeMetrics()
-		strg = storage.NewMapStorage()
+		strg = storage.NewInMemoryStorage()
 		ctx  = context.Background()
 	)
 	b.Run("poll", func(b *testing.B) {

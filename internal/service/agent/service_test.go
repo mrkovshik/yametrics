@@ -13,7 +13,7 @@ import (
 
 func TestAgent_Poll(t *testing.T) {
 	src := metrics.NewMockMetrics()
-	strg := storage2.NewMapStorage()
+	strg := storage2.NewInMemoryStorage()
 	cfg, _ := config.GetConfigs()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
