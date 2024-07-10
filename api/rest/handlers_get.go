@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mrkovshik/yametrics/internal/app_errors"
+	"github.com/mrkovshik/yametrics/internal/apperrors"
 	"go.uber.org/zap"
 
 	"github.com/mrkovshik/yametrics/internal/model"
@@ -42,7 +42,7 @@ func (s *Server) HandleGetMetricFromURL(w http.ResponseWriter, r *http.Request) 
 	var newMetrics model.Metrics
 	if err := newMetrics.MapMetricsFromReqURL(r); err != nil {
 		s.logger.Error("MapMetricsFromReq", zap.Error(err))
-		http.Error(w, app_errors.ErrInvalidRequestData.Error(), http.StatusBadRequest)
+		http.Error(w, apperrors.ErrInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
 

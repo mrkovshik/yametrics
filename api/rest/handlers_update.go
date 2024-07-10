@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mrkovshik/yametrics/internal/app_errors"
+	"github.com/mrkovshik/yametrics/internal/apperrors"
 	"go.uber.org/zap"
 
 	"github.com/mrkovshik/yametrics/internal/model"
@@ -16,7 +16,7 @@ func (s *Server) HandleUpdateMetricFromJSON(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	if err := newMetrics.MapMetricsFromReqJSON(r); err != nil {
 		s.logger.Error("MapMetricsFromReqJSON", zap.Error(err))
-		http.Error(w, app_errors.ErrInvalidRequestData.Error(), http.StatusBadRequest)
+		http.Error(w, apperrors.ErrInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 
 	}
@@ -56,7 +56,7 @@ func (s *Server) HandleUpdateMetricFromURL(w http.ResponseWriter, r *http.Reques
 	var newMetrics model.Metrics
 	if err := newMetrics.MapMetricsFromReqURL(r); err != nil {
 		s.logger.Error("MapMetricsFromReq", zap.Error(err))
-		http.Error(w, app_errors.ErrInvalidRequestData.Error(), http.StatusBadRequest)
+		http.Error(w, apperrors.ErrInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := s.service.UpdateMetrics(ctx, []model.Metrics{newMetrics}); err != nil {
