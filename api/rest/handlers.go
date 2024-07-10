@@ -33,12 +33,8 @@ func (s *Server) HandleUpdateMetricFromJSON(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Gauge successfully updated")); err != nil {
-		s.logger.Error("w.Write", zap.Error(err))
-		http.Error(w, "error w.Write", http.StatusInternalServerError)
-		return
-	}
+	s.writeStatusWithMessage(w, http.StatusOK, "Gauge successfully updated")
+
 }
 
 // HandleUpdateMetricsFromJSON handles HTTP requests to update multiple metrics from JSON data.
@@ -56,12 +52,7 @@ func (s *Server) HandleUpdateMetricsFromJSON(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Gauge successfully updated")); err != nil {
-		s.logger.Error("w.Write", zap.Error(err))
-		http.Error(w, "error w.Write", http.StatusInternalServerError)
-		return
-	}
+	s.writeStatusWithMessage(w, http.StatusOK, "Gauge successfully updated")
 }
 
 // HandleUpdateMetricFromURL handles HTTP requests to update a metric from URL parameters.
@@ -79,12 +70,7 @@ func (s *Server) HandleUpdateMetricFromURL(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Gauge successfully updated")); err != nil {
-		s.logger.Error("w.Write", zap.Error(err))
-		http.Error(w, "error w.Write", http.StatusInternalServerError)
-		return
-	}
+	s.writeStatusWithMessage(w, http.StatusOK, "Gauge successfully updated")
 }
 
 // HandleGetMetricFromJSON handles HTTP requests to retrieve a metric using JSON data.
@@ -120,6 +106,7 @@ func (s *Server) HandleGetMetricFromURL(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
 	}
+
 	metric, err2 := s.service.GetMetric(ctx, newMetrics)
 	if err2 != nil {
 		s.logger.Error("s.storage.GetMetricByModel", zap.Error(err2))
@@ -139,12 +126,7 @@ func (s *Server) HandleGetMetricFromURL(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte(stringValue)); err != nil {
-		s.logger.Error("w.Write", zap.Error(err))
-		http.Error(w, "error w.Write", http.StatusInternalServerError)
-		return
-	}
+	s.writeStatusWithMessage(w, http.StatusOK, stringValue)
 }
 
 // HandleGetMetrics handles HTTP requests to retrieve all metrics.
@@ -157,12 +139,7 @@ func (s *Server) HandleGetMetrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "s.storage.GetAllMetrics", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte(body)); err != nil {
-		s.logger.Error("w.Write", zap.Error(err))
-		http.Error(w, "error w.Write", http.StatusInternalServerError)
-		return
-	}
+	s.writeStatusWithMessage(w, http.StatusOK, body)
 }
 
 // HandlePing handles HTTP requests to ping the server/database.
@@ -176,12 +153,15 @@ func (s *Server) HandlePing(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "data base is not responding", http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("database is alive")); err != nil {
-			s.logger.Error("w.Write", zap.Error(err))
-			http.Error(w, "error w.Write", http.StatusInternalServerError)
-			return
-		}
+		s.writeStatusWithMessage(w, http.StatusOK, "database is alive")
 	}
-	w.WriteHeader(http.StatusInternalServerError)
+	s.writeStatusWithMessage(w, http.StatusInternalServerError, "DB is unable")
+}
+
+func (s *Server) writeStatusWithMessage(w http.ResponseWriter, status int, msg string) {
+	w.WriteHeader(status)
+	if _, err := w.Write([]byte(msg)); err != nil {
+		s.logger.Error("w.Write:", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
