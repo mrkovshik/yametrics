@@ -15,14 +15,15 @@ import (
 
 var errInvalidRequestData = errors.New("invalid request data")
 
-// UpdateMetricFromJSON handles HTTP requests to update a metric from JSON data.
-func (s *Server) UpdateMetricFromJSON(w http.ResponseWriter, r *http.Request) {
+// HandleUpdateMetricFromJSON handles HTTP requests to update a metric from JSON data.
+func (s *Server) HandleUpdateMetricFromJSON(w http.ResponseWriter, r *http.Request) {
 	var newMetrics model.Metrics
 	ctx := r.Context()
 	if err := newMetrics.MapMetricsFromReqJSON(r); err != nil {
 		s.logger.Error("MapMetricsFromReqJSON", zap.Error(err))
 		http.Error(w, errInvalidRequestData.Error(), http.StatusBadRequest)
 		return
+
 	}
 
 	if err := s.service.UpdateMetrics(ctx, []model.Metrics{newMetrics}); err != nil {
@@ -40,8 +41,8 @@ func (s *Server) UpdateMetricFromJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// UpdateMetricsFromJSON handles HTTP requests to update multiple metrics from JSON data.
-func (s *Server) UpdateMetricsFromJSON(w http.ResponseWriter, r *http.Request) {
+// HandleUpdateMetricsFromJSON handles HTTP requests to update multiple metrics from JSON data.
+func (s *Server) HandleUpdateMetricsFromJSON(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var batch []model.Metrics
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
@@ -63,8 +64,8 @@ func (s *Server) UpdateMetricsFromJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// UpdateMetricFromURL handles HTTP requests to update a metric from URL parameters.
-func (s *Server) UpdateMetricFromURL(w http.ResponseWriter, r *http.Request) {
+// HandleUpdateMetricFromURL handles HTTP requests to update a metric from URL parameters.
+func (s *Server) HandleUpdateMetricFromURL(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var newMetrics model.Metrics
 	if err := newMetrics.MapMetricsFromReqURL(r); err != nil {
@@ -86,8 +87,8 @@ func (s *Server) UpdateMetricFromURL(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetMetricFromJSON handles HTTP requests to retrieve a metric using JSON data.
-func (s *Server) GetMetricFromJSON(w http.ResponseWriter, r *http.Request) {
+// HandleGetMetricFromJSON handles HTTP requests to retrieve a metric using JSON data.
+func (s *Server) HandleGetMetricFromJSON(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var newMetrics model.Metrics
 	if err1 := json.NewDecoder(r.Body).Decode(&newMetrics); err1 != nil {
@@ -110,8 +111,8 @@ func (s *Server) GetMetricFromJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetMetricFromURL handles HTTP requests to retrieve a metric using URL parameters.
-func (s *Server) GetMetricFromURL(w http.ResponseWriter, r *http.Request) {
+// HandleGetMetricFromURL handles HTTP requests to retrieve a metric using URL parameters.
+func (s *Server) HandleGetMetricFromURL(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var newMetrics model.Metrics
 	if err := newMetrics.MapMetricsFromReqURL(r); err != nil {
@@ -146,8 +147,8 @@ func (s *Server) GetMetricFromURL(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetMetrics handles HTTP requests to retrieve all metrics.
-func (s *Server) GetMetrics(w http.ResponseWriter, r *http.Request) {
+// HandleGetMetrics handles HTTP requests to retrieve all metrics.
+func (s *Server) HandleGetMetrics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	w.Header().Set("Content-Type", "text/html")
 	body, err := s.service.GetAllMetrics(ctx)
@@ -164,8 +165,8 @@ func (s *Server) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Ping handles HTTP requests to ping the server/database.
-func (s *Server) Ping(w http.ResponseWriter, r *http.Request) {
+// HandlePing handles HTTP requests to ping the server/database.
+func (s *Server) HandlePing(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if s.config.DBEnable {
 		newCtx, cancel := context.WithTimeout(ctx, 5*time.Second)

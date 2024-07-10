@@ -67,17 +67,17 @@ func (s *Server) ConfigureRouter() *Server {
 	router := chi.NewRouter()
 	router.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
 	router.Route("/update", func(r chi.Router) {
-		r.Post("/", s.UpdateMetricFromJSON)
-		r.Post("/{type}/{name}/{value}", s.UpdateMetricFromURL)
+		r.Post("/", s.HandleUpdateMetricFromJSON)
+		r.Post("/{type}/{name}/{value}", s.HandleUpdateMetricFromURL)
 	})
-	router.Post("/updates/", s.UpdateMetricsFromJSON)
+	router.Post("/updates/", s.HandleUpdateMetricsFromJSON)
 	router.Route("/value", func(r chi.Router) {
-		r.Post("/", s.GetMetricFromJSON)
-		r.Get("/{type}/{name}", s.GetMetricFromURL)
+		r.Post("/", s.HandleGetMetricFromJSON)
+		r.Get("/{type}/{name}", s.HandleGetMetricFromURL)
 	})
 
-	router.Get("/ping", s.Ping)
-	router.Get("/", s.GetMetrics)
+	router.Get("/ping", s.HandlePing)
+	router.Get("/", s.HandleGetMetrics)
 	s.logger.Infof("Starting server on %v\n StoreInterval: %v\n"+
 		"StoreIntervalSet: %v\nSyncStoreEnable: %v\nStoreFilePath: %v\nStoreFilePathSet: %v\n"+
 		"StoreEnable: %v\nRestoreEnable: %v\nRestoreEnvSet: %v\nDBAddress: %v\nDBAddressIsSet: %v\nDBEnable: %v\n", s.config.Address, s.config.StoreInterval,
