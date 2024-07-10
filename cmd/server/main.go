@@ -75,7 +75,7 @@ func main() {
 		}
 
 		defer db.Close() //nolint:all
-		dbStorage := storage.NewDBStorage(db)
+		dbStorage := storage.NewPostgresStorage(db)
 		metricService = service.NewMetricService(dbStorage, &cfg, sugar)
 	} else {
 		metricStorage := storage.NewInMemoryStorage()

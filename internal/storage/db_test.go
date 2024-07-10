@@ -35,7 +35,7 @@ TRUNCATE TABLE metrics;`
 	//Удаляем все записи из таблицы
 	defer db.Exec(`TRUNCATE TABLE metrics;`) //nolint:all
 	defer db.Close()                         //nolint:all
-	testDBStorage := NewDBStorage(db)
+	testDBStorage := NewPostgresStorage(db)
 	const testFilePath = "test.json"
 
 	var (

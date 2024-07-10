@@ -61,7 +61,7 @@ func BenchmarkUpdateMetricValue(b *testing.B) {
 	}
 	ctx := context.Background()
 	defer db.Close() //nolint:all
-	postgresStorage := storage.NewDBStorage(db)
+	postgresStorage := storage.NewPostgresStorage(db)
 	runtimeStorage := storage.NewInMemoryStorage()
 	if err := postgresStorage.RestoreMetrics(ctx, "/metrics-db_bm.json"); err != nil {
 		sugar.Fatal("RestoreMetrics", err)

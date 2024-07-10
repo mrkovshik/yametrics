@@ -14,20 +14,20 @@ import (
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
-// DBStorage implements the service.Storage interface using a SQL database.
-type DBStorage struct {
+// PostgresStorage implements the service.Storage interface using a SQL database.
+type PostgresStorage struct {
 	db *sql.DB
 }
 
-// NewDBStorage creates a new instance of dBStorage with the provided SQL database connection.
-func NewDBStorage(db *sql.DB) *DBStorage {
-	return &DBStorage{
+// NewPostgresStorage creates a new instance of dBStorage with the provided SQL database connection.
+func NewPostgresStorage(db *sql.DB) *PostgresStorage {
+	return &PostgresStorage{
 		db: db,
 	}
 }
 
 // UpdateMetricValue updates a single metric value in the database transactionally.
-func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
+func (s *PostgresStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (s *DBStorage) UpdateMetricValue(ctx context.Context, newMetrics model.Metr
 }
 
 // UpdateMetrics updates multiple metrics in the database transactionally.
-func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
+func (s *PostgresStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metrics) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (s *DBStorage) UpdateMetrics(ctx context.Context, newMetrics []model.Metric
 }
 
 // GetMetricByModel retrieves a metric from the database based on the provided model.
-func (s *DBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error) {
+func (s *PostgresStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metrics) (model.Metrics, error) {
 	query := `SELECT id, type, value, delta FROM metrics WHERE id = $1`
 	row, err := retriable.QueryRowRetryable(func() *sql.Row {
 		return s.db.QueryRowContext(ctx, query, newMetrics.ID)
@@ -74,7 +74,7 @@ func (s *DBStorage) GetMetricByModel(ctx context.Context, newMetrics model.Metri
 }
 
 // GetAllMetrics retrieves all metrics from the storage and returns them as a map
-func (s *DBStorage) GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error) {
+func (s *PostgresStorage) GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error) {
 	metricMap := make(map[string]model.Metrics)
 	query := `SELECT id, type, value, delta FROM metrics`
 	rows, err := retriable.QueryRetryable(func() (*sql.Rows, error) {
@@ -98,7 +98,7 @@ func (s *DBStorage) GetAllMetrics(ctx context.Context) (map[string]model.Metrics
 }
 
 // StoreMetrics stores all metrics into a JSON file at the specified path.
-func (s *DBStorage) StoreMetrics(ctx context.Context, path string) error {
+func (s *PostgresStorage) StoreMetrics(ctx context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	})
@@ -119,7 +119,7 @@ func (s *DBStorage) StoreMetrics(ctx context.Context, path string) error {
 }
 
 // RestoreMetrics restores metrics from a JSON file at the specified path into the database.
-func (s *DBStorage) RestoreMetrics(ctx context.Context, path string) error {
+func (s *PostgresStorage) RestoreMetrics(ctx context.Context, path string) error {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
 	})
@@ -149,12 +149,12 @@ func (s *DBStorage) RestoreMetrics(ctx context.Context, path string) error {
 }
 
 // Ping pings the database to check the connectivity.
-func (s *DBStorage) Ping(ctx context.Context) error {
+func (s *PostgresStorage) Ping(ctx context.Context) error {
 	return s.db.PingContext(ctx)
 }
 
 // scanAllMetricsToMap scans all metrics from the database and returns them as a map.
-func (s *DBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.Metrics, error) {
+func (s *PostgresStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.Metrics, error) {
 	metricMap := make(map[string]model.Metrics)
 	query := `SELECT id, type, value, delta FROM metrics`
 	rows, err := retriable.QueryRetryable(func() (*sql.Rows, error) {
@@ -178,7 +178,7 @@ func (s *DBStorage) scanAllMetricsToMap(ctx context.Context) (map[string]model.M
 }
 
 // updateMetricValue updates the metric value in the database transactionally.
-func (s *DBStorage) updateMetricValue(ctx context.Context, newMetrics model.Metrics, tx *sql.Tx) error {
+func (s *PostgresStorage) updateMetricValue(ctx context.Context, newMetrics model.Metrics, tx *sql.Tx) error {
 	query := `SELECT id, type, value, delta FROM metrics WHERE id=$1 AND type= $2`
 	row, err := retriable.QueryRowRetryable(func() *sql.Row {
 		return tx.QueryRowContext(ctx, query, newMetrics.ID, newMetrics.MType)
