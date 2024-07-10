@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/mrkovshik/yametrics/api"
 	config "github.com/mrkovshik/yametrics/internal/config/server"
@@ -41,23 +42,27 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 
 // RunServer starts the HTTP server with the configured router.
 func (s *Server) RunServer(stop chan os.Signal) error {
-	errCh := make(chan error)
-	go func(server *http.Server) {
-		if err := server.ListenAndServe(); err != nil {
-			errCh <- err
+	g, ctx := errgroup.WithContext(context.Background())
+
+	g.Go(func() error {
+		if err := s.server.ListenAndServe(); err != nil {
+			return err
 		}
-	}(s.server)
-	select {
-	case err := <-errCh:
+		return nil
+	})
+	g.Go(func() error {
+		<-stop
+		if err := s.server.Shutdown(ctx); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
 		return err
-	case <-stop:
-		err := s.server.Shutdown(context.Background())
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
