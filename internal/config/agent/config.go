@@ -18,6 +18,7 @@ type AgentConfig struct {
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	RateLimit      int    `env:"RATE_LIMIT"`
+	CryptoKey      string `env:"CRYPTO_KEY"`
 }
 
 // AgentConfigBuilder is a builder for constructing an AgentConfig instance.
@@ -34,6 +35,12 @@ func (c *AgentConfigBuilder) WithKey(key string) *AgentConfigBuilder {
 // WithAddress sets the address in the AgentConfig.
 func (c *AgentConfigBuilder) WithAddress(address string) *AgentConfigBuilder {
 	c.Config.Address = address
+	return c
+}
+
+// WithCryptoKey sets the crypto key flag in the ServerConfig.
+func (c *AgentConfigBuilder) WithCryptoKey(path string) *AgentConfigBuilder {
+	c.Config.CryptoKey = path
 	return c
 }
 
@@ -62,6 +69,7 @@ func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	reportInterval := flag.Int("r", 10, "metrics sending to server interval")
 	key := flag.String("k", "", "secret auth key")
 	rateLimit := flag.Int("l", 1, "agent rate limit")
+	cryptoKey := flag.String("-crypto-key", "./tmp/pub", "path to the file with public key")
 	flag.Parse()
 
 	if c.Config.Key == "" {
@@ -78,6 +86,9 @@ func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	}
 	if c.Config.RateLimit == 0 {
 		c.WithRateLimit(*rateLimit)
+	}
+	if c.Config.CryptoKey == "" {
+		c.WithCryptoKey(*cryptoKey)
 	}
 	return c
 }

@@ -28,6 +28,7 @@ type ServerConfig struct {
 	DBAddress        string `env:"DATABASE_DSN"`
 	DBAddressIsSet   bool
 	DBEnable         bool
+	CryptoKey        string `env:"CRYPTO_KEY"`
 }
 
 // ServerConfigBuilder is a builder for constructing a ServerConfig instance.
@@ -89,6 +90,12 @@ func (c *ServerConfigBuilder) WithSyncStoreEnable(sync bool) *ServerConfigBuilde
 	return c
 }
 
+// WithCryptoKey sets the crypto key flag in the ServerConfig.
+func (c *ServerConfigBuilder) WithCryptoKey(path string) *ServerConfigBuilder {
+	c.Config.CryptoKey = path
+	return c
+}
+
 // FromFlags populates the ServerConfig from command-line flags.
 func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	addr := flag.String("a", "localhost:8080", "server host and port")
@@ -97,11 +104,17 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	restoreEnable := flag.Bool("r", true, "is data restore from file enabled")
 	dbAddress := flag.String("d", "", "db address") //host=localhost port=5432 user=yandex password=yandex dbname=yandex sslmode=disable
 	key := flag.String("k", "", "secret auth key")
+	cryptoKey := flag.String("-crypto-key", "./tmp/private", "path to the file with private key")
 	flag.Parse()
 
 	if c.Config.Key == "" {
 		c.WithKey(*key)
 	}
+
+	if c.Config.CryptoKey == "" {
+		c.WithCryptoKey(*cryptoKey)
+	}
+
 	if c.Config.Address == "" {
 		c.WithAddress(*addr)
 	}
