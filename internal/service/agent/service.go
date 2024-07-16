@@ -116,9 +116,10 @@ func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}
 		currentMetric := model.Metrics{
 			ID: name,
 		}
-		if name == "PollCount" {
+		switch name {
+		case "PollCount":
 			currentMetric.MType = model.MetricTypeCounter
-		} else {
+		default:
 			currentMetric.MType = model.MetricTypeGauge
 		}
 		foundMetric, err := a.storage.GetMetricByModel(ctx, currentMetric)
@@ -172,7 +173,7 @@ func (a *Agent) worker(id int, jobs <-chan model.Metrics) {
 		a.logger.Debugf("worker #%v is sending %v", id, j.ID)
 		metricUpdateURL := fmt.Sprintf("http://%v/update/", a.cfg.Address)
 
-		reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(j).Sign(a.cfg.Key).Compress().SetMethod(http.MethodPost)
+		reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(j).EncryptRSA(a.cfg.CryptoKey).Compress().SetMethod(http.MethodPost)
 		if reqBuilder.Err != nil {
 			a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
 			return
