@@ -10,6 +10,7 @@ import (
 
 	"github.com/mrkovshik/yametrics/internal/compress"
 	"github.com/mrkovshik/yametrics/internal/logger"
+	rsa2 "github.com/mrkovshik/yametrics/internal/rsa"
 	"github.com/mrkovshik/yametrics/internal/signature"
 )
 
@@ -109,6 +110,63 @@ func (s *Server) Authenticate(next http.Handler) http.Handler {
 func (s *Server) SignResponse(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.config.Key == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		rw := signature.NewCapturingResponseWriter(w)
+		next.ServeHTTP(rw, r)
+		if len(rw.Body()) != 0 {
+			sigSrv := signature.NewSha256Sig(s.config.Key, rw.Body())
+			sig, err := sigSrv.Generate()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("HashSHA256", sig)
+			w.WriteHeader(rw.Code())
+			_, err = w.Write(rw.Body())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+	})
+}
+
+func (s *Server) DecryptRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.CryptoKey == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Read the request body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+		// Read the PEM file
+		privateKeyPem, err := rsa2.ReadPEMFile(s.config.CryptoKey)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		//// Decode the base64-encoded ciphertext
+		plaintext, err := rsa2.Decrypt(privateKeyPem, body)
+		r.Body = io.NopCloser(bytes.NewBuffer(plaintext))
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) EncryptResponse(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.CryptoKey == "" {
 			next.ServeHTTP(w, r)
 			return
 		}

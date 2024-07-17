@@ -69,7 +69,7 @@ func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	reportInterval := flag.Int("r", 10, "metrics sending to server interval")
 	key := flag.String("k", "", "secret auth key")
 	rateLimit := flag.Int("l", 1, "agent rate limit")
-	cryptoKey := flag.String("-crypto-key", "./tmp/pub", "path to the file with public key")
+	cryptoKey := flag.String("crypto-key", "./public_key.pem", "path to the file with public key")
 	flag.Parse()
 
 	if c.Config.Key == "" {

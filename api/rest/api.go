@@ -70,7 +70,7 @@ func (s *Server) RunServer(stop chan os.Signal) error {
 // ConfigureRouter configures routes and middleware.
 func (s *Server) ConfigureRouter() *Server {
 	router := chi.NewRouter()
-	router.Use(s.WithLogging, s.GzipHandle, s.Authenticate, s.SignResponse)
+	router.Use(s.WithLogging, s.GzipHandle, s.SignResponse, s.DecryptRequest, s.Authenticate)
 	router.Route("/update", func(r chi.Router) {
 		r.Post("/", s.HandleUpdateMetricFromJSON)
 		r.Post("/{type}/{name}/{value}", s.HandleUpdateMetricFromURL)

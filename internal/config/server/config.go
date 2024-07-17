@@ -104,7 +104,7 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	restoreEnable := flag.Bool("r", true, "is data restore from file enabled")
 	dbAddress := flag.String("d", "", "db address") //host=localhost port=5432 user=yandex password=yandex dbname=yandex sslmode=disable
 	key := flag.String("k", "", "secret auth key")
-	cryptoKey := flag.String("-crypto-key", "./tmp/private", "path to the file with private key")
+	cryptoKey := flag.String("crypto-key", "./private_key.pem", "path to the file with private key")
 	flag.Parse()
 
 	if c.Config.Key == "" {
