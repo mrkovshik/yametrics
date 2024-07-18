@@ -157,6 +157,10 @@ func (s *Server) DecryptRequest(next http.Handler) http.Handler {
 
 		//// Decode the base64-encoded ciphertext
 		plaintext, err := rsa2.Decrypt(privateKeyPem, body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		r.Body = io.NopCloser(bytes.NewBuffer(plaintext))
 
 		// Call the next handler

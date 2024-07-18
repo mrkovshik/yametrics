@@ -1,3 +1,4 @@
+// Package rsa provides functions for RSA encryption, decryption, and reading PEM files.
 package rsa
 
 import (
@@ -14,7 +15,8 @@ import (
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 )
 
-// Encrypt encrypts data using the given RSA public key in PEM format
+// Encrypt encrypts data using the given RSA public key in PEM format.
+// It returns the encrypted data as a base64-encoded string.
 func Encrypt(publicKeyPem []byte, data []byte) (string, error) {
 	// Decode the PEM formatted public key
 	block, _ := pem.Decode(publicKeyPem)
@@ -46,22 +48,28 @@ func Encrypt(publicKeyPem []byte, data []byte) (string, error) {
 	return encryptedBase64, nil
 }
 
+// Decrypt decrypts base64-encoded encrypted data using the given RSA private key in PEM format.
+// It returns the decrypted data as a byte slice.
 func Decrypt(privateKeyPem []byte, data []byte) ([]byte, error) {
-
+	// Decode the PEM formatted private key
 	block, _ := pem.Decode(privateKeyPem)
 	if block == nil {
 		return nil, errors.New("failed to decode PEM block containing the private key")
 	}
 
+	// Parse the private key
 	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
+
+	// Type assert the private key to an rsa.PrivateKey
 	castedPrivateKey, ok := privateKey.(*rsa.PrivateKey)
 	if !ok {
 		return nil, errors.New("not an RSA private key")
 	}
 
+	// Decode the base64-encoded ciphertext
 	ciphertext := make([]byte, base64.StdEncoding.DecodedLen(len(data)))
 	n, err := base64.StdEncoding.Decode(ciphertext, data)
 	if err != nil {
@@ -69,16 +77,16 @@ func Decrypt(privateKeyPem []byte, data []byte) ([]byte, error) {
 	}
 	ciphertext = ciphertext[:n]
 
+	// Decrypt the ciphertext with the private key
 	secret, err := rsa.DecryptPKCS1v15(nil, castedPrivateKey, ciphertext)
 	if err != nil {
 		return nil, err
 	}
 
 	return secret, nil
-
 }
 
-// ReadPEMFile reads the PEM file from the given path and returns its contents as a string
+// ReadPEMFile reads the PEM file from the given path and returns its contents as a byte slice.
 func ReadPEMFile(path string) ([]byte, error) {
 	file, err := retriable.OpenRetryable(func() (*os.File, error) {
 		return os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
@@ -87,9 +95,9 @@ func ReadPEMFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	defer file.Close() //nolint:all
+
 	reader := bufio.NewReader(file)
 	pemBytes, err := io.ReadAll(reader)
-
 	if err != nil {
 		return nil, err
 	}
