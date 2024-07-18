@@ -167,29 +167,3 @@ func (s *Server) DecryptRequest(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-func (s *Server) EncryptResponse(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if s.config.CryptoKey == "" {
-			next.ServeHTTP(w, r)
-			return
-		}
-		rw := signature.NewCapturingResponseWriter(w)
-		next.ServeHTTP(rw, r)
-		if len(rw.Body()) != 0 {
-			sigSrv := signature.NewSha256Sig(s.config.Key, rw.Body())
-			sig, err := sigSrv.Generate()
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.Header().Set("HashSHA256", sig)
-			w.WriteHeader(rw.Code())
-			_, err = w.Write(rw.Body())
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-	})
-}
