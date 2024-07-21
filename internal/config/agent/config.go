@@ -8,17 +8,33 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/eschao/config"
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 	"github.com/mrkovshik/yametrics/internal/util"
 )
 
+const (
+	defaultKey            = ""
+	defaultAddress        = "localhost:8080"
+	defaultPollInterval   = 2
+	defaultReportInterval = 10
+	defaultRateLimit      = 1
+	defaultCryptoKey      = "./public_key.pem"
+)
+
+var k = koanf.New(".")
+
 // AgentConfig holds the configuration settings for the agent.
 type AgentConfig struct {
-	Key            string `env:"KEY"`
-	Address        string `env:"ADDRESS"`
-	ReportInterval int    `env:"REPORT_INTERVAL"`
-	PollInterval   int    `env:"POLL_INTERVAL"`
-	RateLimit      int    `env:"RATE_LIMIT"`
-	CryptoKey      string `env:"CRYPTO_KEY"`
+	Key            string `env:"KEY" json:"key"`
+	Address        string `env:"ADDRESS" json:"address"`
+	ReportInterval int    `env:"REPORT_INTERVAL" json:"report_interval"`
+	PollInterval   int    `env:"POLL_INTERVAL" json:"poll_interval"`
+	RateLimit      int    `env:"RATE_LIMIT" json:"rate_limit"`
+	CryptoKey      string `env:"CRYPTO_KEY" json:"crypto_key"`
+	ConfigFilePath string `env:"CONFIG" json:"config_file_path"`
 }
 
 // AgentConfigBuilder is a builder for constructing an AgentConfig instance.
@@ -62,15 +78,36 @@ func (c *AgentConfigBuilder) WithRateLimit(rateLimit int) *AgentConfigBuilder {
 	return c
 }
 
+// WithConfigFile sets the path to JSON configuration file
+func (c *AgentConfigBuilder) WithConfigFile(configFilePath string) *AgentConfigBuilder {
+	c.Config.ConfigFilePath = configFilePath
+	return c
+}
+
 // FromFlags populates the AgentConfig from command-line flags.
 func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
-	addr := flag.String("a", "localhost:8080", "server host and port")
-	pollInterval := flag.Int("p", 2, "metrics polling interval")
-	reportInterval := flag.Int("r", 10, "metrics sending to server interval")
-	key := flag.String("k", "", "secret auth key")
-	rateLimit := flag.Int("l", 1, "agent rate limit")
-	cryptoKey := flag.String("crypto-key", "./public_key.pem", "path to the file with public key")
+	addr := flag.String("a", defaultAddress, "server host and port")
+	pollInterval := flag.Int("p", defaultPollInterval, "metrics polling interval")
+	reportInterval := flag.Int("r", defaultReportInterval, "metrics sending to server interval")
+	key := flag.String("k", defaultKey, "secret auth key")
+	rateLimit := flag.Int("l", defaultRateLimit, "agent rate limit")
+	cryptoKey := flag.String("crypto-key", defaultCryptoKey, "path to the file with public key")
+	configFilePath := flag.String("c", "", "path to config file")
+	configFilePathAlias := flag.String("config", "", "path to config file (shorthand)")
 	flag.Parse()
+
+	if *configFilePath != "" && *configFilePathAlias != "" {
+		log.Fatalf("usage of both shorthand and full flag (-c and --config)")
+	}
+
+	if c.Config.ConfigFilePath == "" {
+		if *configFilePath != "" {
+			c.WithConfigFile(*configFilePath)
+		}
+		if *configFilePathAlias != "" {
+			c.WithConfigFile(*configFilePathAlias)
+		}
+	}
 
 	if c.Config.Key == "" {
 		c.WithKey(*key)
@@ -93,6 +130,38 @@ func (c *AgentConfigBuilder) FromFlags() *AgentConfigBuilder {
 	return c
 }
 
+// FromFile populates the AgentConfig from config JSON file.
+func (c *AgentConfigBuilder) FromFile() *AgentConfigBuilder {
+	if c.Config.ConfigFilePath != "" {
+		if err := k.Load(file.Provider(c.Config.ConfigFilePath), json.Parser()); err != nil {
+			log.Fatalf("error loading config: %v", err)
+		}
+	}
+	JSONConfig := AgentConfig{}
+	if err := config.ParseConfigFile(&JSONConfig, c.Config.ConfigFilePath); err != nil {
+		log.Fatalf("error parsing config: %v", err)
+	}
+	if JSONConfig.Key != "" && c.Config.Key == defaultKey {
+		c.WithKey(JSONConfig.Key)
+	}
+	if JSONConfig.Address != "" && c.Config.Address == defaultAddress {
+		c.WithAddress(JSONConfig.Address)
+	}
+	if JSONConfig.ReportInterval != 0 && c.Config.ReportInterval == defaultReportInterval {
+		c.WithReportInterval(JSONConfig.ReportInterval)
+	}
+	if JSONConfig.PollInterval != 0 && c.Config.PollInterval == defaultPollInterval {
+		c.WithPollInterval(JSONConfig.PollInterval)
+	}
+	if JSONConfig.RateLimit != 0 && c.Config.RateLimit == defaultRateLimit {
+		c.WithRateLimit(JSONConfig.RateLimit)
+	}
+	if JSONConfig.CryptoKey != "" && c.Config.CryptoKey == defaultCryptoKey {
+		c.WithCryptoKey(JSONConfig.CryptoKey)
+	}
+	return c
+}
+
 // FromEnv populates the AgentConfig from environment variables.
 func (c *AgentConfigBuilder) FromEnv() *AgentConfigBuilder {
 	if err := env.Parse(&c.Config); err != nil {
@@ -102,11 +171,11 @@ func (c *AgentConfigBuilder) FromEnv() *AgentConfigBuilder {
 }
 
 // GetConfigs returns the fully constructed AgentConfig by combining
-// configurations from environment variables and command-line flags.
+// configurations from environment variables, command-line flags and JSON file.
 // It validates the address and rate limit to ensure they are properly set.
 func GetConfigs() (AgentConfig, error) {
 	var c AgentConfigBuilder
-	c.FromEnv().FromFlags()
+	c.FromEnv().FromFlags().FromFile()
 	if !util.ValidateAddress(c.Config.Address) {
 		return AgentConfig{}, errors.New("need address in a form host:port")
 	}
