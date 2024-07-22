@@ -1,0 +1,9 @@
+{
+  "address": "localhost:8084",
+  "restore": false,
+  "store_interval": "0s",
+  "store_file": "/path/to/file.db",
+  "database_dsn": "host=localhost port=5432 user=yandex password=yandex8 dbname=yandex sslmode=disable",
+  "crypto_key": "/path/to/key.pem",
+  "key": "HOHOHO"
+}

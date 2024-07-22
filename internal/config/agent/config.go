@@ -37,6 +37,17 @@ type AgentConfig struct {
 	ConfigFilePath string `env:"CONFIG" json:"config_file_path"`
 }
 
+// AgentJSON is a structure fot mapping config from JSON file.
+type AgentJSON struct {
+	Key            string `json:"key"`
+	Address        string `json:"address"`
+	ReportInterval string `json:"report_interval"`
+	PollInterval   string `json:"poll_interval"`
+	RateLimit      int    `json:"rate_limit"`
+	CryptoKey      string `json:"crypto_key"`
+	ConfigFilePath string `json:"config_file_path"`
+}
+
 // AgentConfigBuilder is a builder for constructing an AgentConfig instance.
 type AgentConfigBuilder struct {
 	Config AgentConfig
@@ -137,7 +148,7 @@ func (c *AgentConfigBuilder) FromFile() *AgentConfigBuilder {
 			log.Fatalf("error loading config: %v", err)
 		}
 	}
-	JSONConfig := AgentConfig{}
+	JSONConfig := AgentJSON{}
 	if err := config.ParseConfigFile(&JSONConfig, c.Config.ConfigFilePath); err != nil {
 		log.Fatalf("error parsing config: %v", err)
 	}
@@ -147,11 +158,19 @@ func (c *AgentConfigBuilder) FromFile() *AgentConfigBuilder {
 	if JSONConfig.Address != "" && c.Config.Address == defaultAddress {
 		c.WithAddress(JSONConfig.Address)
 	}
-	if JSONConfig.ReportInterval != 0 && c.Config.ReportInterval == defaultReportInterval {
-		c.WithReportInterval(JSONConfig.ReportInterval)
+	if JSONConfig.ReportInterval != "" && c.Config.ReportInterval == defaultReportInterval {
+		intReportInterval, err := util.CutSeconds(JSONConfig.ReportInterval)
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.WithReportInterval(intReportInterval)
 	}
-	if JSONConfig.PollInterval != 0 && c.Config.PollInterval == defaultPollInterval {
-		c.WithPollInterval(JSONConfig.PollInterval)
+	if JSONConfig.PollInterval != "" && c.Config.PollInterval == defaultPollInterval {
+		intPollInterval, err := util.CutSeconds(JSONConfig.PollInterval)
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.WithPollInterval(intPollInterval)
 	}
 	if JSONConfig.RateLimit != 0 && c.Config.RateLimit == defaultRateLimit {
 		c.WithRateLimit(JSONConfig.RateLimit)

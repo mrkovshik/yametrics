@@ -83,11 +83,44 @@ func (s *Server) ConfigureRouter() *Server {
 
 	router.Get("/ping", s.HandlePing)
 	router.Get("/", s.HandleGetMetrics)
-	s.logger.Infof("Starting server on %v\n StoreInterval: %v\n"+
-		"StoreIntervalSet: %v\nSyncStoreEnable: %v\nStoreFilePath: %v\nStoreFilePathSet: %v\n"+
-		"StoreEnable: %v\nRestoreEnable: %v\nRestoreEnvSet: %v\nDBAddress: %v\nDBAddressIsSet: %v\nDBEnable: %v\n", s.config.Address, s.config.StoreInterval,
-		s.config.StoreIntervalSet, s.config.SyncStoreEnable, s.config.StoreFilePath, s.config.StoreFilePathSet, s.config.StoreEnable,
-		s.config.RestoreEnable, s.config.RestoreEnvSet, s.config.DBAddress, s.config.DBAddressIsSet, s.config.DBEnable)
+
+	s.logger.Infof(
+		"Starting server on %v\n "+
+			"StoreInterval: %v\n"+
+			"StoreIntervalIsSet: %v\n"+
+			"SyncStoreEnable: %v\n"+
+			"StoreFilePath: %v\n"+
+			"StoreFilePathSet: %v\n"+
+			"StoreEnable: %v\n"+
+			"RestoreEnable: %v\n"+
+			"RestoreEnvSet: %v\n"+
+			"DBAddress: %v\n"+
+			"DBAddressIsSet: %v\n"+
+			"DBEnable: %v\n"+
+			"CryptoKey: %v\n"+
+			"CryptoKeyIsSet: %v\n"+
+			"Key: %v\n"+
+			"KeyIsSet: %v\n"+
+			"ConfigFilePath: %v\n"+
+			"ConfigFilePathIsSet: %v\n",
+		s.config.Address,
+		s.config.StoreInterval,
+		s.config.StoreIntervalIsSet,
+		s.config.SyncStoreEnable,
+		s.config.StoreFilePath,
+		s.config.StoreFilePathIsSet,
+		s.config.StoreEnable,
+		s.config.RestoreEnable,
+		s.config.RestoreEnvIsSet,
+		s.config.DBAddress,
+		s.config.DBAddressIsSet,
+		s.config.DBEnable,
+		s.config.CryptoKey,
+		s.config.CryptoKeyIsSet,
+		s.config.Key,
+		s.config.KeyIsSet,
+		s.config.ConfigFilePath,
+		s.config.ConfigFilePathIsSet)
 	s.server.Handler = router
 	return s
 }
