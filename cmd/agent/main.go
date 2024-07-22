@@ -53,7 +53,34 @@ func main() {
 	agent := service.NewAgent(src, &cfg, strg, sugar)
 
 	// Log agent configuration
-	sugar.Infof("Running agent on %v\npoll interval = %v\nreport interval = %v\n", &cfg.Address, cfg.PollInterval, cfg.ReportInterval)
+	sugar.Infof(
+		"Running agent on %v\n"+
+			"key = %v\n"+
+			"key is set = %v\n"+
+			"poll interval = %v\n"+
+			"poll interval is set = %v\n"+
+			"report interval = %v\n"+
+			"report interval is set = %v\n"+
+			"crypto key = %v\n"+
+			"crypto key is set = %v\n"+
+			"config file path = %v\n"+
+			"config file path is set = %v\n"+
+			"rate limit = %v\n"+
+			"rate limit is set = %v\n",
+		&cfg.Address,
+		cfg.Key,
+		cfg.KeyIsSet,
+		cfg.PollInterval,
+		cfg.PollIntervalIsSet,
+		cfg.ReportInterval,
+		cfg.ReportIntervalIsSet,
+		cfg.CryptoKey,
+		cfg.CryptoKeyIsSet,
+		cfg.ConfigFilePath,
+		cfg.ConfigFilePathIsSet,
+		cfg.RateLimit,
+		cfg.RateLimitIsSet,
+	)
 
 	// Create tickers for polling and sending metrics
 	pollTicker := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)

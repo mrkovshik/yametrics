@@ -1,4 +1,8 @@
 {
-  "address": "localhost:8002",
-  "poll_interval": "3s"
+  "address": "localhost:8081",
+  "report_interval": "1s",
+  "poll_interval": "1s",
+  "crypto_key": "/path/to/key.pem",
+  "key": "test_json_key",
+  "rate_limit": 4
 }
