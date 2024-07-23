@@ -23,7 +23,7 @@ const (
 	defaultConfigFilePath = ""
 	defaultAddress        = "localhost:8080"
 	defaultStoreInterval  = 300
-	defaultStoreFilePath  = "/tmp/metrics-db.json"
+	defaultStoreFilePath  = "./tmp/metrics-db.json"
 	defaultCryptoKey      = "./public_key.pem"
 	defaultDBAddress      = ""
 	defaultRestoreEnable  = true
