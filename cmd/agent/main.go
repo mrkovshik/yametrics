@@ -108,13 +108,13 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	select {
-	case <-sigs:
-		sugar.Info("Received shutdown signal")
-		pollTicker.Stop()
-		pollUtilTicker.Stop()
-		sendTicker.Stop()
-	}
+
+	<-sigs
+	sugar.Info("Received shutdown signal")
+	pollTicker.Stop()
+	pollUtilTicker.Stop()
+	sendTicker.Stop()
+
 	<-pollMetricsStopped
 	<-pollUtilMetricsStopped
 	<-sendMetricsStopped

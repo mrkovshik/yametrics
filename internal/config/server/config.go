@@ -263,7 +263,7 @@ func (c *ServerConfigBuilder) FromFile() *ServerConfigBuilder {
 		c.WithCryptoKey(JSONConfig.CryptoKey)
 	}
 
-	if JSONConfig.RestoreEnable != defaultRestoreEnable && !c.Config.RestoreEnvIsSet {
+	if JSONConfig.RestoreEnable != defaultRestoreEnable && !c.Config.RestoreEnvIsSet { //nolint:all
 		c.WithRestoreEnable(JSONConfig.RestoreEnable)
 	}
 	return c
