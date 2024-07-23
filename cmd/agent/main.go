@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -49,6 +52,9 @@ func main() {
 		logger.Fatal("config.GetConfigs", zap.Error(err))
 	}
 
+	ctx, stopServices := context.WithCancel(context.Background())
+	defer stopServices()
+
 	// Create agent instance with dependencies
 	agent := service.NewAgent(src, &cfg, strg, sugar)
 
@@ -90,11 +96,26 @@ func main() {
 	sendTicker := time.NewTicker(time.Duration(cfg.ReportInterval) * time.Second)
 	defer sendTicker.Stop()
 
-	// Start goroutines for polling and sending metrics
-	go agent.PollMetrics(pollTicker.C)
-	go agent.PollUitlMetrics(pollUtilTicker.C)
-	go agent.SendMetrics(context.Background(), sendTicker.C)
+	pollMetricsStopped := make(chan struct{})
+	pollUtilMetricsStopped := make(chan struct{})
+	sendMetricsStopped := make(chan struct{})
 
-	// Block indefinitely to keep the agent running
-	select {}
+	// Start goroutines for polling and sending metrics
+	go agent.PollMetrics(pollTicker.C, pollMetricsStopped)
+	go agent.PollUtilMetrics(pollUtilTicker.C, pollUtilMetricsStopped)
+	go agent.SendMetrics(ctx, sendTicker.C, sendMetricsStopped)
+
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	select {
+	case <-sigs:
+		sugar.Info("Received shutdown signal")
+		pollTicker.Stop()
+		pollUtilTicker.Stop()
+		sendTicker.Stop()
+	}
+	<-pollMetricsStopped
+	<-pollUtilMetricsStopped
+	<-sendMetricsStopped
 }

@@ -45,7 +45,7 @@ func NewAgent(source metrics.MetricSource, cfg *config.AgentConfig, strg storage
 }
 
 // SendMetrics sends metrics at intervals specified by the channel.
-func (a *Agent) SendMetrics(ctx context.Context, ch <-chan time.Time) {
+func (a *Agent) SendMetrics(ctx context.Context, ch <-chan time.Time, done chan struct{}) {
 	var metricNamesMap = map[string]struct{}{
 		"Alloc":           {},
 		"BuckHashSys":     {},
@@ -81,29 +81,36 @@ func (a *Agent) SendMetrics(ctx context.Context, ch <-chan time.Time) {
 		"CPUutilization1": {},
 	}
 	for range ch {
+		a.logger.Debug("Starting to send metrics")
 		a.sendMetricsByPool(ctx, metricNamesMap)
+		a.logger.Debug("Metrics sent.\n")
 	}
+	done <- struct{}{}
 }
 
 // PollMetrics polls metrics at intervals specified by the channel.
-func (a *Agent) PollMetrics(ch <-chan time.Time) {
+func (a *Agent) PollMetrics(ch <-chan time.Time, done chan struct{}) {
 	for range ch {
 		a.logger.Debug("Starting to update metrics")
 		if err := a.source.PollMemStats(a.storage); err != nil {
 			a.logger.Error("PollMemStats", err)
 			return
 		}
+		a.logger.Debug("Metrics updated.\n")
 	}
+	done <- struct{}{}
 }
 
-// PollUitlMetrics polls utilization metrics at intervals specified by the channel.
-func (a *Agent) PollUitlMetrics(ch <-chan time.Time) {
+// PollUtilMetrics polls utilization metrics at intervals specified by the channel.
+func (a *Agent) PollUtilMetrics(ch <-chan time.Time, done chan struct{}) {
 	for range ch {
 		if err := a.source.PollVirtMemStats(a.storage); err != nil {
 			a.logger.Error("PollVirtMemStats", err)
 			return
 		}
+		a.logger.Debug("Metrics updated.\n")
 	}
+	done <- struct{}{}
 }
 
 // sendMetricsByPool sends metrics using a pool of workers.

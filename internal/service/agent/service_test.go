@@ -28,19 +28,23 @@ func TestAgent_Poll(t *testing.T) {
 
 	t.Run("util_metrics", func(t *testing.T) {
 		ch := make(chan time.Time)
+		done := make(chan struct{}, 1)
 		go func(ch chan time.Time) {
 			ch <- time.Now()
 			close(ch)
 		}(ch)
-		a.PollUitlMetrics(ch)
+		a.PollUtilMetrics(ch, done)
+		<-done
 
 	})
 	t.Run("metrics", func(t *testing.T) {
+		done := make(chan struct{}, 1)
 		ch := make(chan time.Time)
 		go func(ch chan time.Time) {
 			ch <- time.Now()
 			close(ch)
 		}(ch)
-		a.PollMetrics(ch)
+		a.PollMetrics(ch, done)
+		<-done
 	})
 }
