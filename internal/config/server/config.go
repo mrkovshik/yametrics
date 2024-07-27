@@ -28,7 +28,7 @@ const (
 	defaultDBAddress      = ""
 	defaultRestoreEnable  = true
 	defaultStoreEnable    = true
-	defaultTrustedSubnet  = "192.168.0.0/24"
+	defaultTrustedSubnet  = "172.27.144.0/24"
 )
 
 var k = koanf.New(".")

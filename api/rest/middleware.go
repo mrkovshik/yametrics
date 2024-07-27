@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -164,6 +165,33 @@ func (s *Server) DecryptRequest(next http.Handler) http.Handler {
 		r.Body = io.NopCloser(bytes.NewBuffer(plaintext))
 
 		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) VerifySubnet(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.TrustedSubnet == "" {
+			next.ServeHTTP(w, r)
+		}
+		clientIP := r.Header.Get(`X-Real-IP`)
+		ip := net.ParseIP(clientIP)
+		if ip == nil {
+			http.Error(w, "Invalid IP address", http.StatusBadRequest)
+			return
+		}
+
+		_, trustedNet, err := net.ParseCIDR(s.config.TrustedSubnet)
+		if err != nil {
+			http.Error(w, "Invalid trusted subnet", http.StatusInternalServerError)
+			return
+		}
+
+		if !trustedNet.Contains(ip) {
+			http.Error(w, "Forbidden: IP not in trusted subnet", http.StatusForbidden)
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
