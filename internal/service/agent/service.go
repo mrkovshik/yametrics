@@ -180,7 +180,7 @@ func (a *Agent) worker(id int, jobs <-chan model.Metrics) {
 		a.logger.Debugf("worker #%v is sending %v", id, j.ID)
 		metricUpdateURL := fmt.Sprintf("http://%v/update/", a.cfg.Address)
 
-		reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(j).Sign(a.cfg.Key).EncryptRSA(a.cfg.CryptoKey).Compress().SetMethod(http.MethodPost)
+		reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(j).Sign(a.cfg.Key).EncryptRSA(a.cfg.CryptoKey).Compress().SetMethod(http.MethodPost).AddIPHeader()
 		if reqBuilder.Err != nil {
 			a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
 			return
