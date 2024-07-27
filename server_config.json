@@ -4,5 +4,6 @@
   "store_interval": "5s",
   "database_dsn": "host=localhost port=5432 user=yandex password=yandex dbname=yandex sslmode=disable",
   "crypto_key": "./private_key.pem",
-  "key": "test_json_key"
+  "key": "test_json_key",
+  "trusted_subnet": "192.168.0.0/24"
 }

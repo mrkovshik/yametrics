@@ -28,6 +28,7 @@ const (
 	defaultDBAddress      = ""
 	defaultRestoreEnable  = true
 	defaultStoreEnable    = true
+	defaultTrustedSubnet  = "192.168.0.0/24"
 )
 
 var k = koanf.New(".")
@@ -54,6 +55,8 @@ type ServerConfig struct {
 	CryptoKeyIsSet      bool   `json:"-"`
 	ConfigFilePath      string `env:"CONFIG" json:"-"`
 	ConfigFilePathIsSet bool   `json:"-"`
+	TrustedSubnet       string `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
+	TrustedSubnetIsSet  bool   `json:"-"`
 }
 
 // ServerConfigBuilder is a builder for constructing a ServerConfig instance.
@@ -71,6 +74,14 @@ func (c *ServerConfig) SetDefaults() {
 	c.StoreFilePath = defaultStoreFilePath
 	c.ConfigFilePath = defaultConfigFilePath
 	c.StoreEnable = defaultStoreEnable
+	c.TrustedSubnet = defaultTrustedSubnet
+}
+
+// WithTrustedSubnet sets trusted subnet in the ServerConfig.
+func (c *ServerConfigBuilder) WithTrustedSubnet(trustedSubnet string) *ServerConfigBuilder {
+	c.Config.TrustedSubnet = trustedSubnet
+	c.Config.TrustedSubnetIsSet = true
+	return c
 }
 
 // WithKey sets the key in the ServerConfig.
@@ -173,6 +184,9 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 	configFilePathAlias := flags.CustomString{}
 	flag.Var(&configFilePathAlias, "config", "path to config file")
 
+	trustedSubnet := flags.CustomString{}
+	flag.Var(&trustedSubnet, "t", "trusted subnet for server")
+
 	flag.Parse()
 
 	//Verifying if the flags were set properly
@@ -215,6 +229,10 @@ func (c *ServerConfigBuilder) FromFlags() *ServerConfigBuilder {
 
 	if !c.Config.RestoreEnvIsSet && restoreEnable.IsSet {
 		c.WithRestoreEnable(restoreEnable.Value)
+	}
+
+	if !c.Config.TrustedSubnetIsSet && trustedSubnet.IsSet {
+		c.WithTrustedSubnet(trustedSubnet.Value)
 	}
 	return c
 }
@@ -263,7 +281,11 @@ func (c *ServerConfigBuilder) FromFile() *ServerConfigBuilder {
 		c.WithCryptoKey(JSONConfig.CryptoKey)
 	}
 
-	if !JSONConfig.RestoreEnable && defaultRestoreEnable && !c.Config.RestoreEnvIsSet { //nolint:all
+	if !JSONConfig.RestoreEnable && defaultRestoreEnable && !c.Config.RestoreEnvIsSet {
+		c.WithRestoreEnable(JSONConfig.RestoreEnable)
+	}
+
+	if JSONConfig.TrustedSubnet != defaultTrustedSubnet && !c.Config.TrustedSubnetIsSet {
 		c.WithRestoreEnable(JSONConfig.RestoreEnable)
 	}
 	return c
@@ -302,9 +324,14 @@ func (c *ServerConfigBuilder) FromEnv() *ServerConfigBuilder {
 	if restoreSet {
 		c.Config.RestoreEnvIsSet = true
 	}
-	_, DSNSet := os.LookupEnv("DATABASE_DSN")
-	if DSNSet {
+	_, dsnSet := os.LookupEnv("DATABASE_DSN")
+	if dsnSet {
 		c.Config.DBAddressIsSet = true
+	}
+
+	_, trustedSubnetSet := os.LookupEnv("TRUSTED_SUBNET")
+	if trustedSubnetSet {
+		c.Config.TrustedSubnetIsSet = true
 	}
 	return c
 }
