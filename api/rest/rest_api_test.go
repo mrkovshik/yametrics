@@ -1,16 +1,21 @@
-package main
+package rest
 
 import (
 	"bytes"
 	"crypto/hmac"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"testing"
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/mrkovshik/yametrics/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -41,8 +46,7 @@ func Test_server(t *testing.T) {
 			url           string
 			contentType   string
 			contentEncode string
-			//acceptEncoding string
-			req model.Metrics
+			req           model.Metrics
 		}
 	)
 	tests := []struct {
@@ -255,7 +259,7 @@ func Test_server(t *testing.T) {
 		},
 	}
 
-	mapStorage := storage.NewMapStorage()
+	metricStorage := storage.NewInMemoryStorage()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		logger.Fatal("zap.NewDevelopment",
@@ -263,16 +267,22 @@ func Test_server(t *testing.T) {
 	}
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
-	cfg, err2 := config.GetConfigs()
+	cfg, err2 := config.GetTestConfig()
 	cfg.Key = "some_test_key"
 	require.NoError(t, err2)
-	getMetricsService := service.NewServer(mapStorage, cfg, sugar, nil)
-	go run(getMetricsService, sugar, cfg)
+
+	metricService := service.NewMetricService(metricStorage, &cfg, sugar)
+	apiService := NewServer(metricService, &cfg, sugar)
+	apiService.ConfigureRouter()
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	go run(stop, apiService)
+
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{}
-			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method).Sign(cfg.Key)
+			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method).Sign(cfg.Key).AddIPHeader()
 			if tt.request.contentType == "application/json" {
 				req.AddJSONBody(tt.request.req)
 			}
@@ -313,8 +323,6 @@ func Test_server(t *testing.T) {
 					require.Equal(t, *tt.want.response.Value, val)
 				}
 			}
-			/*			body, err7 := io.ReadAll(response.Body)
-						assert.NoError(t, err7)*/
 			if response.StatusCode == http.StatusOK {
 				sigSvc := signature.NewSha256Sig(cfg.Key, body)
 				sig, err9 := sigSvc.Generate()
@@ -327,4 +335,8 @@ func Test_server(t *testing.T) {
 			}
 		})
 	}
+}
+
+func run(stop chan os.Signal, srv api.Server) {
+	log.Fatal(srv.RunServer(stop))
 }

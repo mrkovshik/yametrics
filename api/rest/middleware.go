@@ -1,18 +1,22 @@
-package service
+package rest
 
 import (
 	"bytes"
 	"crypto/hmac"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/mrkovshik/yametrics/internal/compress"
 	"github.com/mrkovshik/yametrics/internal/logger"
+	rsa2 "github.com/mrkovshik/yametrics/internal/rsa"
 	"github.com/mrkovshik/yametrics/internal/signature"
 )
 
+// WithLogging wraps an http.Handler with logging functionality.
+// It logs incoming HTTP requests and their corresponding responses.
 func (s *Server) WithLogging(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -37,6 +41,8 @@ func (s *Server) WithLogging(h http.Handler) http.Handler {
 	return http.HandlerFunc(logFn)
 }
 
+// GzipHandle returns an http.Handler that handles gzip compression for request and response bodies.
+// It checks the request headers for gzip encoding and wraps the response writer with gzip compression if supported.
 func (s *Server) GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var isEncodingSupported = false
@@ -72,11 +78,14 @@ func (s *Server) GzipHandle(next http.Handler) http.Handler {
 	})
 }
 
+// Authenticate returns an http.Handler that authenticates incoming requests using HMAC-SHA256 signatures.
+// It verifies the integrity of the request body against the provided signature.
 func (s *Server) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		clientSig := r.Header.Get(`HashSHA256`)
 		if clientSig != "" && r.Body != nil {
 			body, err := io.ReadAll(r.Body)
+			defer r.Body.Close() //nolint:all
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -97,6 +106,8 @@ func (s *Server) Authenticate(next http.Handler) http.Handler {
 	})
 }
 
+// SignResponse returns an http.Handler that signs outgoing response bodies using HMAC-SHA256 signatures.
+// If a signing key is configured, it computes the signature of the response body and sets the HashSHA256 header.
 func (s *Server) SignResponse(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.config.Key == "" {
@@ -120,5 +131,68 @@ func (s *Server) SignResponse(next http.Handler) http.Handler {
 				return
 			}
 		}
+	})
+}
+
+func (s *Server) DecryptRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.CryptoKey == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Read the request body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+		// Read the PEM file
+		privateKeyPem, err := rsa2.ReadPEMFile(s.config.CryptoKey)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		//// Decode the base64-encoded ciphertext
+		plaintext, err := rsa2.Decrypt(privateKeyPem, body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(plaintext))
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) VerifySubnet(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.config.TrustedSubnet == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		clientIP := r.Header.Get(`X-Real-IP`)
+		ip := net.ParseIP(clientIP)
+		if ip == nil {
+			http.Error(w, "Invalid IP address", http.StatusBadRequest)
+			return
+		}
+
+		_, trustedNet, err := net.ParseCIDR(s.config.TrustedSubnet)
+		if err != nil {
+			http.Error(w, "Invalid trusted subnet", http.StatusInternalServerError)
+			return
+		}
+
+		if !trustedNet.Contains(ip) {
+			http.Error(w, "Forbidden: IP not in trusted subnet", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

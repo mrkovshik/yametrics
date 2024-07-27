@@ -1,3 +1,4 @@
+// Package model represents structure models
 package model
 
 import (
@@ -9,18 +10,24 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// Constants for metric types.
 const (
-	MetricTypeGauge   = "gauge"
+	// MetricTypeGauge represents a gauge metric type.
+	MetricTypeGauge = "gauge"
+
+	// MetricTypeCounter represents a counter metric type.
 	MetricTypeCounter = "counter"
 )
 
+// Metrics represents a metric entity with ID, type (gauge or counter), and either Delta (for counter) or Value (for gauge).
 type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string   `json:"id"`              // Metric name
+	MType string   `json:"type"`            // Parameter that takes values gauge or counter
+	Delta *int64   `json:"delta,omitempty"` // Metric value in case of counter transmission
+	Value *float64 `json:"value,omitempty"` // Metric value in case of gauge transmission
 }
 
+// MapMetricsFromReqJSON maps metric data from JSON format in the HTTP request body to Metrics struct.
 func (m *Metrics) MapMetricsFromReqJSON(req *http.Request) error {
 	if err := json.NewDecoder(req.Body).Decode(&m); err != nil {
 		return err
@@ -45,9 +52,9 @@ func (m *Metrics) MapMetricsFromReqJSON(req *http.Request) error {
 		return errors.New("errInvalidMetricType")
 	}
 	return nil
-
 }
 
+// MapMetricsFromReqURL maps metric data from URL parameters to Metrics struct.
 func (m *Metrics) MapMetricsFromReqURL(req *http.Request) error {
 	metricName := chi.URLParam(req, "name")
 	metricValue := chi.URLParam(req, "value")

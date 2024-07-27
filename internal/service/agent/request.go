@@ -4,28 +4,35 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 
+	rsa2 "github.com/mrkovshik/yametrics/internal/rsa"
 	"github.com/mrkovshik/yametrics/internal/signature"
 )
 
+// RequestBuilder helps in constructing and modifying HTTP requests.
 type RequestBuilder struct {
-	R   http.Request
-	Err error
+	R   http.Request // The HTTP request being built.
+	Err error        // Any error encountered during the building process.
 }
 
+// NewRequestBuilder initializes a new RequestBuilder with a default GET request.
 func NewRequestBuilder() *RequestBuilder {
 	req, err := http.NewRequest(http.MethodGet, "", nil)
 	return &RequestBuilder{*req, err}
 }
 
+// WithHeader adds a header to the HTTP request.
 func (rb *RequestBuilder) WithHeader(key, value string) *RequestBuilder {
 	rb.R.Header.Add(key, value)
 	return rb
 }
 
+// SetMethod sets the HTTP method for the request.
 func (rb *RequestBuilder) SetMethod(method string) *RequestBuilder {
 	if rb.Err == nil {
 		rb.R.Method = method
@@ -33,6 +40,7 @@ func (rb *RequestBuilder) SetMethod(method string) *RequestBuilder {
 	return rb
 }
 
+// SetURL sets the URL for the HTTP request.
 func (rb *RequestBuilder) SetURL(rawURL string) *RequestBuilder {
 	if rb.Err == nil {
 		rb.R.URL, rb.Err = url.Parse(rawURL)
@@ -40,6 +48,18 @@ func (rb *RequestBuilder) SetURL(rawURL string) *RequestBuilder {
 	return rb
 }
 
+// AddIPHeader sets the URL for the HTTP request.
+func (rb *RequestBuilder) AddIPHeader() *RequestBuilder {
+	if rb.Err == nil {
+		ip, err := getLocalIP()
+		if err == nil {
+			rb.R.Header.Add("X-Real-IP", ip)
+		}
+	}
+	return rb
+}
+
+// AddJSONBody encodes data as JSON and sets it as the body of the request.
 func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
 	if rb.Err == nil && data != nil {
 		buf := bytes.Buffer{}
@@ -52,10 +72,9 @@ func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
 	return rb
 }
 
+// Sign generates a SHA-256 signature for the request body and adds it as a header.
 func (rb *RequestBuilder) Sign(key string) *RequestBuilder {
-
 	var body []byte
-
 	if key != "" && rb.Err == nil && rb.R.Body != nil {
 		body, rb.Err = io.ReadAll(rb.R.Body)
 		rb.R.Body = io.NopCloser(bytes.NewBuffer(body))
@@ -69,10 +88,10 @@ func (rb *RequestBuilder) Sign(key string) *RequestBuilder {
 			rb.WithHeader("HashSHA256", sig)
 		}
 	}
-
 	return rb
 }
 
+// Compress compresses the request body using gzip and sets the appropriate headers.
 func (rb *RequestBuilder) Compress() *RequestBuilder {
 	if rb.Err == nil {
 		var compressedBody bytes.Buffer
@@ -90,4 +109,57 @@ func (rb *RequestBuilder) Compress() *RequestBuilder {
 		rb.WithHeader("Content-Encoding", "gzip")
 	}
 	return rb
+}
+
+func (rb *RequestBuilder) EncryptRSA(pemFilePath string) *RequestBuilder {
+	var body []byte
+	if pemFilePath != "" && rb.Err == nil && rb.R.Body != nil {
+		// Read the request body
+		body, rb.Err = io.ReadAll(rb.R.Body)
+
+		if rb.Err == nil {
+			// Read the PEM file
+			publicKeyPem, err := rsa2.ReadPEMFile(pemFilePath)
+			if err != nil {
+				rb.Err = err
+				return rb
+			}
+
+			// Encrypt the body using RSA
+			encryptedBody, err := rsa2.Encrypt(publicKeyPem, body)
+			if err != nil {
+				rb.Err = err
+				return rb
+			}
+			rb.R.Body = io.NopCloser(bytes.NewBufferString(encryptedBody))
+		}
+	}
+	return rb
+}
+
+func getLocalIP() (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, iface := range interfaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip != nil && !ip.IsLoopback() && ip.To4() != nil {
+				return ip.String(), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("no connected network interface found")
 }
