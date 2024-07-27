@@ -173,6 +173,7 @@ func (s *Server) VerifySubnet(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.config.TrustedSubnet == "" {
 			next.ServeHTTP(w, r)
+			return
 		}
 		clientIP := r.Header.Get(`X-Real-IP`)
 		ip := net.ParseIP(clientIP)

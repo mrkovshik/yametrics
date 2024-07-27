@@ -282,7 +282,7 @@ func Test_server(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{}
-			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method).Sign(cfg.Key)
+			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method).Sign(cfg.Key).AddIPHeader()
 			if tt.request.contentType == "application/json" {
 				req.AddJSONBody(tt.request.req)
 			}
