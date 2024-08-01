@@ -30,6 +30,7 @@ const (
 var k = koanf.New(".")
 
 // AgentConfig holds the configuration settings for the agent.
+// TODO: divide config for client and metric
 type AgentConfig struct {
 	Key                  string `env:"KEY" json:"key"`
 	KeyIsSet             bool   `json:"-"`

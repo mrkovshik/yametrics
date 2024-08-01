@@ -12,7 +12,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/api"
-	"github.com/mrkovshik/yametrics/api/rest"
+	"github.com/mrkovshik/yametrics/api/grpc"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 	"go.uber.org/zap"
@@ -81,7 +81,7 @@ func main() {
 		metricStorage := storage.NewInMemoryStorage()
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
-	apiService := rest.NewServer(metricService, &cfg, sugar).ConfigureRouter()
+	apiService := grpc.NewServer(metricService, &cfg, sugar)
 
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {

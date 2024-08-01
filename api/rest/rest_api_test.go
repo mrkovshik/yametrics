@@ -16,13 +16,13 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/api"
+	service2 "github.com/mrkovshik/yametrics/internal/reqbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/model"
-	service2 "github.com/mrkovshik/yametrics/internal/service/agent"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
 	"github.com/mrkovshik/yametrics/internal/signature"
 	"github.com/mrkovshik/yametrics/internal/storage"
@@ -282,7 +282,7 @@ func Test_server(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{}
-			req := *service2.NewRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method).Sign(cfg.Key).AddIPHeader()
+			req := *service2.NewHTTPRequestBuilder().SetURL(tt.request.url).SetMethod(tt.request.method).Sign(cfg.Key).AddIPHeader()
 			if tt.request.contentType == "application/json" {
 				req.AddJSONBody(tt.request.req)
 			}

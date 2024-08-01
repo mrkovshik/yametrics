@@ -1,4 +1,4 @@
-package service
+package reqbuilder
 
 import (
 	"bytes"
@@ -14,26 +14,26 @@ import (
 	"github.com/mrkovshik/yametrics/internal/signature"
 )
 
-// RequestBuilder helps in constructing and modifying HTTP requests.
-type RequestBuilder struct {
+// HTTPRequestBuilder helps in constructing and modifying HTTP requests.
+type HTTPRequestBuilder struct {
 	R   http.Request // The HTTP request being built.
 	Err error        // Any error encountered during the building process.
 }
 
-// NewRequestBuilder initializes a new RequestBuilder with a default GET request.
-func NewRequestBuilder() *RequestBuilder {
+// NewHTTPRequestBuilder initializes a new HTTPRequestBuilder with a default GET request.
+func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 	req, err := http.NewRequest(http.MethodGet, "", nil)
-	return &RequestBuilder{*req, err}
+	return &HTTPRequestBuilder{*req, err}
 }
 
 // WithHeader adds a header to the HTTP request.
-func (rb *RequestBuilder) WithHeader(key, value string) *RequestBuilder {
+func (rb *HTTPRequestBuilder) WithHeader(key, value string) *HTTPRequestBuilder {
 	rb.R.Header.Add(key, value)
 	return rb
 }
 
 // SetMethod sets the HTTP method for the request.
-func (rb *RequestBuilder) SetMethod(method string) *RequestBuilder {
+func (rb *HTTPRequestBuilder) SetMethod(method string) *HTTPRequestBuilder {
 	if rb.Err == nil {
 		rb.R.Method = method
 	}
@@ -41,7 +41,7 @@ func (rb *RequestBuilder) SetMethod(method string) *RequestBuilder {
 }
 
 // SetURL sets the URL for the HTTP request.
-func (rb *RequestBuilder) SetURL(rawURL string) *RequestBuilder {
+func (rb *HTTPRequestBuilder) SetURL(rawURL string) *HTTPRequestBuilder {
 	if rb.Err == nil {
 		rb.R.URL, rb.Err = url.Parse(rawURL)
 	}
@@ -49,7 +49,7 @@ func (rb *RequestBuilder) SetURL(rawURL string) *RequestBuilder {
 }
 
 // AddIPHeader sets the URL for the HTTP request.
-func (rb *RequestBuilder) AddIPHeader() *RequestBuilder {
+func (rb *HTTPRequestBuilder) AddIPHeader() *HTTPRequestBuilder {
 	if rb.Err == nil {
 		ip, err := getLocalIP()
 		if err == nil {
@@ -60,7 +60,7 @@ func (rb *RequestBuilder) AddIPHeader() *RequestBuilder {
 }
 
 // AddJSONBody encodes data as JSON and sets it as the body of the request.
-func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
+func (rb *HTTPRequestBuilder) AddJSONBody(data any) *HTTPRequestBuilder {
 	if rb.Err == nil && data != nil {
 		buf := bytes.Buffer{}
 		rb.Err = json.NewEncoder(&buf).Encode(data)
@@ -73,7 +73,7 @@ func (rb *RequestBuilder) AddJSONBody(data any) *RequestBuilder {
 }
 
 // Sign generates a SHA-256 signature for the request body and adds it as a header.
-func (rb *RequestBuilder) Sign(key string) *RequestBuilder {
+func (rb *HTTPRequestBuilder) Sign(key string) *HTTPRequestBuilder {
 	var body []byte
 	if key != "" && rb.Err == nil && rb.R.Body != nil {
 		body, rb.Err = io.ReadAll(rb.R.Body)
@@ -92,17 +92,17 @@ func (rb *RequestBuilder) Sign(key string) *RequestBuilder {
 }
 
 // Compress compresses the request body using gzip and sets the appropriate headers.
-func (rb *RequestBuilder) Compress() *RequestBuilder {
+func (rb *HTTPRequestBuilder) Compress() *HTTPRequestBuilder {
 	if rb.Err == nil {
 		var compressedBody bytes.Buffer
 		gzipWriter := gzip.NewWriter(&compressedBody)
 		_, err := io.Copy(gzipWriter, rb.R.Body)
 		if err != nil {
-			return &RequestBuilder{Err: err}
+			return &HTTPRequestBuilder{Err: err}
 		}
 		err = gzipWriter.Close()
 		if err != nil {
-			return &RequestBuilder{Err: err}
+			return &HTTPRequestBuilder{Err: err}
 		}
 		rb.R.Body = io.NopCloser(&compressedBody)
 		rb.R.ContentLength = int64(compressedBody.Len())
@@ -111,7 +111,7 @@ func (rb *RequestBuilder) Compress() *RequestBuilder {
 	return rb
 }
 
-func (rb *RequestBuilder) EncryptRSA(pemFilePath string) *RequestBuilder {
+func (rb *HTTPRequestBuilder) EncryptRSA(pemFilePath string) *HTTPRequestBuilder {
 	var body []byte
 	if pemFilePath != "" && rb.Err == nil && rb.R.Body != nil {
 		// Read the request body

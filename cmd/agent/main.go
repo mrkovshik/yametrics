@@ -9,7 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mrkovshik/yametrics/internal/request"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
@@ -55,8 +58,16 @@ func main() {
 	ctx, stopServices := context.WithCancel(context.Background())
 	defer stopServices()
 
+	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := request.NewGRPCClient(sugar, &cfg, conn)
+	//client := request.NewRestClient(sugar, &cfg)
+
 	// Create agent instance with dependencies
-	agent := service.NewAgent(src, &cfg, strg, sugar)
+	agent := service.NewAgent(src, &cfg, strg, sugar, client)
 
 	// Log agent configuration
 	sugar.Infof(

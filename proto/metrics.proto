@@ -1,0 +1,21 @@
+syntax = "proto3";
+package api.grpc;
+option go_package = "yametrics/proto";
+message Metric {
+      string ID = 1;
+      string MType =2;
+      int64 Delta = 3;
+      double Value = 4;
+}
+
+message UpdateMetricsRequest{
+ repeated Metric metrics = 1;
+}
+
+message UpdateMetricsResponse{
+  string error = 1;
+}
+
+service Users {
+  rpc UpdateMetrics(UpdateMetricsRequest) returns (UpdateMetricsResponse);
+}
