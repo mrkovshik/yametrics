@@ -7,6 +7,7 @@ require (
 	github.com/eschao/config v0.1.0
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/golang/mock v1.6.0
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/knadh/koanf/parsers/json v0.1.0
 	github.com/knadh/koanf/providers/file v1.0.0

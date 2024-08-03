@@ -10,12 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/api"
 	"github.com/mrkovshik/yametrics/api/grpc"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 	"go.uber.org/zap"
+	grpc2 "google.golang.org/grpc"
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
@@ -44,6 +46,11 @@ func main() {
 	}
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
+
+	opts := []logging.Option{
+		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
+		// Add any other option (check functions starting with logging.With).
+	}
 
 	cfg, err := config.GetConfigs()
 	if err != nil {
@@ -81,7 +88,12 @@ func main() {
 		metricStorage := storage.NewInMemoryStorage()
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
-	apiService := grpc.NewServer(metricService, &cfg, sugar)
+	srv := grpc2.NewServer(grpc2.ChainUnaryInterceptor(
+		logging.UnaryServerInterceptor(grpc.InterceptorLogger(logger), opts...),
+		grpc.Authenticate(cfg.Key),
+	))
+
+	apiService := grpc.NewServer(metricService, &cfg, sugar, srv)
 
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {

@@ -1,11 +1,14 @@
 package request
 
 import (
-	"context"
+	"encoding/json"
 	"time"
 
+	"github.com/mrkovshik/yametrics/internal/reqbuilder"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/model"
@@ -61,9 +64,16 @@ func (r *GRPCClient) Request(id int, jobs <-chan model.Metrics) {
 // retryableSend sends an HTTP request with retries.
 func (r *GRPCClient) retryableSend(req *proto.UpdateMetricsRequest) (*proto.UpdateMetricsResponse, error) {
 	var retryIntervals = []int{1, 3, 5} //TODO: move to config
-
+	messageBytes, err := json.Marshal(req)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to marshal request: %v", err)
+	}
+	ctxBuilder := reqbuilder.NewGRPCContextBuilder().Sign(r.cfg.Key, messageBytes)
+	if ctxBuilder.Err != nil {
+		return nil, ctxBuilder.Err
+	}
 	for i := 0; i <= len(retryIntervals); i++ {
-		response, err := r.UpdateMetrics(context.Background(), req)
+		response, err := r.UpdateMetrics(ctxBuilder.Ctx, req)
 		if err == nil {
 			return response, nil
 		}

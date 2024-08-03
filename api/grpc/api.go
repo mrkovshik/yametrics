@@ -26,16 +26,9 @@ type Server struct {
 	pb.UnimplementedUsersServer
 }
 
-// NewServer creates a new Server instance.
-// Parameters:
-// - service: an implementation of the api.Service interface.
-// - config: server configuration settings.
-// - logger: a sugared logger instance.
-// Returns:
-// - a pointer to the new Server instance.
-func NewServer(service api.Service, config *config.ServerConfig, logger *zap.SugaredLogger) *Server {
+func NewServer(service api.Service, config *config.ServerConfig, logger *zap.SugaredLogger, server *grpc2.Server) *Server {
 	return &Server{
-		server:                   grpc2.NewServer(),
+		server:                   server,
 		service:                  service,
 		config:                   config,
 		logger:                   logger,
