@@ -17,6 +17,12 @@ import (
 
 // WithLogging wraps an http.Handler with logging functionality.
 // It logs incoming HTTP requests and their corresponding responses.
+//
+// Parameters:
+//   - h: The http.Handler to be wrapped with logging.
+//
+// Returns:
+//   - http.Handler: The wrapped http.Handler with logging.
 func (s *Server) WithLogging(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -30,7 +36,7 @@ func (s *Server) WithLogging(h http.Handler) http.Handler {
 		}
 		h.ServeHTTP(&lw, r)
 		duration := time.Since(start)
-		s.logger.Infoln(
+		defer s.logger.Infoln(
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", responseData.Status,
@@ -43,6 +49,12 @@ func (s *Server) WithLogging(h http.Handler) http.Handler {
 
 // GzipHandle returns an http.Handler that handles gzip compression for request and response bodies.
 // It checks the request headers for gzip encoding and wraps the response writer with gzip compression if supported.
+//
+// Parameters:
+//   - next: The next http.Handler to be called.
+//
+// Returns:
+//   - http.Handler: The wrapped http.Handler with gzip compression support.
 func (s *Server) GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var isEncodingSupported = false
@@ -54,7 +66,7 @@ func (s *Server) GzipHandle(next http.Handler) http.Handler {
 				return
 			}
 			r.Body = gz
-			defer gz.Close() //nolint:all
+			defer gz.Close() // nolint:all
 		}
 
 		acceptValues := r.Header.Values("Accept-Encoding")
@@ -72,7 +84,7 @@ func (s *Server) GzipHandle(next http.Handler) http.Handler {
 
 		cw := compress.NewGzipWriter(w)
 
-		defer cw.Close() //nolint:all
+		defer cw.Close() // nolint:all
 
 		next.ServeHTTP(cw, r)
 	})
@@ -80,12 +92,18 @@ func (s *Server) GzipHandle(next http.Handler) http.Handler {
 
 // Authenticate returns an http.Handler that authenticates incoming requests using HMAC-SHA256 signatures.
 // It verifies the integrity of the request body against the provided signature.
+//
+// Parameters:
+//   - next: The next http.Handler to be called.
+//
+// Returns:
+//   - http.Handler: The wrapped http.Handler with authentication.
 func (s *Server) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		clientSig := r.Header.Get(`HashSHA256`)
 		if clientSig != "" && r.Body != nil {
 			body, err := io.ReadAll(r.Body)
-			defer r.Body.Close() //nolint:all
+			defer r.Body.Close() // nolint:all
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -108,6 +126,12 @@ func (s *Server) Authenticate(next http.Handler) http.Handler {
 
 // SignResponse returns an http.Handler that signs outgoing response bodies using HMAC-SHA256 signatures.
 // If a signing key is configured, it computes the signature of the response body and sets the HashSHA256 header.
+//
+// Parameters:
+//   - next: The next http.Handler to be called.
+//
+// Returns:
+//   - http.Handler: The wrapped http.Handler with response signing.
 func (s *Server) SignResponse(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.config.Key == "" {
@@ -134,6 +158,14 @@ func (s *Server) SignResponse(next http.Handler) http.Handler {
 	})
 }
 
+// DecryptRequest returns an http.Handler that decrypts incoming requests using RSA.
+// If a decryption key is configured, it decrypts the request body and replaces the original body.
+//
+// Parameters:
+//   - next: The next http.Handler to be called.
+//
+// Returns:
+//   - http.Handler: The wrapped http.Handler with request decryption.
 func (s *Server) DecryptRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.config.CryptoKey == "" {
@@ -156,7 +188,7 @@ func (s *Server) DecryptRequest(next http.Handler) http.Handler {
 			return
 		}
 
-		//// Decode the base64-encoded ciphertext
+		// Decrypt the body using RSA
 		plaintext, err := rsa2.Decrypt(privateKeyPem, body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -169,6 +201,14 @@ func (s *Server) DecryptRequest(next http.Handler) http.Handler {
 	})
 }
 
+// VerifySubnet returns an http.Handler that verifies the client IP address against a trusted subnet.
+// If the client IP is not within the trusted subnet, it returns a forbidden error.
+//
+// Parameters:
+//   - next: The next http.Handler to be called.
+//
+// Returns:
+//   - http.Handler: The wrapped http.Handler with subnet verification.
 func (s *Server) VerifySubnet(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if s.config.TrustedSubnet == "" {

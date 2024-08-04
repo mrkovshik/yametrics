@@ -124,3 +124,5 @@ func (s *Server) ConfigureRouter() *Server {
 	s.server.Handler = router
 	return s
 }
+
+type RouterOption func(*chi.Mux)
