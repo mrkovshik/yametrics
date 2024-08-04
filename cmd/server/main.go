@@ -88,12 +88,12 @@ func main() {
 		metricStorage := storage.NewInMemoryStorage()
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
-	srv := grpc2.NewServer(grpc2.ChainUnaryInterceptor(
+	grpcSrv := grpc2.NewServer(grpc2.ChainUnaryInterceptor(
 		logging.UnaryServerInterceptor(grpc.InterceptorLogger(logger), opts...),
 		grpc.Authenticate(cfg.Key),
 	))
 
-	apiService := grpc.NewServer(metricService, &cfg, sugar, srv)
+	apiService := grpc.NewServer(metricService, &cfg, sugar, grpcSrv)
 
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {

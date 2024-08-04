@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/mrkovshik/yametrics/internal/model"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	grpc2 "google.golang.org/grpc"
@@ -36,7 +35,7 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 	}
 }
 
-// RunServer starts the HTTP server with the configured router.
+// RunServer starts server with the configured router.
 func (s *Server) RunServer(stop chan os.Signal) error {
 
 	listen, err := net.Listen("tcp", ":3200")
@@ -67,28 +66,4 @@ func (s *Server) RunServer(stop chan os.Signal) error {
 		return err
 	}
 	return nil
-}
-
-func (s *Server) UpdateMetrics(ctx context.Context, request *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
-	mappedMetrics := make([]model.Metrics, len(request.Metrics))
-	for i, metric := range request.Metrics {
-		mappedMetrics[i] = model.Metrics{
-			ID:    metric.ID,
-			MType: metric.MType,
-		}
-		switch metric.MType {
-		case model.MetricTypeGauge:
-			mappedMetrics[i].Value = &metric.Value
-		case model.MetricTypeCounter:
-			mappedMetrics[i].Delta = &metric.Delta
-		default:
-			return &pb.UpdateMetricsResponse{Error: "unknown metric type"}, errors.New("unknown metric type")
-		}
-
-	}
-
-	if err := s.service.UpdateMetrics(ctx, mappedMetrics); err != nil {
-		return &pb.UpdateMetricsResponse{Error: err.Error()}, err
-	}
-	return &pb.UpdateMetricsResponse{}, nil
 }
