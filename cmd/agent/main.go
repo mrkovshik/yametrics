@@ -58,7 +58,7 @@ func main() {
 	ctx, stopServices := context.WithCancel(context.Background())
 	defer stopServices()
 
-	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
