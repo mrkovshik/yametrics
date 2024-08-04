@@ -22,13 +22,13 @@ type storage interface {
 	GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error)
 }
 
-type requester interface {
-	Request(id int, jobs <-chan model.Metrics)
+type sender interface {
+	Send(id int, jobs <-chan model.Metrics)
 }
 
 // Agent represents a metric collection agent that polls and sends metrics.
 type Agent struct {
-	client  requester            //Client for sending metrics to the server
+	client  sender               //Client for sending metrics to the server
 	source  metrics.MetricSource // Source of the metrics
 	logger  *zap.SugaredLogger   // Logger for logging messages
 	cfg     *config.AgentConfig  // Configuration for the agent
@@ -36,7 +36,7 @@ type Agent struct {
 }
 
 // NewAgent initializes a new Agent.
-func NewAgent(source metrics.MetricSource, cfg *config.AgentConfig, strg storage, logger *zap.SugaredLogger, client requester) *Agent {
+func NewAgent(source metrics.MetricSource, cfg *config.AgentConfig, strg storage, logger *zap.SugaredLogger, client sender) *Agent {
 	return &Agent{
 		client:  client,
 		source:  source,
@@ -119,7 +119,7 @@ func (a *Agent) PollUtilMetrics(ch <-chan time.Time, done chan struct{}) {
 func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}) {
 	jobs := make(chan model.Metrics, len(names))
 	for w := 1; w <= a.cfg.RateLimit; w++ {
-		go a.client.Request(w, jobs)
+		go a.client.Send(w, jobs)
 	}
 	for name := range names {
 		currentMetric := model.Metrics{

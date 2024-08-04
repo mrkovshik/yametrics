@@ -64,7 +64,6 @@ func main() {
 	}
 
 	client := request.NewGRPCClient(sugar, &cfg, conn)
-	//client := request.NewRestClient(sugar, &cfg)
 
 	// Create agent instance with dependencies
 	agent := service.NewAgent(src, &cfg, strg, sugar, client)

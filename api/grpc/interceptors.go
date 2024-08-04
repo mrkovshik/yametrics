@@ -15,6 +15,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// InterceptorLogger creates a logging interceptor for gRPC.
+//
+// Parameters:
+//   - l: The logger instance.
+//
+// Returns:
+//   - logging.Logger: A logging interceptor for gRPC.
 func InterceptorLogger(l *zap.Logger) logging.Logger {
 	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
 		f := make([]zap.Field, 0, len(fields)/2)
@@ -52,6 +59,13 @@ func InterceptorLogger(l *zap.Logger) logging.Logger {
 	})
 }
 
+// Authenticate creates a gRPC unary server interceptor for HMAC-SHA256 authentication.
+//
+// Parameters:
+//   - key: The secret key for HMAC-SHA256 authentication.
+//
+// Returns:
+//   - grpc.UnaryServerInterceptor: A gRPC unary server interceptor for authentication.
 func Authenticate(key string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 

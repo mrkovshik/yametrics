@@ -25,8 +25,8 @@ func NewRestClient(logger *zap.SugaredLogger, cfg *config.AgentConfig) *RestClie
 	}
 }
 
-// Request processes metrics and sends them to the server.
-func (r *RestClient) Request(id int, jobs <-chan model.Metrics) {
+// Send processes metrics and sends them to the server.
+func (r *RestClient) Send(id int, jobs <-chan model.Metrics) {
 	for j := range jobs {
 		r.logger.Debugf("worker #%v is sending %v", id, j.ID)
 		metricUpdateURL := fmt.Sprintf("http://%v/update/", r.cfg.Address)

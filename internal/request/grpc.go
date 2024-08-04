@@ -15,12 +15,22 @@ import (
 	"github.com/mrkovshik/yametrics/proto"
 )
 
+// GRPCClient represents a client for interacting with a gRPC service.
 type GRPCClient struct {
-	logger *zap.SugaredLogger  // Logger for logging messages
-	cfg    *config.AgentConfig // Configuration for the agent
-	proto.UsersClient
+	logger            *zap.SugaredLogger  // Logger for logging messages.
+	cfg               *config.AgentConfig // Configuration for the agent.
+	proto.UsersClient                     // gRPC client for interacting with the Users service.
 }
 
+// NewGRPCClient creates a new GRPCClient instance.
+//
+// Parameters:
+//   - logger: A SugaredLogger instance for logging.
+//   - cfg: The agent configuration.
+//   - conn: The gRPC client connection.
+//
+// Returns:
+//   - *GRPCClient: A new GRPCClient instance.
 func NewGRPCClient(logger *zap.SugaredLogger, cfg *config.AgentConfig, conn *grpc.ClientConn) *GRPCClient {
 	return &GRPCClient{
 		UsersClient: proto.NewUsersClient(conn),
@@ -29,8 +39,12 @@ func NewGRPCClient(logger *zap.SugaredLogger, cfg *config.AgentConfig, conn *grp
 	}
 }
 
-// Request processes metrics and sends them to the server.
-func (r *GRPCClient) Request(id int, jobs <-chan model.Metrics) {
+// Send processes and sends metrics to the gRPC server.
+//
+// Parameters:
+//   - id: The worker ID.
+//   - jobs: A channel of metrics to be sent.
+func (r *GRPCClient) Send(id int, jobs <-chan model.Metrics) {
 	for j := range jobs {
 		r.logger.Debugf("worker #%v is sending %v", id, j.ID)
 		var metric = proto.Metric{
@@ -61,9 +75,16 @@ func (r *GRPCClient) Request(id int, jobs <-chan model.Metrics) {
 	}
 }
 
-// retryableSend sends an HTTP request with retries.
+// retryableSend sends a request with retry logic.
+//
+// Parameters:
+//   - req: The UpdateMetricsRequest to be sent.
+//
+// Returns:
+//   - *proto.UpdateMetricsResponse: The response from the server.
+//   - error: Any error encountered during the send operation.
 func (r *GRPCClient) retryableSend(req *proto.UpdateMetricsRequest) (*proto.UpdateMetricsResponse, error) {
-	var retryIntervals = []int{1, 3, 5} //TODO: move to config
+	var retryIntervals = []int{1, 3, 5} // TODO: move to config
 	messageBytes, err := json.Marshal(req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to marshal request: %v", err)
@@ -80,7 +101,7 @@ func (r *GRPCClient) retryableSend(req *proto.UpdateMetricsRequest) (*proto.Upda
 		if i == len(retryIntervals) {
 			return nil, err
 		}
-		r.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, retryIntervals[i])
+		r.logger.Errorf("failed to connect to server: %v\n retrying in %v seconds\n", err, retryIntervals[i])
 		time.Sleep(time.Duration(retryIntervals[i]) * time.Second)
 	}
 	return nil, nil

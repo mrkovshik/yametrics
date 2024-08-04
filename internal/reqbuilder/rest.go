@@ -21,18 +21,34 @@ type HTTPRequestBuilder struct {
 }
 
 // NewHTTPRequestBuilder initializes a new HTTPRequestBuilder with a default GET request.
+//
+// Returns:
+//   - *HTTPRequestBuilder: A new HTTPRequestBuilder instance.
 func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 	req, err := http.NewRequest(http.MethodGet, "", nil)
 	return &HTTPRequestBuilder{*req, err}
 }
 
 // WithHeader adds a header to the HTTP request.
+//
+// Parameters:
+//   - key: The header key.
+//   - value: The header value.
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) WithHeader(key, value string) *HTTPRequestBuilder {
 	rb.R.Header.Add(key, value)
 	return rb
 }
 
 // SetMethod sets the HTTP method for the request.
+//
+// Parameters:
+//   - method: The HTTP method (e.g., GET, POST).
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) SetMethod(method string) *HTTPRequestBuilder {
 	if rb.Err == nil {
 		rb.R.Method = method
@@ -41,6 +57,12 @@ func (rb *HTTPRequestBuilder) SetMethod(method string) *HTTPRequestBuilder {
 }
 
 // SetURL sets the URL for the HTTP request.
+//
+// Parameters:
+//   - rawURL: The URL to be set.
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) SetURL(rawURL string) *HTTPRequestBuilder {
 	if rb.Err == nil {
 		rb.R.URL, rb.Err = url.Parse(rawURL)
@@ -48,7 +70,10 @@ func (rb *HTTPRequestBuilder) SetURL(rawURL string) *HTTPRequestBuilder {
 	return rb
 }
 
-// AddIPHeader sets the URL for the HTTP request.
+// AddIPHeader adds the local IP address as a header to the HTTP request.
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) AddIPHeader() *HTTPRequestBuilder {
 	if rb.Err == nil {
 		ip, err := getLocalIP()
@@ -60,6 +85,12 @@ func (rb *HTTPRequestBuilder) AddIPHeader() *HTTPRequestBuilder {
 }
 
 // AddJSONBody encodes data as JSON and sets it as the body of the request.
+//
+// Parameters:
+//   - data: The data to be encoded as JSON.
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) AddJSONBody(data any) *HTTPRequestBuilder {
 	if rb.Err == nil && data != nil {
 		buf := bytes.Buffer{}
@@ -73,6 +104,12 @@ func (rb *HTTPRequestBuilder) AddJSONBody(data any) *HTTPRequestBuilder {
 }
 
 // Sign generates a SHA-256 signature for the request body and adds it as a header.
+//
+// Parameters:
+//   - key: The secret key for HMAC-SHA256 authentication.
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) Sign(key string) *HTTPRequestBuilder {
 	var body []byte
 	if key != "" && rb.Err == nil && rb.R.Body != nil {
@@ -92,6 +129,9 @@ func (rb *HTTPRequestBuilder) Sign(key string) *HTTPRequestBuilder {
 }
 
 // Compress compresses the request body using gzip and sets the appropriate headers.
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) Compress() *HTTPRequestBuilder {
 	if rb.Err == nil {
 		var compressedBody bytes.Buffer
@@ -111,6 +151,13 @@ func (rb *HTTPRequestBuilder) Compress() *HTTPRequestBuilder {
 	return rb
 }
 
+// EncryptRSA encrypts the request body using RSA and sets the encrypted data as the body.
+//
+// Parameters:
+//   - pemFilePath: The path to the PEM file containing the RSA public key.
+//
+// Returns:
+//   - *HTTPRequestBuilder: The updated HTTPRequestBuilder instance.
 func (rb *HTTPRequestBuilder) EncryptRSA(pemFilePath string) *HTTPRequestBuilder {
 	var body []byte
 	if pemFilePath != "" && rb.Err == nil && rb.R.Body != nil {
@@ -137,6 +184,11 @@ func (rb *HTTPRequestBuilder) EncryptRSA(pemFilePath string) *HTTPRequestBuilder
 	return rb
 }
 
+// getLocalIP retrieves the local IP address.
+//
+// Returns:
+//   - string: The local IP address.
+//   - error: An error if the IP address could not be retrieved.
 func getLocalIP() (string, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
