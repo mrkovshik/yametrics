@@ -303,6 +303,7 @@ func Test_server(t *testing.T) {
 			body, err555 := io.ReadAll(response.Body)
 			assert.NoError(t, err555)
 			response.Body = io.NopCloser(bytes.NewBuffer(body))
+			defer response.Body.Close() //nolint:all
 			if contentType == "application/json" {
 				respBody := model.Metrics{}
 				err44 := json.NewDecoder(response.Body).Decode(&respBody)
