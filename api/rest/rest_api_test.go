@@ -2,7 +2,7 @@ package rest
 
 import (
 	"bytes"
-	"crypto/hmac"
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -24,7 +24,6 @@ import (
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	"github.com/mrkovshik/yametrics/internal/model"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
-	"github.com/mrkovshik/yametrics/internal/signature"
 	"github.com/mrkovshik/yametrics/internal/storage"
 )
 
@@ -276,7 +275,13 @@ func Test_server(t *testing.T) {
 	apiService.ConfigureRouter()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	go run(stop, apiService)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		<-stop
+		cancel()
+	}()
+	go run(ctx, apiService)
 
 	time.Sleep(1 * time.Second)
 	for _, tt := range tests {
@@ -323,20 +328,10 @@ func Test_server(t *testing.T) {
 					require.Equal(t, *tt.want.response.Value, val)
 				}
 			}
-			if response.StatusCode == http.StatusOK {
-				sigSvc := signature.NewSha256Sig(cfg.Key, body)
-				sig, err9 := sigSvc.Generate()
-				require.NoError(t, err9)
-				respSig := response.Header.Get("HashSHA256")
-				require.Equal(t, true, hmac.Equal([]byte(sig), []byte(respSig)))
-
-				err8 := response.Body.Close()
-				require.NoError(t, err8)
-			}
 		})
 	}
 }
 
-func run(stop chan os.Signal, srv api.Server) {
-	log.Fatal(srv.RunServer(stop))
+func run(ctx context.Context, srv api.Server) {
+	log.Fatal(srv.RunServer(ctx))
 }

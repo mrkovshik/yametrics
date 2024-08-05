@@ -95,7 +95,7 @@ func main() {
 	))
 	restSrv := rest.NewServer(metricService, &cfg, sugar).ConfigureRouter()
 
-	grpcApiService := grpc.NewServer(metricService, &cfg, sugar, grpcSrv)
+	grpcAPIService := grpc.NewServer(metricService, &cfg, sugar, grpcSrv)
 
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {
@@ -119,7 +119,7 @@ func main() {
 		<-stop
 		cancel()
 	}()
-	go run(ctx, grpcApiService)
+	go run(ctx, grpcAPIService)
 	run(ctx, restSrv)
 	if err := metricService.StoreMetrics(context.Background()); err != nil {
 		sugar.Fatal("StoreMetrics", err)

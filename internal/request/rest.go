@@ -13,11 +13,20 @@ import (
 	"go.uber.org/zap"
 )
 
+// RestClient represents a client for interacting with a REST service.
 type RestClient struct {
 	logger *zap.SugaredLogger  // Logger for logging messages
 	cfg    *config.AgentConfig // Configuration for the agent
 }
 
+// NewRestClient creates a new RestClient instance.
+//
+// Parameters:
+//   - logger: A SugaredLogger instance for logging.
+//   - cfg: The agent configuration.
+//
+// Returns:
+//   - *RestClient: A new RestClient instance.
 func NewRestClient(logger *zap.SugaredLogger, cfg *config.AgentConfig) *RestClient {
 	return &RestClient{
 		logger: logger,
@@ -26,12 +35,24 @@ func NewRestClient(logger *zap.SugaredLogger, cfg *config.AgentConfig) *RestClie
 }
 
 // Send processes metrics and sends them to the server.
+//
+// Parameters:
+//   - id: The worker ID.
+//   - jobs: A channel of metrics to be sent.
 func (r *RestClient) Send(id int, jobs <-chan model.Metrics) {
 	for j := range jobs {
 		r.logger.Debugf("worker #%v is sending %v", id, j.ID)
 		metricUpdateURL := fmt.Sprintf("http://%v/update/", r.cfg.Address)
 
-		reqBuilder := reqbuilder.NewHTTPRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(j).Sign(r.cfg.Key).EncryptRSA(r.cfg.CryptoKey).Compress().SetMethod(http.MethodPost).AddIPHeader()
+		reqBuilder := reqbuilder.NewHTTPRequestBuilder().
+			SetURL(metricUpdateURL).
+			AddJSONBody(j).
+			Sign(r.cfg.Key).
+			EncryptRSA(r.cfg.CryptoKey).
+			Compress().
+			SetMethod(http.MethodPost).
+			AddIPHeader()
+
 		if reqBuilder.Err != nil {
 			r.logger.Errorf("error building request: %v\n", reqBuilder.Err)
 			return
@@ -53,10 +74,17 @@ func (r *RestClient) Send(id int, jobs <-chan model.Metrics) {
 }
 
 // retryableSend sends an HTTP request with retries.
+//
+// Parameters:
+//   - req: The HTTP request to be sent.
+//
+// Returns:
+//   - *http.Response: The response from the server.
+//   - error: Any error encountered during the send operation.
 func (r *RestClient) retryableSend(req *http.Request) (*http.Response, error) {
 	var (
 		bodyBytes      []byte
-		retryIntervals = []int{1, 3, 5} //TODO: move to config
+		retryIntervals = []int{1, 3, 5} // TODO: move to config
 		client         = http.Client{Timeout: 5 * time.Second}
 		err            error
 	)
@@ -77,7 +105,7 @@ func (r *RestClient) retryableSend(req *http.Request) (*http.Response, error) {
 		if i == len(retryIntervals) {
 			return nil, err
 		}
-		r.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, retryIntervals[i])
+		r.logger.Errorf("failed to connect to server: %v\n retrying in %v seconds\n", err, retryIntervals[i])
 		time.Sleep(time.Duration(retryIntervals[i]) * time.Second)
 		if req.Body != nil {
 			req.Body.Close() //nolint:all
