@@ -14,6 +14,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/api"
 	"github.com/mrkovshik/yametrics/api/grpc"
+	"github.com/mrkovshik/yametrics/api/rest"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 	"go.uber.org/zap"
@@ -92,8 +93,9 @@ func main() {
 		logging.UnaryServerInterceptor(grpc.InterceptorLogger(logger), opts...),
 		grpc.Authenticate(cfg.Key),
 	))
+	restSrv := rest.NewServer(metricService, &cfg, sugar).ConfigureRouter()
 
-	apiService := grpc.NewServer(metricService, &cfg, sugar, grpcSrv)
+	grpcApiService := grpc.NewServer(metricService, &cfg, sugar, grpcSrv)
 
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {
@@ -113,13 +115,17 @@ func main() {
 	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
-
-	run(stop, apiService)
+	go func() {
+		<-stop
+		cancel()
+	}()
+	go run(ctx, grpcApiService)
+	run(ctx, restSrv)
 	if err := metricService.StoreMetrics(context.Background()); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
 }
 
-func run(stop chan os.Signal, srv api.Server) {
-	log.Fatal(srv.RunServer(stop))
+func run(ctx context.Context, srv api.Server) {
+	log.Fatal(srv.RunServer(ctx))
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"os"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -52,7 +51,7 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 //
 // Returns:
 //   - error: An error if the server fails to start or stop gracefully.
-func (s *Server) RunServer(stop chan os.Signal) error {
+func (s *Server) RunServer(ctx context.Context) error {
 	// Listen on TCP port 3200
 	listen, err := net.Listen("tcp", ":3200")
 	if err != nil {
@@ -75,7 +74,7 @@ func (s *Server) RunServer(stop chan os.Signal) error {
 
 	// Wait for stop signal and gracefully stop the server
 	g.Go(func() error {
-		<-stop
+		<-ctx.Done()
 		s.server.GracefulStop()
 		return nil
 	})
