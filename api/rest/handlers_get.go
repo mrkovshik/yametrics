@@ -3,8 +3,8 @@ package rest
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/mrkovshik/yametrics/internal/apperrors"
 	"go.uber.org/zap"
@@ -56,9 +56,9 @@ func (s *Server) HandleGetMetricFromURL(w http.ResponseWriter, r *http.Request) 
 	var stringValue string
 	switch metric.MType {
 	case model.MetricTypeCounter:
-		stringValue = fmt.Sprint(*metric.Delta)
+		stringValue = strconv.FormatInt(*metric.Delta, 10)
 	case model.MetricTypeGauge:
-		stringValue = fmt.Sprint(*metric.Value)
+		stringValue = strconv.FormatFloat(*metric.Value, 'f', -1, 64)
 	default:
 		s.logger.Error("invalid metric type", zap.Error(errors.New("ErrInvalidMetricType")))
 		http.Error(w, "error w.Write", http.StatusInternalServerError)

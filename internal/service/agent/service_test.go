@@ -7,6 +7,7 @@ import (
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
 	"github.com/mrkovshik/yametrics/internal/metrics"
+	"github.com/mrkovshik/yametrics/internal/request"
 	storage2 "github.com/mrkovshik/yametrics/internal/storage"
 	"go.uber.org/zap"
 )
@@ -23,8 +24,8 @@ func TestAgent_Poll(t *testing.T) {
 	// Flushes buffered log entries before program exits
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
-
-	a := NewAgent(src, &cfg, strg, sugar)
+	client := request.NewRestClient(sugar, &cfg)
+	a := NewAgent(src, &cfg, strg, sugar, client)
 
 	t.Run("util_metrics", func(t *testing.T) {
 		ch := make(chan time.Time)

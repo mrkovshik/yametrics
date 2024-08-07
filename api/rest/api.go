@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -41,7 +40,7 @@ func NewServer(service api.Service, config *config.ServerConfig, logger *zap.Sug
 }
 
 // RunServer starts the HTTP server with the configured router.
-func (s *Server) RunServer(stop chan os.Signal) error {
+func (s *Server) RunServer(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
@@ -51,7 +50,7 @@ func (s *Server) RunServer(stop chan os.Signal) error {
 		return nil
 	})
 	g.Go(func() error {
-		<-stop
+		<-ctx.Done()
 		if err := s.server.Shutdown(ctx); err != nil {
 			return err
 		}
@@ -70,12 +69,15 @@ func (s *Server) RunServer(stop chan os.Signal) error {
 // ConfigureRouter configures routes and middleware.
 func (s *Server) ConfigureRouter() *Server {
 	router := chi.NewRouter()
-	router.Use(s.WithLogging, s.GzipHandle, s.SignResponse, s.DecryptRequest, s.Authenticate)
+	router.Use(s.WithLogging, s.GzipHandle)
+
 	router.Route("/update", func(r chi.Router) {
 		r.Post("/", s.HandleUpdateMetricFromJSON)
 		r.Post("/{type}/{name}/{value}", s.HandleUpdateMetricFromURL)
 	})
-	router.Post("/updates/", s.HandleUpdateMetricsFromJSON)
+
+	router.With(s.Authenticate, s.VerifySubnet, s.DecryptRequest, s.SignResponse).Post("/updates/", s.HandleUpdateMetricsFromJSON)
+
 	router.Route("/value", func(r chi.Router) {
 		r.Post("/", s.HandleGetMetricFromJSON)
 		r.Get("/{type}/{name}", s.HandleGetMetricFromURL)
@@ -124,3 +126,5 @@ func (s *Server) ConfigureRouter() *Server {
 	s.server.Handler = router
 	return s
 }
+
+type RouterOption func(*chi.Mux)

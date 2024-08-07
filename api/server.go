@@ -2,11 +2,11 @@
 package api
 
 import (
-	"os"
+	"context"
 )
 
 // Server represents an interface for running a server.
 type Server interface {
 	// RunServer starts the server with the given context.
-	RunServer(stop chan os.Signal) error
+	RunServer(ctx context.Context) error
 }

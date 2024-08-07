@@ -10,12 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	_ "github.com/lib/pq"
 	"github.com/mrkovshik/yametrics/api"
+	"github.com/mrkovshik/yametrics/api/grpc"
 	"github.com/mrkovshik/yametrics/api/rest"
 	"github.com/mrkovshik/yametrics/internal/storage"
 	"github.com/mrkovshik/yametrics/internal/util/retriable"
 	"go.uber.org/zap"
+	grpc2 "google.golang.org/grpc"
 
 	config "github.com/mrkovshik/yametrics/internal/config/server"
 	service "github.com/mrkovshik/yametrics/internal/service/server"
@@ -44,6 +47,11 @@ func main() {
 	}
 	defer logger.Sync() //nolint:all
 	sugar := logger.Sugar()
+
+	opts := []logging.Option{
+		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
+		// Add any other option (check functions starting with logging.With).
+	}
 
 	cfg, err := config.GetConfigs()
 	if err != nil {
@@ -81,7 +89,13 @@ func main() {
 		metricStorage := storage.NewInMemoryStorage()
 		metricService = service.NewMetricService(metricStorage, &cfg, sugar)
 	}
-	apiService := rest.NewServer(metricService, &cfg, sugar).ConfigureRouter()
+	grpcSrv := grpc2.NewServer(grpc2.ChainUnaryInterceptor(
+		logging.UnaryServerInterceptor(grpc.InterceptorLogger(logger), opts...),
+		grpc.Authenticate(cfg.Key),
+	))
+	restSrv := rest.NewServer(metricService, &cfg, sugar).ConfigureRouter()
+
+	grpcAPIService := grpc.NewServer(metricService, &cfg, sugar, grpcSrv)
 
 	if cfg.RestoreEnable {
 		if err := metricService.RestoreMetrics(ctx); err != nil {
@@ -101,13 +115,17 @@ func main() {
 	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
-
-	run(stop, apiService)
+	go func() {
+		<-stop
+		cancel()
+	}()
+	go run(ctx, grpcAPIService)
+	run(ctx, restSrv)
 	if err := metricService.StoreMetrics(context.Background()); err != nil {
 		sugar.Fatal("StoreMetrics", err)
 	}
 }
 
-func run(stop chan os.Signal, srv api.Server) {
-	log.Fatal(srv.RunServer(stop))
+func run(ctx context.Context, srv api.Server) {
+	log.Fatal(srv.RunServer(ctx))
 }

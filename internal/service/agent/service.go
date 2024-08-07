@@ -2,11 +2,7 @@
 package service
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
-	"net/http"
 	"time"
 
 	config "github.com/mrkovshik/yametrics/internal/config/agent"
@@ -26,8 +22,13 @@ type storage interface {
 	GetAllMetrics(ctx context.Context) (map[string]model.Metrics, error)
 }
 
+type sender interface {
+	Send(id int, jobs <-chan model.Metrics)
+}
+
 // Agent represents a metric collection agent that polls and sends metrics.
 type Agent struct {
+	client  sender               //Client for sending metrics to the server
 	source  metrics.MetricSource // Source of the metrics
 	logger  *zap.SugaredLogger   // Logger for logging messages
 	cfg     *config.AgentConfig  // Configuration for the agent
@@ -35,8 +36,9 @@ type Agent struct {
 }
 
 // NewAgent initializes a new Agent.
-func NewAgent(source metrics.MetricSource, cfg *config.AgentConfig, strg storage, logger *zap.SugaredLogger) *Agent {
+func NewAgent(source metrics.MetricSource, cfg *config.AgentConfig, strg storage, logger *zap.SugaredLogger, client sender) *Agent {
 	return &Agent{
+		client:  client,
 		source:  source,
 		logger:  logger,
 		cfg:     cfg,
@@ -117,7 +119,7 @@ func (a *Agent) PollUtilMetrics(ch <-chan time.Time, done chan struct{}) {
 func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}) {
 	jobs := make(chan model.Metrics, len(names))
 	for w := 1; w <= a.cfg.RateLimit; w++ {
-		go a.worker(w, jobs)
+		go a.client.Send(w, jobs)
 	}
 	for name := range names {
 		currentMetric := model.Metrics{
@@ -137,66 +139,4 @@ func (a *Agent) sendMetricsByPool(ctx context.Context, names map[string]struct{}
 		jobs <- foundMetric
 	}
 	close(jobs)
-}
-
-// retryableSend sends an HTTP request with retries.
-func (a *Agent) retryableSend(req *http.Request) (*http.Response, error) {
-	var (
-		bodyBytes      []byte
-		retryIntervals = []int{1, 3, 5} //TODO: move to config
-		client         = http.Client{Timeout: 5 * time.Second}
-		err            error
-	)
-	if req.Body != nil {
-		bodyBytes, err = io.ReadAll(req.Body)
-		if err != nil {
-			return nil, err
-		}
-		// Reset the request body for retries.
-		req.Body.Close() //nolint:all
-		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
-	}
-	for i := 0; i <= len(retryIntervals); i++ {
-		response, err := client.Do(req)
-		if err == nil {
-			return response, nil
-		}
-		if i == len(retryIntervals) {
-			return nil, err
-		}
-		a.logger.Errorf("failed connect to server: %v\n retry in %v seconds\n", err, retryIntervals[i])
-		time.Sleep(time.Duration(retryIntervals[i]) * time.Second)
-		if req.Body != nil {
-			req.Body.Close() //nolint:all
-			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
-		}
-	}
-	return nil, nil
-}
-
-// worker processes metrics and sends them to the server.
-func (a *Agent) worker(id int, jobs <-chan model.Metrics) {
-	for j := range jobs {
-		a.logger.Debugf("worker #%v is sending %v", id, j.ID)
-		metricUpdateURL := fmt.Sprintf("http://%v/update/", a.cfg.Address)
-
-		reqBuilder := NewRequestBuilder().SetURL(metricUpdateURL).AddJSONBody(j).Sign(a.cfg.Key).EncryptRSA(a.cfg.CryptoKey).Compress().SetMethod(http.MethodPost)
-		if reqBuilder.Err != nil {
-			a.logger.Errorf("error building request: %v\n", reqBuilder.Err)
-			return
-		}
-		response, err := a.retryableSend(&reqBuilder.R)
-		if err != nil {
-			a.logger.Errorf("error sending request: %v\n", err)
-			return
-		}
-		if response.StatusCode != http.StatusOK {
-			a.logger.Errorf("status code is %v\n", response.StatusCode)
-			return
-		}
-		if err := response.Body.Close(); err != nil {
-			a.logger.Error("response.Body.Close()", err)
-			return
-		}
-	}
 }
