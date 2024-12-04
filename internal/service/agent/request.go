@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 
@@ -42,6 +44,17 @@ func (rb *RequestBuilder) SetMethod(method string) *RequestBuilder {
 func (rb *RequestBuilder) SetURL(rawURL string) *RequestBuilder {
 	if rb.Err == nil {
 		rb.R.URL, rb.Err = url.Parse(rawURL)
+	}
+	return rb
+}
+
+// AddIPHeader sets the URL for the HTTP request.
+func (rb *RequestBuilder) AddIPHeader() *RequestBuilder {
+	if rb.Err == nil {
+		ip, err := getLocalIP()
+		if err == nil {
+			rb.R.Header.Add("X-Real-IP", ip)
+		}
 	}
 	return rb
 }
@@ -122,4 +135,31 @@ func (rb *RequestBuilder) EncryptRSA(pemFilePath string) *RequestBuilder {
 		}
 	}
 	return rb
+}
+
+func getLocalIP() (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, iface := range interfaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip != nil && !ip.IsLoopback() && ip.To4() != nil {
+				return ip.String(), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("no connected network interface found")
 }
